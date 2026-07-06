@@ -3,14 +3,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router';
 import { 
   ArrowLeft, Trophy, AlertTriangle, ExternalLink, Search, 
-  Sparkles, Check, Loader2, ShieldCheck, HelpCircle, FileText, Key, Activity,
+  Sparkles, Check, Loader2, ShieldCheck, HelpCircle, FileText, Activity,
   ChevronDown, ChevronUp, Star, Shield, X, Database
 } from 'lucide-react';
 import { RESTAURANTS_DATA } from '../data/restaurantsData';
 import { parseReviews, Review } from '../utils/csvParser';
-import { computeShopStats, auditReview, ShopStats, AuditResult } from '../utils/auditEngine';
+import { computeShopStats, aggregateAuditedReviews, computeSpikeMonths, getReviewTemporalContext, computeSimilaritySignals, computeHotTermSignals, computeNearbyLongReviewCounts, ShopStats, AuditResult } from '../utils/auditEngine';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
-import auditPromptTemplate from '../../../review_scraper/audit_prompt.txt?raw';
 
 function cleanStoreName(name: string): string {
   if (!name) return '';
@@ -34,58 +33,6 @@ function cleanStoreName(name: string): string {
   return parts[parts.length - 1].trim();
 }
 
-function sanitizeJsonString(rawStr: string): string {
-  // 1. Remove trailing commas in arrays/objects
-  let cleaned = rawStr.replace(/,\s*([\]}])/g, '$1');
-  
-  // 2. Escape double quotes inside values.
-  const stringFields = ["username", "reason", "reasoningPath", "issueType"];
-  const lines = cleaned.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i];
-    for (const field of stringFields) {
-      const prefix = `"${field}": "`;
-      if (line.includes(prefix)) {
-        const startIdx = line.indexOf(prefix) + prefix.length;
-        const endIdx = line.lastIndexOf('"');
-        if (endIdx > startIdx) {
-          const innerVal = line.substring(startIdx, endIdx);
-          const escapedVal = innerVal.replace(/(?<!\\)"/g, '\\"');
-          const suffix = line.substring(endIdx);
-          line = line.substring(0, startIdx) + escapedVal + suffix;
-        }
-        break;
-      }
-    }
-    lines[i] = line;
-  }
-  return lines.join('\n');
-}
-
-function closeMalformedJson(jsonStr: string): string {
-  let str = jsonStr.trim();
-  const quoteCount = (str.match(/"/g) || []).length;
-  if (quoteCount % 2 !== 0) {
-    str += '"';
-  }
-  
-  let openBraces = (str.match(/\{/g) || []).length;
-  let closeBraces = (str.match(/\}/g) || []).length;
-  while (openBraces > closeBraces) {
-    str += '}';
-    closeBraces++;
-  }
-  
-  let openBrackets = (str.match(/\[/g) || []).length;
-  let closeBrackets = (str.match(/\]/g) || []).length;
-  while (openBrackets > closeBrackets) {
-    str += ']';
-    closeBrackets++;
-  }
-  
-  return str;
-}
-
 export function Results() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -100,19 +47,9 @@ export function Results() {
   const [inspectSearch, setInspectSearch] = useState<{ [key: number]: string }>({});
   const [inspectFilter, setInspectFilter] = useState<{ [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' }>({});
 
-  const [apiKey, setApiKey] = useState(() => {
-    if (location.state?.apiKey !== undefined) return location.state.apiKey;
-    return localStorage.getItem('gemini_api_key') || '';
-  });
   const [isAiAuditing, setIsAiAuditing] = useState(false);
   const [aiAuditResults, setAiAuditResults] = useState<{ [storeId: string]: { [username: string]: AuditResult } }>({});
   const [apiError, setApiError] = useState('');
-  const [auditModel, setAuditModel] = useState<'gemini' | 'gemma'>(() => {
-    if (location.state?.auditModel) return location.state.auditModel;
-    const key = localStorage.getItem('gemini_api_key') || '';
-    return key.trim() ? 'gemini' : 'gemma';
-  });
-  const ollamaModelTag = location.state?.ollamaModelTag || localStorage.getItem('ollama_model_tag') || 'gemma4:e4b';
 
   // Accordion state for CoT reasoning paths (keyed by "storeIdx-reviewIdx")
   const [expandedCoT, setExpandedCoT] = useState<{ [key: string]: boolean }>({});
@@ -173,34 +110,16 @@ export function Results() {
   // 1.5. Auto-trigger AI Audit on mount once shopResults are computed
   useEffect(() => {
     if (shopResults.length > 0 && !isAiAuditing && Object.keys(aiAuditResults).length === 0) {
-      const key = location.state?.apiKey !== undefined ? location.state.apiKey : (localStorage.getItem('gemini_api_key') || '');
-      const model = location.state?.auditModel || (key.trim() ? 'gemini' : 'gemma');
-      handleGeminiAudit(model, key, shopResults);
+      handleGeminiAudit(shopResults);
     }
   }, [shopResults]);
 
   // 2. AI Live Audit execution (Two-Stage Hybrid Pipeline)
-  const handleGeminiAudit = async (forcedModel?: 'gemini' | 'gemma', forcedKey?: string, forcedShopResults?: ShopStats[]) => {
-    const activeModel = forcedModel || auditModel;
-    const activeKey = forcedKey !== undefined ? forcedKey : apiKey;
+  const handleGeminiAudit = async (forcedShopResults?: ShopStats[]) => {
     const activeShopResults = forcedShopResults || shopResults;
 
-    if (activeModel === 'gemini' && !activeKey.trim()) {
-      if (forcedModel) {
-        console.log('Gemini API key missing, falling back to local Gemma...');
-        setAuditModel('gemma');
-        handleGeminiAudit('gemma', '', activeShopResults);
-        return;
-      }
-      setApiError('請輸入有效的 Gemini API 金鑰！');
-      return;
-    }
-    
     setApiError('');
     setIsAiAuditing(true);
-    if (activeModel === 'gemini') {
-      localStorage.setItem('gemini_api_key', activeKey);
-    }
 
     try {
       const newAiResults = { ...aiAuditResults };
@@ -211,163 +130,71 @@ export function Results() {
         const id = storeIds[idx] || `custom_${idx}`;
         const reviews = result.auditedReviews;
 
-        const monthlyCounts: { [month: string]: number } = {};
-        reviews.forEach(r => {
-          if (r.time) {
-            const month = r.time.substring(0, 7); // YYYY-MM
-            if (/^\d{4}-\d{2}$/.test(month)) {
-              monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
-            }
-          }
-        });
+        const spikeMonths = computeSpikeMonths(reviews);
+        const getReviewTemporalData = (r: Review) => getReviewTemporalContext(r, spikeMonths, new Date('2026-05-19'));
 
-        const monthKeys = Object.keys(monthlyCounts);
-        const monthlyAverage = monthKeys.length > 0
-          ? monthKeys.reduce((sum, k) => sum + monthlyCounts[k], 0) / monthKeys.length
-          : 0;
+        // Precomputed cross-review signals, aligned by index to `reviews`, fed
+        // to Gemini as context (not used to auto-decide a verdict here).
+        const similaritySignals = computeSimilaritySignals(reviews);
+        const hotTermSignals = computeHotTermSignals(reviews);
+        const nearbyLongReviewCounts = computeNearbyLongReviewCounts(reviews);
 
-        const getReviewTemporalData = (r: Review) => {
-          const month = r.time ? r.time.substring(0, 7) : '';
-          const reviewsInMonth = monthlyCounts[month] || 0;
-          const isSpikePeriod = reviewsInMonth > 2 * monthlyAverage && reviewsInMonth >= 10;
-          
-          let daysElapsed = 0;
-          if (r.time) {
-            const reviewDate = new Date(r.time);
-            if (!isNaN(reviewDate.getTime())) {
-              const currentDate = new Date('2026-05-19');
-              const diffTime = currentDate.getTime() - reviewDate.getTime();
-              daysElapsed = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
-            }
-          }
-          return { isSpikePeriod, daysElapsed };
-        };
+        // Stage 1 already reached a confident verdict (incentive/template/
+        // no_text/low_info) for anything with a non-null issueType — re-litigating
+        // those via Gemini would be wasteful and could silently override a
+        // deliberate local rule (e.g. low_info) with a worse LLM guess. Only
+        // genuinely ambiguous 5-star reviews (issueType === null) go to Stage 2.
+        const stage1Count = reviews.filter(r => r.stars === 5 && r.audit.issueType !== null).length;
 
-        const stage1WashedReviews = reviews.filter(r => {
-          const audit = auditReview(r);
-          return audit.isWashed && audit.issueType === 'incentive';
-        });
-        const stage1Count = stage1WashedReviews.length;
+        const ambiguousReviews = reviews.filter(r => r.stars === 5 && r.audit.issueType === null);
 
-        const ambiguousReviews = reviews.filter(r => {
-          const isStage1 = stage1WashedReviews.some(s1 => s1.username === r.username && s1.text === r.text);
-          return r.stars === 5 && !isStage1 && r.text.trim().length > 0;
-        });
-
-        const aiAuditLimit = (() => {
-          if (location.state?.aiAuditCount !== undefined) return Number(location.state.aiAuditCount);
-          const saved = localStorage.getItem('ai_audit_count');
-          return saved ? Number(saved) : 15;
-        })();
-
-        let sampleReviews: typeof ambiguousReviews = [];
-        const ambiguousCount = ambiguousReviews.length;
-        if (ambiguousCount <= aiAuditLimit) {
-          sampleReviews = [...ambiguousReviews];
-        } else {
-          for (let i = 0; i < aiAuditLimit; i++) {
-            const index = Math.floor((i * (ambiguousCount - 1)) / (aiAuditLimit - 1));
-            sampleReviews.push(ambiguousReviews[index]);
-          }
-        }
-        const stage2Sent = sampleReviews.length;
+        // No sampling cap — every ambiguous 5-star review with text gets sent for
+        // Stage 2 review; the backend splits them into batches itself.
+        const stage2Sent = ambiguousReviews.length;
 
         let stage2Flagged = 0;
         let stage2Passed = 0;
         const storeMap: { [username: string]: AuditResult } = {};
 
         if (stage2Sent > 0) {
-          const promptPayload = sampleReviews.map((r, rIdx) => {
+          const reviewsPayload = ambiguousReviews.map(r => {
             const { isSpikePeriod, daysElapsed } = getReviewTemporalData(r);
+            const idx = reviews.indexOf(r);
+            const { maxSimilarity, similarCount } = similaritySignals[idx];
+            const { hotTermCount, hotTermMaxRatio } = hotTermSignals[idx];
             return {
-              index: rIdx,
               username: r.username,
               text: r.text,
               stars: r.stars,
+              images: r.images,
               daysElapsed,
-              isSpikePeriod
+              isSpikePeriod,
+              maxSimilarity,
+              similarCount,
+              hotTermCount,
+              hotTermMaxRatio,
+              nearbyLongReviewCount: nearbyLongReviewCounts[idx]
             };
           });
 
-          const prompt = auditPromptTemplate
-            .replace('{store_name}', result.storeName)
-            .replace('{review_count}', stage2Sent.toString())
-            .replace('{reviews_json}', JSON.stringify(promptPayload, null, 2));
+          const response = await fetch('/api/audit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              storeName: result.storeName,
+              reviews: reviewsPayload
+            })
+          });
 
-          let items: any[] = [];
-
-          if (activeModel === 'gemini') {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                  responseMimeType: 'application/json'
-                }
-              })
-            });
-
-            if (!response.ok) {
-              const errData = await response.json();
-              throw new Error(errData.error?.message || 'Gemini API 請求失敗');
-            }
-
-            const resData = await response.json();
-            const textResponse = resData.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
-            try {
-              items = JSON.parse(sanitizeJsonString(textResponse));
-            } catch (e) {
-              try {
-                items = JSON.parse(closeMalformedJson(sanitizeJsonString(textResponse)));
-              } catch (e2) {
-                console.error("Failed to parse Gemini response. Raw string:", textResponse);
-                throw new Error(`Gemini 語意審計失敗，模型回傳格式非合規 JSON：\n${e2.message || e2}`);
-              }
-            }
-          } else {
-            const response = await fetch('/api/audit-local', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                reviews: promptPayload,
-                model: ollamaModelTag
-              })
-            });
-
-            if (!response.ok) {
-              const errData = await response.json().catch(() => null);
-              throw new Error(`本地 Ollama 服務回傳錯誤，請確認本機 Ollama 運作中且已下載模型 "${ollamaModelTag}"。${errData?.error || errData?.details || ''}`);
-            }
-
-            const responseJson = await response.json();
-            if (!responseJson.results && !responseJson.result) {
-              throw new Error('本地 Ollama 回傳資料格式不正確');
-            }
-            
-            let parsedContent = responseJson.results || responseJson.result;
-            
-            // Normalize array if model wrapped it in an object like {"reviews": [...]}
-            if (!Array.isArray(parsedContent)) {
-              if (parsedContent.reviews && Array.isArray(parsedContent.reviews)) {
-                parsedContent = parsedContent.reviews;
-              } else if (parsedContent.results && Array.isArray(parsedContent.results)) {
-                parsedContent = parsedContent.results;
-              } else {
-                const arrayKey = Object.keys(parsedContent).find(k => Array.isArray(parsedContent[k]));
-                if (arrayKey) {
-                  parsedContent = parsedContent[arrayKey];
-                } else {
-                  throw new Error('模型未回傳 JSON 陣列審查結果');
-                }
-              }
-            }
-            items = parsedContent;
+          if (!response.ok) {
+            const errData = await response.json().catch(() => null);
+            throw new Error(errData?.error || (errData?.details || []).join('; ') || '後端 AI 語意審計請求失敗');
           }
+
+          const responseJson = await response.json();
+          const items: any[] = responseJson.results || [];
 
           items.forEach(item => {
             if (item.isWashed) {
@@ -379,16 +206,24 @@ export function Results() {
             const inc = item.incentiveIntensity || 3;
             const aut = item.sentimentAuthenticity || 3;
             const gra = item.descriptionGranularity || 3;
-            
-            let confidence = 50;
-            if (item.isWashed) {
-              const washScore = (inc + (6 - aut) + (6 - gra)) / 3;
-              confidence = Math.round(60 + (washScore - 1) * 9.75);
-            } else {
-              const cleanScore = ((6 - inc) + aut + gra) / 3;
-              confidence = Math.round(60 + (cleanScore - 1) * 9.75);
-            }
-            confidence = Math.max(50, Math.min(99, confidence));
+
+            // S_val: 0 (dimensions read as clean) .. 12 (dimensions read as washed),
+            // independent of the model's own isWashed call.
+            const sVal = (inc - 1) + (5 - aut) + (5 - gra);
+            const washRatio = sVal / 12;
+
+            // agreement: how strongly the I/A/D dimensions back up the model's binary
+            // verdict. 1 = fully backed, 0 = fully contradicted, 0.5 = genuinely
+            // ambiguous (dimensions don't lean either way — this is also what you get
+            // when the model omits the dimension scores, since they default to 3/3/3).
+            const agreement = item.isWashed ? washRatio : (1 - washRatio);
+
+            // Full 0-100 range. The ^1.5 curve pulls the ambiguous midpoint
+            // (agreement=0.5) down to ~35% instead of pinning it at 50+/60+, so a low
+            // number visibly reads as "treat this verdict with caution" rather than
+            // looking like moderate confidence.
+            let confidence = Math.round(Math.pow(agreement, 1.5) * 100);
+            confidence = Math.max(0, Math.min(100, confidence));
 
             storeMap[item.username] = {
               isWashed: item.isWashed,
@@ -425,25 +260,14 @@ export function Results() {
         if (!newAiResults[matchingId]) return shop;
 
         const aiStoreMap = newAiResults[matchingId];
-        const reviews = shop.auditedReviews;
-
-        const stage1WashedReviews = reviews.filter(r => {
-          const audit = auditReview(r);
-          return audit.isWashed && audit.issueType === 'incentive';
-        });
 
         const updatedReviews = shop.auditedReviews.map(r => {
-          const isStage1 = stage1WashedReviews.some(s1 => s1.username === r.username && s1.text === r.text);
-          if (isStage1) {
-            return {
-              ...r,
-              audit: {
-                isWashed: true,
-                reason: '階段一規則分析：匹配到顯性打卡贈送促銷字樣（高頻精確關鍵字）。',
-                confidenceScore: 100,
-                issueType: 'incentive' as const
-              }
-            };
+          // Reviews Stage 1 already reached a confident verdict on were never
+          // sent to Gemini — keep their original Stage 1 audit untouched
+          // rather than accepting an aiStoreMap entry that shouldn't exist
+          // for them (or silently losing the verdict).
+          if (r.audit.issueType !== null) {
+            return r;
           }
 
           if (aiStoreMap[r.username]) {
@@ -456,53 +280,9 @@ export function Results() {
           return r;
         });
 
-        const total = updatedReviews.length;
-        let suspicious = 0;
-        let originalSum = 0;
-        let weightedSum = 0;
-        let weightTotal = 0;
-        const filteredDist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-        const issues = { timeAnomaly: 0, templateText: 0, vague: 0 };
-
-        updatedReviews.forEach(r => {
-          originalSum += r.stars;
-
-          const weight = r.audit.isWashed 
-            ? 1 - (r.audit.confidenceScore / 100) 
-            : (r.audit.confidenceScore / 100);
-
-          weightedSum += r.stars * weight;
-          weightTotal += weight;
-
-          filteredDist[r.stars as 1 | 2 | 3 | 4 | 5] = parseFloat(
-            ((filteredDist[r.stars as 1 | 2 | 3 | 4 | 5] || 0) + weight).toFixed(1)
-          );
-
-          if (r.audit.isWashed) {
-            suspicious++;
-            if (r.audit.issueType === 'incentive') issues.timeAnomaly++;
-            else if (r.audit.issueType === 'template') issues.templateText++;
-            else if (r.audit.issueType === 'discrepancy') issues.vague++;
-          }
-        });
-
-        const basicFilteredRating = weightTotal > 0 ? weightedSum / weightTotal : shop.originalRating;
-        const trustScore = total > 0 ? Math.max(0, 100 - (suspicious / total) * 100 * 2.0) : 100;
-        const trustPenalty = (100 - trustScore) * 0.02;
-        const filteredRating = Math.max(1.0, basicFilteredRating - trustPenalty);
-
-        return {
-          ...shop,
-          trustScore: parseFloat(trustScore.toFixed(0)),
-          suspiciousReviews: suspicious,
-          filteredRating: parseFloat(filteredRating.toFixed(2)),
-          issues,
-          ratingDistribution: {
-            ...shop.ratingDistribution,
-            filtered: filteredDist
-          },
-          auditedReviews: updatedReviews
-        };
+        // Re-aggregate through the same shared formula computeShopStats used for the
+        // Stage-1-only pass, instead of recomputing the weighting/Trust Score math here.
+        return aggregateAuditedReviews(shop.storeName, updatedReviews);
       });
 
       setShopResults(updatedResults);
@@ -607,25 +387,14 @@ export function Results() {
                 <div className="space-y-4">
                   {shopResults.map((shop, idx) => {
                     const reviews = shop.auditedReviews || shop.reviews || [];
-                    const stage1Washed = reviews.filter(r => {
-                      const audit = auditReview(r);
-                      return audit.isWashed && audit.issueType === 'incentive';
-                    });
+                    const stage1Washed = reviews.filter(r => r.audit.issueType !== null);
                     const stage1Count = stage1Washed.length;
-                    
-                    const ambiguousReviews = reviews.filter(r => {
-                      const isStage1 = stage1Washed.some(s1 => s1.username === r.username && s1.text === r.text);
-                      return r.stars === 5 && !isStage1 && r.text.trim().length > 0;
-                    });
-                    
-                    const aiAuditLimit = (() => {
-                      if (location.state?.aiAuditCount !== undefined) return Number(location.state.aiAuditCount);
-                      const saved = localStorage.getItem('ai_audit_count');
-                      return saved ? Number(saved) : 15;
-                    })();
-                    const stage2Sent = Math.min(ambiguousReviews.length, aiAuditLimit);
-                    
-                    const remainingReviews = reviews.filter(r => !stage1Washed.some(w => w.username === r.username && w.text === r.text));
+
+                    const ambiguousReviews = reviews.filter(r => r.stars === 5 && r.audit.issueType === null);
+
+                    const stage2Sent = ambiguousReviews.length;
+
+                    const remainingReviews = reviews.filter(r => r.audit.issueType === null);
                     const heuristicRating = remainingReviews.length > 0
                       ? Number((remainingReviews.reduce((sum, r) => sum + r.stars, 0) / remainingReviews.length).toFixed(2))
                       : shop.originalRating;
@@ -1171,6 +940,11 @@ export function Results() {
                   ) : (
                     filteredReviews.map((review, rIdx) => {
                       const isWashed = review.audit.isWashed;
+                      const isLowInfo = review.audit.issueType === 'low_info';
+                      // Below 50% confidence, "isWashed: true" is a weak signal, not a
+                      // confirmed catch — read the label/color/chip as tentative rather
+                      // than the same certainty as a high-confidence interception.
+                      const isLowConfidenceWashed = isWashed && review.audit.confidenceScore < 50;
                       const hasCoT = !!review.audit.reasoningPath;
                       const cotExpanded = expandedCoT[`${selectedInspectorTab}-${rIdx}`];
 
@@ -1189,18 +963,23 @@ export function Results() {
                           
                           {/* Audit Status Box */}
                           {isWashed ? (
-                            <div className="bg-[#d4a5a5]/10 border border-[#d4a5a5]/30 p-3 rounded-xl text-[11px] text-[#8c4848] space-y-2">
+                            <div className={isLowConfidenceWashed
+                              ? "bg-[#e8c547]/10 border border-[#e8c547]/30 p-3 rounded-xl text-[11px] text-[#8b7534] space-y-2"
+                              : "bg-[#d4a5a5]/10 border border-[#d4a5a5]/30 p-3 rounded-xl text-[11px] text-[#8c4848] space-y-2"
+                            }>
                               <div className="flex items-start gap-1.5 font-bold flex-wrap">
-                                <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#8c4848]" />
-                                <span>判定：灌水洗評 ({review.audit.confidenceScore}% 信心度)</span>
-                                {hasCoT ? (
-                                  <span className="ml-1 bg-amber-100 text-amber-800 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-amber-300">
-                                    二階 AI 攔截
-                                  </span>
-                                ) : (
-                                  <span className="ml-1 bg-rose-100 text-rose-800 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-rose-300">
-                                    一階規則攔截
-                                  </span>
+                                <AlertTriangle className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isLowConfidenceWashed ? 'text-[#8b7534]' : 'text-[#8c4848]'}`} />
+                                <span>{isLowConfidenceWashed ? '疑似洗評' : '判定：灌水洗評'} ({review.audit.confidenceScore}% 信心度)</span>
+                                {!isLowConfidenceWashed && (
+                                  hasCoT ? (
+                                    <span className="ml-1 bg-amber-100 text-amber-800 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-amber-300">
+                                      二階 AI 攔截
+                                    </span>
+                                  ) : (
+                                    <span className="ml-1 bg-rose-100 text-rose-800 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-rose-300">
+                                      一階規則攔截
+                                    </span>
+                                  )
                                 )}
                               </div>
                               <div className="font-semibold opacity-90 pl-5 leading-relaxed">
@@ -1209,18 +988,18 @@ export function Results() {
 
                               {/* Accordion Reasoning Path */}
                               {hasCoT && (
-                                <div className="mt-2 pt-2 border-t border-[#d4a5a5]/20">
+                                <div className={`mt-2 pt-2 border-t ${isLowConfidenceWashed ? 'border-[#e8c547]/20' : 'border-[#d4a5a5]/20'}`}>
                                   <button
                                     onClick={() => toggleCoT(selectedInspectorTab, rIdx)}
-                                    className="flex items-center justify-between w-full text-left text-[10px] font-bold text-[#8c4848] bg-[#f5f1e8]/40 hover:bg-[#f5f1e8]/80 px-2.5 py-1.5 rounded-lg border border-[#d4c5b0]/30 transition-colors cursor-pointer"
+                                    className={`flex items-center justify-between w-full text-left text-[10px] font-bold ${isLowConfidenceWashed ? 'text-[#8b7534]' : 'text-[#8c4848]'} bg-[#f5f1e8]/40 hover:bg-[#f5f1e8]/80 px-2.5 py-1.5 rounded-lg border border-[#d4c5b0]/30 transition-colors cursor-pointer`}
                                   >
                                     <span className="flex items-center gap-1.5">
                                       <span>AI 思考鏈 (CoT 推理)</span>
                                     </span>
                                     {cotExpanded ? (
-                                      <ChevronUp className="w-3.5 h-3.5 text-[#8c4848]" />
+                                      <ChevronUp className={`w-3.5 h-3.5 ${isLowConfidenceWashed ? 'text-[#8b7534]' : 'text-[#8c4848]'}`} />
                                     ) : (
-                                      <ChevronDown className="w-3.5 h-3.5 text-[#8c4848]" />
+                                      <ChevronDown className={`w-3.5 h-3.5 ${isLowConfidenceWashed ? 'text-[#8b7534]' : 'text-[#8c4848]'}`} />
                                     )}
                                   </button>
 
@@ -1234,18 +1013,18 @@ export function Results() {
                                         className="overflow-hidden"
                                       >
                                         <div className="mt-2 pl-2 text-[10px] space-y-2">
-                                          <div className="text-[#8c4848]/90 leading-relaxed bg-[#f5f1e8]/60 p-2.5 rounded-lg italic border border-[#d4c5b0]/30">
+                                          <div className={`${isLowConfidenceWashed ? 'text-[#8b7534]/90' : 'text-[#8c4848]/90'} leading-relaxed bg-[#f5f1e8]/60 p-2.5 rounded-lg italic border border-[#d4c5b0]/30`}>
                                             <b>推理過程：</b>{review.audit.reasoningPath}
                                           </div>
                                           <div className="grid grid-cols-3 gap-2 text-[9px] text-center pt-1 font-bold">
-                                            <div className="bg-[#d4a5a5]/20 py-1 px-1.5 rounded">
-                                              利益誘因: <span className="text-[#8c4848] font-black">{review.audit.incentiveIntensity}/5</span>
+                                            <div className={`${isLowConfidenceWashed ? 'bg-[#e8c547]/20' : 'bg-[#d4a5a5]/20'} py-1 px-1.5 rounded`}>
+                                              利益誘因: <span className={`${isLowConfidenceWashed ? 'text-[#8b7534]' : 'text-[#8c4848]'} font-black`}>{review.audit.incentiveIntensity}/5</span>
                                             </div>
-                                            <div className="bg-[#d4a5a5]/20 py-1 px-1.5 rounded">
-                                              情感真實: <span className="text-[#8c4848] font-black">{review.audit.sentimentAuthenticity}/5</span>
+                                            <div className={`${isLowConfidenceWashed ? 'bg-[#e8c547]/20' : 'bg-[#d4a5a5]/20'} py-1 px-1.5 rounded`}>
+                                              情感真實: <span className={`${isLowConfidenceWashed ? 'text-[#8b7534]' : 'text-[#8c4848]'} font-black`}>{review.audit.sentimentAuthenticity}/5</span>
                                             </div>
-                                            <div className="bg-[#d4a5a5]/20 py-1 px-1.5 rounded">
-                                              描述細緻: <span className="text-[#8c4848] font-black">{review.audit.descriptionGranularity}/5</span>
+                                            <div className={`${isLowConfidenceWashed ? 'bg-[#e8c547]/20' : 'bg-[#d4a5a5]/20'} py-1 px-1.5 rounded`}>
+                                              描述細緻: <span className={`${isLowConfidenceWashed ? 'text-[#8b7534]' : 'text-[#8c4848]'} font-black`}>{review.audit.descriptionGranularity}/5</span>
                                             </div>
                                           </div>
                                         </div>
@@ -1254,6 +1033,16 @@ export function Results() {
                                   </AnimatePresence>
                                 </div>
                               )}
+                            </div>
+                          ) : isLowInfo ? (
+                            <div className="bg-gray-100 border border-gray-300 p-3 rounded-xl text-[11px] text-gray-600 space-y-2">
+                              <div className="flex items-start gap-1.5 font-bold flex-wrap">
+                                <HelpCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-gray-500" />
+                                <span>低資訊評論 ({review.audit.confidenceScore}% 信心度)</span>
+                              </div>
+                              <div className="font-semibold opacity-90 pl-5 leading-relaxed">
+                                <b>原因：</b>{review.audit.reason}
+                              </div>
                             </div>
                           ) : (
                             <div className="bg-[#6b8e7f]/10 border border-[#6b8e7f]/30 p-3 rounded-xl text-[11px] text-[#304a3e] space-y-2">

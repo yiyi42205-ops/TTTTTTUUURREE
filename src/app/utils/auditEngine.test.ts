@@ -1,0 +1,267 @@
+import { describe, it, expect } from 'vitest';
+import {
+  aggregateAuditedReviews,
+  auditReview,
+  computeSimilaritySignals,
+  computeHotTermSignals,
+  computeNearbyLongReviewCounts,
+  AuditResult,
+} from './auditEngine';
+import { Review } from './csvParser';
+
+function review(overrides: Partial<Review> = {}): Review {
+  return {
+    username: 'user',
+    stars: 5,
+    time: '2025-01-01',
+    text: 'placeholder',
+    images: [],
+    ...overrides,
+  };
+}
+
+function audited(review: Review, audit: AuditResult) {
+  return { ...review, audit };
+}
+
+describe('aggregateAuditedReviews', () => {
+  it('all-clean store: uniform weight leaves filteredRating equal to originalRating', () => {
+    const clean = (audit: Partial<AuditResult> = {}): AuditResult => ({
+      isWashed: false,
+      reason: '',
+      confidenceScore: 80,
+      issueType: null,
+      ...audit,
+    });
+
+    const reviews = [
+      audited(review({ stars: 5 }), clean()),
+      audited(review({ stars: 4 }), clean()),
+      audited(review({ stars: 5 }), clean()),
+    ];
+
+    const result = aggregateAuditedReviews('Clean Shop', reviews);
+
+    expect(result.originalRating).toBe(4.67);
+    expect(result.filteredRating).toBe(4.67);
+    expect(result.trustScore).toBe(100);
+    expect(result.suspiciousReviews).toBe(0);
+    expect(result.totalReviews).toBe(3);
+  });
+
+  it('mixed-weight store: incentive + no_text washed reviews pull down the filtered rating and trust score', () => {
+    const reviews = [
+      audited(review({ stars: 5 }), { isWashed: true, reason: '', confidenceScore: 100, issueType: 'incentive' }),
+      audited(review({ stars: 5 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+      audited(review({ stars: 1 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+      audited(review({ stars: 5, text: '' }), { isWashed: true, reason: '', confidenceScore: 65, issueType: 'no_text' }),
+    ];
+
+    const result = aggregateAuditedReviews('Mixed Shop', reviews);
+
+    // originalRating = (5+5+1+5)/4 = 4.00
+    expect(result.originalRating).toBe(4.00);
+    // weightedSum = 5*0 + 5*0.8 + 1*0.8 + 5*0.35 = 6.55; weightTotal = 0+0.8+0.8+0.35 = 1.95
+    // basicFilteredRating = 6.55/1.95 = 3.358974...; trustScore = 100-(2/4)*100*2 = 0; penalty = 2
+    // filteredRating = 3.358974... - 2 = 1.358974... -> 1.36
+    expect(result.filteredRating).toBe(1.36);
+    expect(result.trustScore).toBe(0);
+    expect(result.suspiciousReviews).toBe(2);
+    expect(result.issues.timeAnomaly).toBe(1);
+    expect(result.issues.templateText).toBe(0);
+    expect(result.issues.vague).toBe(0);
+  });
+
+  it('store with no_text reviews: neutral 0.5 weight is applied distinctly from normal clean reviews', () => {
+    const reviews = [
+      audited(review({ stars: 5, text: '' }), { isWashed: false, reason: '', confidenceScore: 50, issueType: 'no_text' }),
+      audited(review({ stars: 3, text: '' }), { isWashed: false, reason: '', confidenceScore: 50, issueType: 'no_text' }),
+      audited(review({ stars: 5 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+    ];
+
+    const result = aggregateAuditedReviews('No-text Shop', reviews);
+
+    // originalRating = (5+3+5)/3 = 4.333... -> 4.33
+    expect(result.originalRating).toBe(4.33);
+    // weightedSum = 5*0.5 + 3*0.5 + 5*0.8 = 8; weightTotal = 0.5+0.5+0.8 = 1.8
+    // basicFilteredRating = 8/1.8 = 4.4444...; trustScore stays 100 (no isWashed reviews) -> no penalty
+    expect(result.filteredRating).toBe(4.44);
+    expect(result.trustScore).toBe(100);
+    expect(result.suspiciousReviews).toBe(0);
+  });
+
+  it('extreme case: every review judged washed at 100% confidence zeroes out the weight total and floors trust score at 0', () => {
+    const reviews = [
+      audited(review({ stars: 5 }), { isWashed: true, reason: '', confidenceScore: 100, issueType: 'incentive' }),
+      audited(review({ stars: 5 }), { isWashed: true, reason: '', confidenceScore: 100, issueType: 'incentive' }),
+      audited(review({ stars: 5 }), { isWashed: true, reason: '', confidenceScore: 100, issueType: 'template' }),
+      audited(review({ stars: 1 }), { isWashed: true, reason: '', confidenceScore: 100, issueType: 'incentive' }),
+    ];
+
+    const result = aggregateAuditedReviews('All Washed Shop', reviews);
+
+    // weightTotal = 0 for every review -> basicFilteredRating falls back to originalRating (4.00)
+    expect(result.originalRating).toBe(4.00);
+    expect(result.trustScore).toBe(0);
+    // trustPenalty = (100-0)*0.02 = 2 -> filteredRating = max(1.0, 4.00 - 2) = 2.00
+    expect(result.filteredRating).toBe(2.00);
+    expect(result.suspiciousReviews).toBe(4);
+    expect(result.issues.timeAnomaly).toBe(3);
+    expect(result.issues.templateText).toBe(1);
+  });
+
+  it('empty review list returns a neutral zeroed-out ShopStats', () => {
+    const result = aggregateAuditedReviews('Empty Shop', []);
+
+    expect(result.totalReviews).toBe(0);
+    expect(result.originalRating).toBe(0);
+    expect(result.filteredRating).toBe(0);
+    expect(result.trustScore).toBe(100);
+    expect(result.suspiciousReviews).toBe(0);
+  });
+
+  it('store with low_info reviews: neutral 0.55 weight is distinct from no_text (0.5) and clean (0.8)', () => {
+    const reviews = [
+      audited(review({ stars: 1, text: '好吃' }), { isWashed: false, reason: '', confidenceScore: 55, issueType: 'low_info' }),
+      audited(review({ stars: 5 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+    ];
+
+    const result = aggregateAuditedReviews('Low Info Shop', reviews);
+
+    // originalRating = (1+5)/2 = 3.00
+    // weightedSum = 1*0.55 + 5*0.8 = 4.55; weightTotal = 0.55+0.8 = 1.35 -> 4.55/1.35 = 3.3703... -> 3.37
+    expect(result.originalRating).toBe(3.00);
+    expect(result.filteredRating).toBe(3.37);
+    expect(result.trustScore).toBe(100);
+    expect(result.suspiciousReviews).toBe(0);
+  });
+});
+
+describe('auditReview - low_info vs escalated washing', () => {
+  it('classifies an isolated short generic review as low_info, not washed', () => {
+    const result = auditReview(review({ text: '好吃' }));
+    expect(result.issueType).toBe('low_info');
+    expect(result.isWashed).toBe(false);
+    expect(result.confidenceScore).toBe(55);
+  });
+
+  it('escalates to washed template when a short generic review co-occurs with a spike period', () => {
+    const result = auditReview(review({ text: '讚' }), { isSpikePeriod: true });
+    expect(result.issueType).toBe('template');
+    expect(result.isWashed).toBe(true);
+  });
+
+  it('escalates to washed template when a short generic review has a high similarCount', () => {
+    const result = auditReview(review({ text: '推推' }), { similarCount: 2 });
+    expect(result.issueType).toBe('template');
+    expect(result.isWashed).toBe(true);
+  });
+
+  it('does not escalate when similarCount is below the threshold and there is no spike', () => {
+    const result = auditReview(review({ text: '棒' }), { similarCount: 1 });
+    expect(result.issueType).toBe('low_info');
+    expect(result.isWashed).toBe(false);
+  });
+
+  it('a review with real content is unaffected by low_info logic regardless of context', () => {
+    const result = auditReview(
+      review({ text: '今天跟朋友來吃，點了豚骨拉麵麵硬湯濃，叉燒有火烤香氣很讚！不過排隊等了快半小時。' }),
+      { isSpikePeriod: true, similarCount: 5 }
+    );
+    expect(result.issueType).toBe(null);
+    expect(result.isWashed).toBe(false);
+  });
+});
+
+describe('computeSimilaritySignals', () => {
+  it('flags near-identical text (2-gram > 75%) as a hard duplicate', () => {
+    const reviews = [
+      review({ text: '這家拉麵真的超級好吃，湯頭濃郁，叉燒軟嫩，值得推薦給大家。' }),
+      review({ text: '這家拉麵真的超級好吃，湯頭濃郁，叉燒軟嫩，值得推薦給大家！' }),
+      review({ text: '完全不同的一段話，內容毫無關聯，純粹拿來當作對照組使用。' }),
+    ];
+    const signals = computeSimilaritySignals(reviews);
+    expect(signals[0].isDuplicate).toBe(true);
+    expect(signals[1].isDuplicate).toBe(true);
+    expect(signals[2].isDuplicate).toBe(false);
+  });
+
+  it('reports maxSimilarity/similarCount as a soft 3-gram signal without hard-flagging as duplicate', () => {
+    const shared = '招牌黑蒜油豚骨拉麵湯頭濃郁叉燒軟嫩服務親切';
+    const reviews = [
+      review({ text: shared + '座位舒適很快就吃完了' }),
+      review({ text: shared + '還有附贈小菜非常划算' }),
+      review({ text: '今天路過隨便晃進來點的東西普普通通沒有特別感覺就這樣離開了' }),
+    ];
+    const signals = computeSimilaritySignals(reviews);
+    expect(signals[0].isDuplicate).toBe(false);
+    expect(signals[0].maxSimilarity).toBeGreaterThanOrEqual(0.45);
+    expect(signals[0].similarCount).toBe(1);
+    expect(signals[2].similarCount).toBe(0);
+    expect(signals[2].maxSimilarity).toBe(0);
+  });
+
+  it('ignores very short text when computing similarity (avoids noise on trivial strings)', () => {
+    const reviews = [
+      review({ text: '讚' }),
+      review({ text: '讚' }),
+    ];
+    const signals = computeSimilaritySignals(reviews);
+    expect(signals[0].isDuplicate).toBe(false);
+    expect(signals[0].similarCount).toBe(0);
+  });
+});
+
+describe('computeHotTermSignals', () => {
+  it('flags a dish name repeated across most 5-star reviews as a hot term', () => {
+    const reviews = [
+      review({ text: '招牌黑蒜油豚骨拉麵真的很推薦，湯頭濃郁' }),
+      review({ text: '朋友介紹來吃黑蒜油豚骨拉麵，確實好吃' }),
+      review({ text: '特地來吃黑蒜油豚骨拉麵，果然名不虛傳' }),
+      review({ text: '黑蒜油豚骨拉麵是招牌必點，非常推薦' }),
+      review({ text: '隨便點了個東西，普普通通沒有特別感覺' }),
+    ];
+    const signals = computeHotTermSignals(reviews);
+    expect(signals[0].hotTermCount).toBeGreaterThan(0);
+    expect(signals[0].hotTermMaxRatio).toBeCloseTo(0.8, 1);
+    expect(signals[4].hotTermCount).toBe(0);
+  });
+
+  it('does not compute hot terms from non-5-star or empty-text reviews', () => {
+    const reviews = [
+      review({ stars: 4, text: '招牌黑蒜油豚骨拉麵真的很推薦，湯頭濃郁' }),
+      review({ stars: 5, text: '' }),
+    ];
+    const signals = computeHotTermSignals(reviews);
+    expect(signals[0].hotTermCount).toBe(0);
+    expect(signals[1].hotTermCount).toBe(0);
+  });
+
+  it('returns all-zero signals when there are no 5-star reviews with text', () => {
+    const reviews = [review({ stars: 3, text: '普通' })];
+    const signals = computeHotTermSignals(reviews);
+    expect(signals[0]).toEqual({ hotTermCount: 0, hotTermMaxRatio: 0 });
+  });
+});
+
+describe('computeNearbyLongReviewCounts', () => {
+  const longText = '這是一則超過五十個字的長評論，內容詳細描述了餐點的口感、店內環境、服務態度以及排隊等待的體驗，總之細節非常豐富完整。';
+
+  it('counts other long reviews posted within 30 minutes', () => {
+    const reviews = [
+      review({ text: longText, time: '2025-01-01T12:00:00Z' }),
+      review({ text: longText, time: '2025-01-01T12:15:00Z' }),
+      review({ text: longText, time: '2025-01-01T14:00:00Z' }), // 2 hours away — outside the window
+      review({ text: '短評', time: '2025-01-01T12:05:00Z' }), // within window but too short to count
+    ];
+    const counts = computeNearbyLongReviewCounts(reviews);
+    expect(counts[0]).toBe(1); // only review[1] is both long and within 30 minutes
+    expect(counts[1]).toBe(1);
+    expect(counts[2]).toBe(0);
+  });
+
+  it('returns 0 for reviews with unparseable or missing timestamps', () => {
+    const counts = computeNearbyLongReviewCounts([review({ text: longText, time: '' })]);
+    expect(counts[0]).toBe(0);
+  });
+});

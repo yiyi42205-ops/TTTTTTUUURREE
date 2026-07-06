@@ -30,8 +30,8 @@
         │
         ▼
 ┌─────────────────────────┐
-│  資料採集層               │  Playwright + BeautifulSoup
-│  模擬瀏覽器抓取評論        │  (含 Stealth 反偵測補丁)
+│  資料採集層               │  Apify（compass/Google-Maps-Reviews-Scraper，主要路徑）
+│  取得店家評論              │  失敗時 fallback 至本機 Playwright + BeautifulSoup（含 Stealth 反偵測補丁）
 └─────────────────────────┘
         │
         ▼
@@ -48,7 +48,7 @@
         │ (邊界評論)
         ▼
 ┌─────────────────────────┐
-│  Stage 2:LLM 語意複審     │  Ollama 本地模型 / Gemini
+│  Stage 2:LLM 語意複審     │  Gemini 2.5 Flash（後端呼叫）
 │  深度分析模糊評論          │  三維度評分 + 思維鏈推理
 └─────────────────────────┘
         │
@@ -72,8 +72,8 @@
 |------|------|
 | 前端 | Vite + React (TypeScript)、Chart.js |
 | 後端 | Python |
-| 爬蟲 | Playwright、BeautifulSoup、playwright-stealth |
-| AI 引擎 | Ollama(本地端 LLM)、Gemini 2.5(雲端) |
+| 爬蟲 | Apify（compass/Google-Maps-Reviews-Scraper，主要路徑）；Playwright、BeautifulSoup、playwright-stealth（本機備援） |
+| AI 引擎 | Gemini 2.5 Flash(伺服器端呼叫) |
 | 資料格式 | JSON / CSV |
 
 ---
@@ -85,16 +85,25 @@
 ```
 
 ### 手動啟動 (Windows/MacOS/Linux)
-```
-npm i
-npm run dev
-```
-- (Optional) 若尚未安裝Ollama，在這裡 [下載Ollama](https://ollama.com/download)
-```
-ollama pull gemma4:e4b
-```
+1. 複製 `.env.example` 為 `.env`，並填入 `GEMINI_API_KEY`（AI 審計用）與 `APIFY_TOKEN`（爬蟲主路徑用，至 [Apify Console](https://console.apify.com/) 取得）：
+   ```
+   cp .env.example .env
+   ```
+   若未填寫 `APIFY_TOKEN`，或 Apify 執行失敗（額度用盡、逾時等），系統會自動改用本機 Playwright 備援路徑爬取評論。
+2. 安裝並啟動前後端：
+   ```
+   npm i
+   npm run dev:scraper
+   npm run dev
+   ```
+   `npm run dev:scraper` 啟動 Flask 後端（爬蟲 + Gemini 審計，讀取 `.env` 中的 `GEMINI_API_KEY`），需與 `npm run dev` 同時執行。
 
 啟動後於瀏覽器開啟提示的本機網址,貼上 Google Maps 店家連結即可開始分析。
+
+### 執行測試
+```
+pytest tests/
+```
 
 ---
 
@@ -117,7 +126,7 @@ ollama pull gemma4:e4b
 ```
 Google-Map-TrueRating/
 ├── src/                    前端原始碼 (React + TypeScript)
-├── review_scraper/         評論爬蟲 (Python + Playwright)
+├── review_scraper/         評論爬蟲 (Python，Apify 主要路徑 + Playwright 備援)
 ├── restaurant_data/        標注資料集 (CSV,依類別與洗評狀態分層)
 │   ├── 拉麵__有洗/
 │   ├── 拉麵__沒洗/
@@ -164,11 +173,11 @@ Google-Map-TrueRating/
 
 ## 已知限制
 
-- **部署限制**:即時爬蟲依賴 Playwright 模擬瀏覽器,需於本機執行,無法直接部署至 Serverless 平台(如 Vercel)。
+- **部署限制**:爬蟲主路徑已改為 Apify(雲端執行,不受此限制影響);僅當 Apify 失敗觸發本機 Playwright 備援路徑時,才需要模擬瀏覽器於本機執行,因此該備援路徑無法部署至 Serverless 平台(如 Vercel),但不影響主要爬蟲流程。
 - **樣本範圍**:為控制成本,單次分析最近約 100 則評論,可能錯過店家的長期評價趨勢。
 - **語言侷限**:規則庫與 prompt 專為繁體中文餐飲評論設計,對其他語言偵測率較低。
 - **邊界判定**:「真實但話少的客人」與「敷衍洗評」在文字特徵上難以區分,存在誤判風險。
-- **爬蟲永續性**:依賴的 CSS 定位器高度依賴 Google Maps 現行網頁結構,平台改版時可能失效。
+- **爬蟲永續性**:僅備援路徑(本機 Playwright)才需擔心此風險——其依賴的 CSS 定位器高度依賴 Google Maps 現行網頁結構,平台改版時可能失效;主路徑(Apify)由第三方代管維護,此風險由 Apify 端吸收。
 
 ---
 

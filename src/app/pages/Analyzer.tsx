@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Loader2, Link as LinkIcon, X, Search, Info, Plus, Globe, Sliders, Database, ShieldCheck, Sparkles, Shield } from 'lucide-react';
+import { ArrowLeft, Loader2, Link as LinkIcon, X, Search, Info, Plus, Globe, Sliders, Database, ShieldCheck, Sparkles, Shield, AlertTriangle } from 'lucide-react';
 import { RESTAURANTS_DATA, Restaurant } from '../data/restaurantsData';
 
 export function Analyzer() {
@@ -9,20 +9,6 @@ export function Analyzer() {
   const [urls, setUrls] = useState<string[]>(['', '', '']);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
-  // AI Depth Review Config States
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
-  const [auditModel, setAuditModel] = useState<'gemini' | 'gemma'>(() => {
-    const saved = localStorage.getItem('audit_model') as 'gemini' | 'gemma';
-    if (saved === 'gemini' || saved === 'gemma') return saved;
-    const key = localStorage.getItem('gemini_api_key') || '';
-    return key.trim() ? 'gemini' : 'gemma';
-  });
-  const [aiAuditCount, setAiAuditCount] = useState<number>(() => {
-    const saved = localStorage.getItem('ai_audit_count');
-    return saved ? parseInt(saved, 10) : 15;
-  });
-  const [ollamaModel, setOllamaModel] = useState(() => localStorage.getItem('ollama_model_tag') || 'gemma4:e4b');
-
   // Suggestion Dropdown states for each slot
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,6 +19,7 @@ export function Analyzer() {
   const [scrapeUrls, setScrapeUrls] = useState<string[]>(['', '', '']);
   const [maxReviews, setMaxReviews] = useState(50);
   const [scrapeLoadingStep, setScrapeLoadingStep] = useState('');
+  const [scrapeError, setScrapeError] = useState('');
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -164,7 +151,7 @@ export function Analyzer() {
       const fallbackIds = filledUrls.map((_, i) => RESTAURANTS_DATA[i].id);
       setIsAnalyzing(true);
       setTimeout(() => {
-        navigate('/results', { state: { storeIds: fallbackIds, auditModel, apiKey, aiAuditCount, ollamaModelTag: ollamaModel } });
+        navigate('/results', { state: { storeIds: fallbackIds } });
       }, 1500);
       return;
     }
@@ -172,7 +159,7 @@ export function Analyzer() {
     setIsAnalyzing(true);
 
     setTimeout(() => {
-      navigate('/results', { state: { storeIds: matchedStoreIds, auditModel, apiKey, aiAuditCount, ollamaModelTag: ollamaModel } });
+      navigate('/results', { state: { storeIds: matchedStoreIds } });
     }, 1800);
   };
   
@@ -192,13 +179,13 @@ export function Analyzer() {
       }
     }
     
+    setScrapeError('');
     setIsAnalyzing(true);
-    setScrapeLoadingStep(`正在平行啟動 ${activeUrls.length} 間店家的 Playwright 瀏覽器並開啟隱形模式...`);
-    
+    setScrapeLoadingStep(`正在平行抓取 ${activeUrls.length} 間店家的評論...`);
+
     const steps = [
-      '正在平行定位商家評論分頁並繞過驗證碼...',
-      '正在平行滾動頁面懶加載更多歷史評價...',
-      '正在平行解析評論文字、發布時間與打卡照片...',
+      '正在向 Apify 送出抓取請求（若失敗將自動改用本地 Playwright 備援）...',
+      '正在解析評論文字、發布時間與打卡照片...',
       '正在整理資料格式...'
     ];
     let stepIdx = 0;
@@ -237,21 +224,25 @@ export function Analyzer() {
             })
           });
 
+          const data = await response.json().catch(() => null);
+
           if (!response.ok) {
-            throw new Error('伺服器爬取失敗，請確認本地爬蟲伺服器已開啟，且網址正確。');
+            throw new Error(data?.error || '伺服器爬取失敗，請確認本地爬蟲伺服器已開啟，且網址正確。');
           }
 
-          const data = await response.json();
-          if (!data.reviews || data.reviews.length === 0) {
+          if (!data?.reviews || data.reviews.length === 0) {
             throw new Error('無法抓取到任何評論，可能是網址無效或 Google 正在阻擋爬蟲請求。');
           }
 
+          // /api/scrape now always returns reviews normalized to a single shape
+          // (username/stars/time/text/images), regardless of whether Apify,
+          // the Playwright fallback, or the cache actually served the request.
           const mappedReviews = data.reviews.map((item: any) => ({
-            username: item.Username || '未知用戶',
-            stars: parseInt(item.Stars, 10) || 5,
-            time: item.Time || '',
-            text: item.Text || '',
-            images: item.Images ? item.Images.split(',').map((img: string) => img.trim()).filter(Boolean) : []
+            username: item.username || '未知用戶',
+            stars: parseInt(item.stars, 10) || 5,
+            time: item.time || '',
+            text: item.text || '',
+            images: Array.isArray(item.images) ? item.images : []
           }));
 
           return {
@@ -265,22 +256,22 @@ export function Analyzer() {
       });
 
       const customShops = await Promise.all(promises);
-      clearInterval(interval);
 
       navigate('/results', {
         state: {
           storeIds: [],
-          auditModel,
-          apiKey,
-          aiAuditCount,
-          ollamaModelTag: ollamaModel,
           customShops: customShops
         }
       });
     } catch (e: any) {
       console.error(e);
-      alert(`爬取錯誤: ${e.message}`);
+      setScrapeError(e.message || '爬取過程中發生未知錯誤，請確認本地爬蟲伺服器已開啟。');
     } finally {
+      // Always clear the progress-message interval and reset loading state,
+      // whether the scrape succeeded, failed, or the response was a 500 —
+      // previously this was only cleared on the success path, so a failed
+      // scrape left the interval running in the background indefinitely.
+      clearInterval(interval);
       setIsAnalyzing(false);
       setScrapeLoadingStep('');
     }
@@ -546,6 +537,19 @@ export function Analyzer() {
                   </span>
                 </div>
 
+                {scrapeError && (
+                  <div className="p-3.5 bg-[#fde8e8] border-2 border-[#e53e3e] text-[#9b2c2c] rounded-2xl flex items-start gap-2.5">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#e53e3e]" />
+                    <p className="flex-1 text-xs font-semibold leading-relaxed">{scrapeError}</p>
+                    <button
+                      onClick={() => setScrapeError('')}
+                      className="text-[#9b2c2c] hover:opacity-80 font-black cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
                 <div className="space-y-4 mb-4">
                   {scrapeUrls.map((url, index) => {
                     const isEmpty = !url.trim();
@@ -649,88 +653,12 @@ export function Analyzer() {
         >
           <h3 className="font-extrabold text-sm md:text-base text-[#4a5d52] mb-3 flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-[#6b8e7f]" />
-            設定 AI 深度審查引擎（二階段語意分析）
+            AI 深度審查引擎（二階段語意分析）
           </h3>
 
-          {/* Model Toggle */}
-          <div className="flex gap-1 mb-4 bg-[#f5f1e8] p-1 rounded-xl border border-[#d4c5b0] max-w-xs md:max-w-md">
-            <button
-              onClick={() => { setAuditModel('gemini'); localStorage.setItem('audit_model', 'gemini'); }}
-              className={`flex-1 py-1.5 px-2.5 rounded-lg font-extrabold text-[10px] md:text-xs cursor-pointer transition-all ${auditModel === 'gemini' ? 'bg-[#6b8e7f] text-white shadow-xs' : 'text-[#4a5d52] hover:bg-[#6b8e7f]/10'}`}
-            >
-              Gemini 2.5 Flash (雲端)
-            </button>
-            <button
-              onClick={() => { setAuditModel('gemma'); localStorage.setItem('audit_model', 'gemma'); }}
-              className={`flex-1 py-1.5 px-2.5 rounded-lg font-extrabold text-[10px] md:text-xs cursor-pointer transition-all ${auditModel === 'gemma' ? 'bg-[#6b8e7f] text-white shadow-xs' : 'text-[#4a5d52] hover:bg-[#6b8e7f]/10'}`}
-            >
-              Gemma 4:e4b (本地 Ollama)
-            </button>
-          </div>
-
-          <p className="text-[11px] text-[#6b8e7f] mb-4 leading-relaxed font-semibold">
-            {auditModel === 'gemini' 
-              ? '建議使用！本地啟發式規則過濾顯性好評後，調用 Gemini 2.5 Flash 進行精確的「語意一致性」比對。金鑰保存在您本機瀏覽器 localStorage 中。'
-              : '本地運算！直接連線本機 Ollama 服務進行推理，保證 100% 資料安全隱私且免付 API 費用。'}
+          <p className="text-[11px] text-[#6b8e7f] leading-relaxed font-semibold">
+            本地啟發式規則過濾顯性好評後，所有疑似水軍的五星好評都會送交後端由 Gemini 2.5 Flash 進行「語意一致性」比對。Gemini 金鑰安全保存於伺服器端，瀏覽器端不會接觸金鑰。
           </p>
-
-          <div>
-            {auditModel === 'gemini' ? (
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => { setApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }}
-                placeholder="輸入您的 Gemini API 金鑰 (AIzaSy...)"
-                className="w-full px-4 py-2 bg-[#f5f1e8] rounded-xl border border-[#d4c5b0] text-xs text-[#4a5d52] font-semibold focus:outline-none focus:border-[#6b8e7f] placeholder-[#a0b3a0] shadow-inner"
-              />
-            ) : (
-              <div className="space-y-3.5">
-                <div className="w-full px-4 py-2.5 bg-[#f5f1e8] rounded-xl border border-[#d4c5b0]/60 text-[#6b8e7f] text-[10px] flex items-center gap-2 font-bold">
-                  <span className="inline-block w-2 h-2 rounded-full bg-[#6b8e7f] animate-pulse"></span>
-                  <span>系統將直接連線本機 Ollama 服務：<code className="bg-[#6b8e7f]/10 px-1 py-0.5 rounded font-mono text-[9px]">http://localhost:11434</code></span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black text-[#4a5d52] whitespace-nowrap">Ollama 模型名稱:</span>
-                  <input
-                    type="text"
-                    value={ollamaModel}
-                    onChange={(e) => { setOllamaModel(e.target.value); localStorage.setItem('ollama_model_tag', e.target.value); }}
-                    placeholder="例如: gemma4:e4b, gemma:2b"
-                    className="flex-1 px-3 py-1.5 bg-white rounded-xl border border-[#d4c5b0] text-[10px] text-[#4a5d52] font-semibold focus:outline-none focus:border-[#6b8e7f] shadow-sm"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* AI Audit Count Selector */}
-          <div className="mt-4 pt-4 border-t border-[#d4c5b0]/60">
-            <div className="flex justify-between items-center mb-1.5">
-              <label className="text-[11px] font-black text-[#4a5d52] flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-[#6b8e7f]" />
-                AI 抽樣審查數量上限 (每間店)
-              </label>
-              <span className="text-[10px] font-extrabold text-[#6b8e7f] bg-[#f5f1e8] px-2 py-0.5 rounded border border-[#d4c5b0]">
-                {aiAuditCount} 筆
-              </span>
-            </div>
-            <input
-              type="range"
-              min="5"
-              max="100"
-              step="5"
-              value={aiAuditCount}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10);
-                setAiAuditCount(val);
-                localStorage.setItem('ai_audit_count', String(val));
-              }}
-              className="w-full accent-[#6b8e7f] h-1.5 bg-[#e8dcc8] rounded-lg appearance-none cursor-pointer"
-            />
-            <p className="text-[9px] text-[#6b8e7f] mt-1.5 leading-relaxed">
-              * 系統會從疑似水軍好評中均勻抽取指定筆數交由大語言模型審核。抽查筆數愈多愈準確，但會花費較多 Token 或本機 CPU 運算資源。
-            </p>
-          </div>
         </motion.div>
 
         {/* Preset Store Recommendations Grid */}

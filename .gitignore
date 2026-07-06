@@ -15,3 +15,6 @@ dist-ssr/
 *.local
 .vscode/
 
+# Local scrape cache
+cache.db
+

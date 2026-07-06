@@ -11,6 +11,11 @@
 - stars: 評分星等（皆為高風險的五星）
 - daysElapsed: 該評論發表距今的天數。注意：如果多個高風險評論的 daysElapsed 數值非常接近（例如都在相近的天數，如 5 天前、30 天前），代表它們在同一個時間點集中出現，具有極高的群體刷評或集中打卡活動嫌疑。
 - isSpikePeriod: 布林值。若為 true，代表該評論是在評論發表密度異常暴增的「高峰期」所寫下。這通常強烈暗示了店家在該時段有集中的打卡送禮行銷活動或刷單行為。
+- maxSimilarity: 0 到 1 之間的浮點數，代表本則評論與店內其他評論的最高文字結構相似度（3-gram Jaccard）。數值僅供參考交叉比對，並非直接判定依據——真實顧客描述同一道菜也可能有一定相似度。
+- similarCount: 本則評論與店內其他評論結構相似（達到相似度門檻）的則數。數值越高，代表這則評論不是單一巧合，而是有一群結構相近的評論。
+- hotTermCount: 本則評論命中「全店五星評論高頻詞組」（例如反覆出現的招牌菜名）的數量。
+- hotTermMaxRatio: 本則評論命中的熱門詞組中，該詞組在全店五星評論中的最高出現占比（0 到 1）。占比越高，代表這個詞組（通常是招牌品項）被越多評論反覆提及。
+- nearbyLongReviewCount: 本則評論發布時間前後 30 分鐘內，店內其他「長評」（字數 > 50 字）的則數。數值越高，代表疑似有多篇長文被集中批次貼出。
 
 # 語意審查三維度評分 (1-5分)
 對於每一則評論，你必須客觀給出以下三個維度的評分：
@@ -36,11 +41,18 @@
    - 評論字數短、內容空泛，缺乏任何與該店家相關的具體品項或消費細節。
    - 即使沒有提及利益交換字眼，若 descriptionGranularity <= 2 且 sentimentAuthenticity <= 2（例如：「好吃啦麵，讚！」、「美味推薦」、「環境乾淨好吃」），亦屬於低價值洗評。
    - 若 isSpikePeriod: true（集中發表期），對於這類空洞好評的判定標準應更嚴格，只要描述細緻度 <= 2 即可判定為洗評。
+   - 注意：評論「字數短」本身不等於洗評。若短評中包含具體、可驗證的對象描述（例如提及「老闆」、「店員」等特定人物的互動、特定餐點名稱、特定場景細節），即使只有短短一句，也應給予較高的 descriptionGranularity（3分以上），不得僅因字數少就一律判定為空洞模板（詳見範例 D）。
 3. 【情感虛假洗評】：
    - 情感真實度極低（sentimentAuthenticity <= 2），充滿機器人罐頭文感或與一般人消費心態不符。
-4. 【時序群聚洗評】(結合時間維度分析)：
-   - 仔細比對所有輸入評論的 daysElapsed 與 isSpikePeriod。
-   - 如果有多則評論的 isSpikePeriod 為 true，且它們的 daysElapsed 數值非常接近（即在極短的幾天內集中發表），且內容皆缺乏深刻具體消費細節（descriptionGranularity <= 3），這代表有極高機率是商家舉辦集中行銷、促銷打卡或水軍刷評活動。這群評論應被整體判定為 "isWashed": true，分類為 "template" 或 "incentive"。
+4. 【時序群聚 / 高細節模板洗評】(結合時間維度、結構相似度與熱門詞組分析)：
+   - 仔細比對所有輸入評論的 daysElapsed、isSpikePeriod、maxSimilarity、similarCount、hotTermCount、hotTermMaxRatio、nearbyLongReviewCount。
+   - 若符合以下任一情形，無論 descriptionGranularity 多高，皆應整體判定為洗評（"isWashed": true，issueType 用 "template"）：
+     a. isSpikePeriod 為 true，且該評論與其他評論的 maxSimilarity 達 45% 以上，或 similarCount >= 2（結構與店內多則評論高度相似）。
+     b. hotTermCount >= 2 且 hotTermMaxRatio 偏高（例如 >= 0.3），代表評論反覆點名同一招牌品項，且該品項在全店五星評論中也被大量反覆提及，疑似套用固定行銷文案素材。
+     c. nearbyLongReviewCount >= 2（前後 30 分鐘內有其他長評同時發布），顯示疑似集中批次貼文行為。
+   - 過去版本要求「descriptionGranularity <= 3」才觸發本規則，此條件已移除：專業代寫的行銷長評往往描述細緻、情感豐富，反而更容易被本規則放過，但這正是需要攔截的對象（見下方反向提醒）。
+
+⚠️ 反向提醒：「描述細緻」不等於「真實」。專業代寫評論的特徵正是細節豐富、情感生動，但因套用同一份文案或簡報素材，會與店內其他評論呈現高度同質化（相似的招牌品項描述、相似的行文結構、集中的發文時間）。請勿僅因 descriptionGranularity 高分就排除洗評可能性，務必交叉比對 maxSimilarity、similarCount、hotTermCount、hotTermMaxRatio、nearbyLongReviewCount 等結構性訊號。
 
 ※ 若不符合上述任何洗評特徵，且有具體消費細節者，始得判定為真實評論 ("isWashed": false)。
 
@@ -54,15 +66,27 @@
 - 範例 C（真實消費評論）：「今天跟朋友來吃，點了豚骨拉麵麵硬湯濃，叉燒有火烤香氣很讚！不過排隊等了快半小時，店內座位比較少。」
   - 評分：incentiveIntensity: 1, sentimentAuthenticity: 5, descriptionGranularity: 5
   - 判定: isWashed: false | issueType: "none" | reason: 提及餐點細節、口感與排隊等真實體驗，屬真實評論。
+- 範例 D（短評但真實）：「好吃　老闆很親切　推薦」
+  - 評分：incentiveIntensity: 1, sentimentAuthenticity: 4, descriptionGranularity: 3
+  - 判定: isWashed: false | issueType: "none" | reason: 雖然字數短，但具體提及「老闆很親切」這類可驗證的人物互動細節，並非萬用套話，不應僅因簡短就判定為洗評。
+- 範例 E（高細節模板洗評 / 代寫長評）：「一走進店裡就被撲鼻而來的湯頭香氣驚艷到了😍，招牌黑蒜油豚骨拉麵湯頭濃郁順口，叉燒軟嫩入味，配上溏心蛋根本絕配！服務也很親切，整體用餐體驗非常滿分，下次一定會再來 (´▽`)」
+  - 評分：incentiveIntensity: 1, sentimentAuthenticity: 4, descriptionGranularity: 5
+  - 特徵：isSpikePeriod: true, maxSimilarity: 0.62, similarCount: 4, hotTermCount: 2, hotTermMaxRatio: 0.55
+  - 判定: isWashed: true | issueType: "template" | reason: 雖描述細緻、情感豐富，但與店內其他評論結構高度相似（maxSimilarity 62%、similarCount 4 則），反覆點名同一招牌菜「黑蒜油豚骨拉麵」（hotTermMaxRatio 55%），且發布於評論暴增期，屬專業代寫模板洗評。descriptionGranularity 高分不能排除洗評可能性。
+
+※ 範例 B 與範例 D 的關鍵差異：範例 B 完全沒有提及任何具體對象（人物、餐點、場景），純粹是空泛的形容詞堆疊；範例 D 雖然同樣簡短，卻點名了「老闆」這個具體互動對象。判定短評時，請以「是否有可驗證的具體對象」為準，而非單純以字數長短作為洗評依據。
+
+※ 範例 C 與範例 E 的關鍵差異：兩者 descriptionGranularity 皆高分，但範例 C 的 maxSimilarity / similarCount / hotTermMaxRatio 皆低（獨特、非重複描述），範例 E 則在結構相似度與熱門詞組占比上都偏高、且處於評論暴增期。判定長評時，請勿只看描述細緻度，務必交叉比對這些結構性重複訊號。
 
 # 輸出格式要求
-請嚴格遵循如下 JSON 格式返回，不要包含額外的 Markdown 標記、思維泡泡或任何非 JSON 內容，直接輸出一個合法的 JSON 數組：
+請嚴格遵循如下 JSON 格式返回，不要包含額外的 Markdown 標記、思維泡泡或任何非 JSON 內容，直接輸出一個合法的 JSON 數組。
+欄位順序刻意將 reasoningPath 排在 isWashed 之前——請先逐步推理寫出 reasoningPath，再根據這段推理下 isWashed 結論，不要先射飛鏢下結論才回頭編理由：
 [
   {
     "username": "評論者姓名 (必須與輸入一致)",
+    "reasoningPath": "思考鏈推理過程：具體解釋為何該評論屬於洗評或真實消費 (繁體中文)",
     "isWashed": true 或 false,
     "reason": "最終判定洗評或乾淨口碑的簡短說明 (50字以內繁體中文)",
-    "reasoningPath": "思考鏈推理過程：具體解釋為何該評論屬於洗評或真實消費 (繁體中文)",
     "incentiveIntensity": 1到5的整數,
     "sentimentAuthenticity": 1到5的整數,
     "descriptionGranularity": 1到5的整數,

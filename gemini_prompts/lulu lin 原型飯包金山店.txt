@@ -1,0 +1,128 @@
+你是一個資深的 Google 地圖商譽誠信審計員,專門負責審查店家是否有大量「灌水好評」(包含刷單、打卡送禮交易、機器人洗評、空洞口碑)的異常行徑。你特別擅長結合評論內容語意、情感真實度以及「時間維度特徵」(如發表天數群聚性、異常密集高峰期)進行交叉對比與綜合審查。
+
+我們正在對「lulu lin 原型飯包金山店」這間店家進行雙階段 AI 語意複審。以下是從該店家篩選出的 8 則高風險五星好評數據(JSON 格式):
+```json
+[
+  {
+    "username": "潘柏宏Odin Pan",
+    "text": "👍🏻 …",
+    "stars": 5,
+    "daysElapsed": 1101,
+    "isSpikePeriod": true
+  },
+  {
+    "username": "Jane Yu",
+    "text": "健康好吃",
+    "stars": 5,
+    "daysElapsed": 1466,
+    "isSpikePeriod": true
+  },
+  {
+    "username": "Danny Chen",
+    "text": "店員好親切",
+    "stars": 5,
+    "daysElapsed": 735,
+    "isSpikePeriod": true
+  },
+  {
+    "username": "Cecilia Fang",
+    "text": "好吃、健康",
+    "stars": 5,
+    "daysElapsed": 370,
+    "isSpikePeriod": true
+  },
+  {
+    "username": "鱘",
+    "text": "好吃健康實惠",
+    "stars": 5,
+    "daysElapsed": 370,
+    "isSpikePeriod": true
+  },
+  {
+    "username": "銘慧陳",
+    "text": "外帶健康方便",
+    "stars": 5,
+    "daysElapsed": 735,
+    "isSpikePeriod": true
+  },
+  {
+    "username": "Yumi",
+    "text": "很平價又好吃！",
+    "stars": 5,
+    "daysElapsed": 1101,
+    "isSpikePeriod": true
+  },
+  {
+    "username": "BingHsin Tsai",
+    "text": "好吃且環境乾淨",
+    "stars": 5,
+    "daysElapsed": 1101,
+    "isSpikePeriod": true
+  }
+]
+```
+
+# 特徵欄位說明
+- username: 評論者名稱
+- text: 評論內文
+- stars: 評分星等(皆為高風險的五星)
+- daysElapsed: 該評論發表距今的天數。注意:如果多個高風險評論的 daysElapsed 數值非常接近(例如都在相近的天數,如 5 天前、30 天前),代表它們在同一個時間點集中出現,具有極高的群體刷評或集中打卡活動嫌疑。
+- isSpikePeriod: 布林值。若為 true,代表該評論是在評論發表密度異常暴增的「高峰期」所寫下。這通常強烈暗示了店家在該時段有集中的打卡送禮行銷活動或刷單行為。
+
+# 語意審查三維度評分 (1-5分)
+對於每一則評論,你必須客觀給出以下三個維度的評分:
+1. "incentiveIntensity" (利益誘因強度, 1-5分):
+   - 5分:極度強烈。明文提及「打卡送小菜/甜點/折扣」,或文風完全屬於為了獲得贈品而寫的敷衍客套話。
+   - 3分:中度懷疑。文風異常,高度吻合打卡活動的常用推薦句型。
+   - 1分:無任何利益交換跡象。
+2. "sentimentAuthenticity" (情感真實度, 1-5分):
+   - 5分:極高。真情實感,有情緒起伏或具體的用餐心情分享。
+   - 3分:中等。平鋪直敘。
+   - 1-2分:極低。假惺惺、敷衍、像複製貼上的機器人模板,或是毫無靈魂的敷衍。對於極短且內容空洞的好評(如「好吃,讚!」、「好吃啦麵,讚!」),情感真實度應評為 2 或 1。
+3. "descriptionGranularity" (描述細緻度, 1-5分):
+   - 5分:極高。提及具體菜單品項(例如:黑蒜油豚骨拉麵、溏心蛋)、口感細節(麵條硬度、湯頭鹹度)、排隊時間、店內環境或服務細節。
+   - 1-2分:極低。空洞無物(例如:「好吃讚!」、「拉麵好吃推薦」、「通化街拉麵好讚!」、「CP值高,老闆親切」等萬用套話)。
+
+# 洗評判定規則
+若符合以下任一條件,必須判定該評論為洗評 ("isWashed": true):
+
+1. 【利益交換洗評】:
+   - incentiveIntensity >= 3(有利益傾向) 且 descriptionGranularity <= 2(描述空洞)。
+   - 或者:評論內文明文提到打卡、送禮、優惠、打折、五星送小菜等關鍵字。
+2. 【空洞模板洗評】(針對萬用短評):
+   - 評論字數短、內容空泛,缺乏任何與該店家相關的具體品項或消費細節。
+   - 即使沒有提及利益交換字眼,若 descriptionGranularity <= 2 且 sentimentAuthenticity <= 2(例如:「好吃啦麵,讚!」、「美味推薦」、「環境乾淨好吃」),亦屬於低價值洗評。
+   - 若 isSpikePeriod: true(集中發表期),對於這類空洞好評的判定標準應更嚴格,只要描述細緻度 <= 2 即可判定為洗評。
+3. 【情感虛假洗評】:
+   - 情感真實度極低(sentimentAuthenticity <= 2),充滿機器人罐頭文感或與一般人消費心態不符。
+4. 【時序群聚洗評】(結合時間維度分析):
+   - 仔細比對所有輸入評論的 daysElapsed 與 isSpikePeriod。
+   - 如果有多則評論的 isSpikePeriod 為 true,且它們的 daysElapsed 數值非常接近(即在極短的幾天內集中發表),且內容皆缺乏深刻具體消費細節(descriptionGranularity <= 3),這代表有極高機率是商家舉辦集中行銷、促銷打卡或水軍刷評活動。這群評論應被整體判定為 "isWashed": true,分類為 "template" 或 "incentive"。
+
+※ 若不符合上述任何洗評特徵,且有具體消費細節者,始得判定為真實評論 ("isWashed": false)。
+
+# 判定範例 (Few-Shot Examples)
+- 範例 A(利益交換洗評):「打卡送奶酪!雞湯拉麵很好吃!」
+  - 評分:incentiveIntensity: 5, sentimentAuthenticity: 2, descriptionGranularity: 2
+  - 判定:isWashed: true | issueType: "incentive" | reason: 提及打卡送奶酪,屬於典型利益交換。
+- 範例 B(空洞模板洗評):「好吃啦麵,讚!」 或 「美味拉麵推薦!」
+  - 評分:incentiveIntensity: 2, sentimentAuthenticity: 2, descriptionGranularity: 1
+  - 判定: isWashed: true | issueType: "template" | reason: 字數極短且無任何具體餐點或消費細節,屬空洞模板。
+- 範例 C(真實消費評論):「今天跟朋友來吃,點了豚骨拉麵麵硬湯濃,叉燒有火烤香氣很讚!不過排隊等了快半小時,店內座位比較少。」
+  - 評分:incentiveIntensity: 1, sentimentAuthenticity: 5, descriptionGranularity: 5
+  - 判定: isWashed: false | issueType: "none" | reason: 提及餐點細節、口感與排隊等真實體驗,屬真實評論。
+
+# 輸出格式要求
+請嚴格遵循如下 JSON 格式返回,不要包含額外的 Markdown 標記、思維泡泡或任何非 JSON 內容,直接輸出一個合法的 JSON 數組:
+[
+  {
+    "username": "評論者姓名 (必須與輸入一致)",
+    "isWashed": true 或 false,
+    "reason": "最終判定洗評或乾淨口碑的簡短說明 (50字以內繁體中文)",
+    "reasoningPath": "思考鏈推理過程:具體解釋為何該評論屬於洗評或真實消費 (繁體中文)",
+    "incentiveIntensity": 1到5的整數,
+    "sentimentAuthenticity": 1到5的整數,
+    "descriptionGranularity": 1到5的整數,
+    "issueType": "incentive"(利益相關) 或 "template"(短模板空洞) 或 "discrepancy"(語意不符) 或 "none"(真實評論)
+  }
+]

@@ -93,16 +93,30 @@ INSTALL_NODE=${INSTALL_NODE:-Y}
 read -p "$(echo -e "${YELLOW}Install Python scraper dependencies & setup venv? (Required for scraping reviews) [Y/n]: ${NC}")" INSTALL_PYTHON
 INSTALL_PYTHON=${INSTALL_PYTHON:-Y}
 
-# Ask about Ollama (local LLM)
-read -p "$(echo -e "${YELLOW}Do you plan to use local Ollama LLM for advanced auditing? [y/N]: ${NC}")" USE_OLLAMA
-USE_OLLAMA=${USE_OLLAMA:-N}
+echo
 
-OLLAMA_MODEL="gemma4:e4b"
-if [[ "$USE_OLLAMA" =~ ^[yY]$ ]]; then
-    read -p "$(echo -e "${YELLOW}Enter Ollama Model to use [default: gemma4:e4b]: ${NC}")" CUSTOM_MODEL
-    if [ ! -z "$CUSTOM_MODEL" ]; then
-        OLLAMA_MODEL=$CUSTOM_MODEL
+# --- Gemini API Key Setup ---
+# The audit backend (review_scraper/server.py) reads GEMINI_API_KEY from .env at
+# startup and refuses to start without it, so make sure one exists before we try
+# to launch anything.
+if [ ! -f ".env" ]; then
+    if [ -f ".env.example" ]; then
+        cp .env.example .env
     fi
+    status_warning ".env not found — created from .env.example. A Gemini API key is required to run the AI audit."
+    read -p "$(echo -e "${YELLOW}Enter your Gemini API key now (leave blank to edit .env manually later): ${NC}")" GEMINI_KEY_INPUT
+    if [ ! -z "$GEMINI_KEY_INPUT" ]; then
+        if [[ "$(uname)" == "Darwin" ]]; then
+            sed -i '' "s|GEMINI_API_KEY=.*|GEMINI_API_KEY=$GEMINI_KEY_INPUT|" .env
+        else
+            sed -i "s|GEMINI_API_KEY=.*|GEMINI_API_KEY=$GEMINI_KEY_INPUT|" .env
+        fi
+        status_success "Gemini API key saved to .env."
+    else
+        status_warning "Skipped — remember to set GEMINI_API_KEY in .env before starting the scraper backend."
+    fi
+else
+    status_success ".env already exists."
 fi
 
 echo
@@ -161,72 +175,6 @@ else
     status_info "Skipping Python venv setup."
 fi
 
-# Check and pull Ollama model if requested
-if [[ "$USE_OLLAMA" =~ ^[yY]$ ]]; then
-    if ! command -v ollama &> /dev/null; then
-        status_warning "Ollama is not installed on your system."
-        read -p "$(echo -e "${YELLOW}Would you like to install Ollama now? [Y/n]: ${NC}")" INSTALL_OLLAMA_CONFIRM
-        INSTALL_OLLAMA_CONFIRM=${INSTALL_OLLAMA_CONFIRM:-Y}
-        
-        if [[ "$INSTALL_OLLAMA_CONFIRM" =~ ^[yY]$ ]]; then
-            if [[ "$(uname)" == "Darwin" ]]; then
-                if command -v brew &> /dev/null; then
-                    status_info "Installing Ollama via Homebrew..."
-                    brew install --cask ollama
-                    if [ $? -eq 0 ]; then
-                        status_success "Ollama installed successfully!"
-                    else
-                        status_error "Failed to install Ollama via Homebrew."
-                    fi
-                else
-                    status_error "Homebrew is not installed. Please install Ollama manually from: https://ollama.com"
-                fi
-            elif [[ "$(uname)" == "Linux" ]]; then
-                status_info "Installing Ollama via official install script..."
-                curl -fsSL https://ollama.com/install.sh | sh
-                if [ $? -eq 0 ]; then
-                    status_success "Ollama installed successfully!"
-                else
-                    status_error "Failed to install Ollama via script."
-                fi
-            else
-                status_error "Unsupported OS for auto-installation. Please install Ollama manually from: https://ollama.com"
-            fi
-        fi
-    fi
-
-    # Check again if it is installed now
-    if command -v ollama &> /dev/null; then
-        status_info "Checking if Ollama service is running..."
-        # Wait a bit if we just installed it, but usually the user needs to start the app on macOS
-        if [[ "$(uname)" == "Darwin" ]] && ! pgrep -x "Ollama" &> /dev/null; then
-            status_warning "Ollama app is installed but might not be running."
-            read -p "$(echo -e "${YELLOW}Would you like to launch the Ollama app now? [Y/n]: ${NC}")" LAUNCH_OLLAMA
-            LAUNCH_OLLAMA=${LAUNCH_OLLAMA:-Y}
-            if [[ "$LAUNCH_OLLAMA" =~ ^[yY]$ ]]; then
-                open -a Ollama
-                status_info "Waiting for Ollama service to start..."
-                sleep 5
-            fi
-        fi
-
-        if curl -s http://127.0.0.1:11434/api/tags &> /dev/null; then
-            status_success "Ollama service is active!"
-            status_info "Pulling/verifying model '$OLLAMA_MODEL'..."
-            ollama pull "$OLLAMA_MODEL"
-            if [ $? -eq 0 ]; then
-                status_success "Model '$OLLAMA_MODEL' is ready."
-            else
-                status_warning "Failed to pull model '$OLLAMA_MODEL'. Make sure Ollama is running and model name is correct."
-            fi
-        else
-            status_warning "Ollama service is not running. Please start the Ollama application first."
-        fi
-    else
-        status_warning "Ollama is required to pull the model. Please ensure it is running: https://ollama.com"
-    fi
-fi
-
 echo
 echo -e "${GREEN}${BOLD}=================================================="
 echo -e "              Setup Completed!"
@@ -237,10 +185,17 @@ read -p "$(echo -e "${YELLOW}Would you like to start the application now? [Y/n]:
 START_APP=${START_APP:-Y}
 
 if [[ "$START_APP" =~ ^[yY]$ ]]; then
-    status_info "Starting Vite developer server..."
-    echo -e "${BLUE}Press Ctrl+C to stop the application.${NC}"
+    status_info "Starting Flask scraper backend (background) and Vite developer server..."
+    echo -e "${BLUE}Press Ctrl+C to stop both.${NC}"
     echo
+
+    npm run dev:scraper &
+    SCRAPER_PID=$!
+    trap 'status_info "Stopping scraper backend..."; kill $SCRAPER_PID 2>/dev/null' EXIT
+
     npm run dev
 else
-    status_info "Setup completed. You can start the app later by running: ${BOLD}npm run dev${NC}"
+    status_info "Setup completed. You can start the app later by running these two commands (in separate terminals):"
+    status_info "  ${BOLD}npm run dev:scraper${NC}  (Flask scraper/audit backend, port 5001)"
+    status_info "  ${BOLD}npm run dev${NC}          (Vite frontend, proxies /api to the backend)"
 fi
