@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-疑騙真星 TrueRating is a tool that audits Google Maps restaurant reviews for authenticity. Restaurants in Taiwan commonly run "check-in for a free dish" / "5-star review for a drink" promotions that inflate their star rating with non-experience-driven reviews. Given a Google Maps store URL, the app scrapes recent reviews, runs a two-stage audit pipeline (local heuristics + LLM semantic review) to flag likely "washed" reviews, and produces a trust-weighted "Filtered Rating" alongside the official rating. See [`TRUE_RATING_LOGIC.md`](./TRUE_RATING_LOGIC.md) for the exact scoring math (Stage 1 rules, Stage 2 confidence formula, Trust Score / Filtered Rating aggregation) — don't re-derive it from code, it's spelled out there.
+疑騙真星 TrueRating is a tool that audits Google Maps restaurant reviews for authenticity. Restaurants in Taiwan commonly run "check-in for a free dish" / "5-star review for a drink" promotions that inflate their star rating with non-experience-driven reviews. Given a Google Maps store URL, the app scrapes recent reviews, runs a two-stage audit pipeline (local heuristics + LLM semantic review) to flag likely "washed" reviews, and produces a trust-weighted "Filtered Rating" alongside the official rating. See [`docs/TRUE_RATING_LOGIC.md`](./docs/TRUE_RATING_LOGIC.md) for the exact scoring math (Stage 1 rules, Stage 2 confidence formula, Trust Score / Filtered Rating aggregation) — don't re-derive it from code, it's spelled out there.
 
 ## Workflow
 
@@ -21,17 +21,17 @@ This is a multi-contributor project. **All changes go through pull requests** �
 - `npm run dev` — start the Vite dev server. Vite proxies `/api/*` to `http://127.0.0.1:5001`, so `npm run dev:scraper` needs to be running alongside it (two terminals, or via `./run.sh`).
 - `npm run build` — production build (`vite build`)
 - `./run.sh` — interactive one-shot setup + run script (macOS-oriented): detects a compatible Python (3.9–3.13), creates `review_scraper/venv`, installs `review_scraper/requirements.txt`, installs the Playwright Chromium browser, then starts both `npm run dev:scraper` (backgrounded) and `npm run dev`. This is the recommended first-run path.
-- Python offline evaluation scripts (not a test suite — see below), run with the venv Python, e.g. `review_scraper/venv/bin/python evaluate.py`:
-  - `evaluate.py` — runs the Stage 1 rule engine over labeled CSVs in `restaurant_data/`, reports precision/recall/F1 against human labels
-  - `evaluate_v2.py` — grid-searches the Stage 1 confidence threshold and produces Stage 2 LLM sampling input (writes `tune_results.json`, `llm_input.json`)
-  - `sample_fp.py` — samples false-positive stores and writes ready-to-paste Gemini prompts into `gemini_prompts/*.txt`
-  - `check_data.py` — checks CSV column consistency / `Time` field format across `restaurant_data/`
+- Python offline evaluation scripts live in `eval/` (not a test suite — see below), run with the venv Python from the repo root, e.g. `review_scraper/venv/bin/python eval/evaluate.py restaurant_data`:
+  - `eval/evaluate.py` — runs the Stage 1 rule engine over labeled CSVs in `restaurant_data/`, reports precision/recall/F1 against human labels
+  - `eval/evaluate_v2.py` — grid-searches the Stage 1 confidence threshold and produces Stage 2 LLM sampling input (writes `tune_results.json`, `llm_input.json`)
+  - `eval/sample_fp.py` — samples false-positive stores and writes ready-to-paste Gemini prompts into `gemini_prompts/*.txt`
+  - `eval/check_data.py` — checks CSV column consistency / `Time` field format across `restaurant_data/`
 
 **Audit mode** (`VITE_AUDIT_MODE` env var): `production` (default) caps Stage 2 at 15 reviews with stratified sampling; `evaluate` removes the cap for full-coverage offline evaluation. Always use `evaluate` mode when running evaluation scripts against the frontend pipeline.
 
 **Testing:**
 - `npm test` — runs vitest (`src/app/utils/auditEngine.test.ts`): covers `aggregateAuditedReviews` weighting/Trust Score/Filtered Rating, `auditReview` Stage 1 heuristics, similarity signals, hot term signals, and nearby long review counts.
-- `cd review_scraper && python -m pytest tests/` — Python backend tests (normalize, Apify scraper, Gemini client, prompt builder, audit API).
+- `python -m pytest tests/` — Python backend tests (normalize, Apify scraper, Gemini client, prompt builder, audit API). Run from the repo root.
 - There is **no lint script and no `tsconfig.json`** in this repo.
 
 ## Architecture
@@ -41,7 +41,7 @@ A flat 3-page React app (not a component-library-driven one, despite ~20 `@radix
 
 - `src/app/routes.ts` — react-router v7 `createBrowserRouter`: `/` (`Home.tsx`), `/analyzer` (`Analyzer.tsx`), `/results` (`Results.tsx`). Data is passed between pages via `navigate(path, { state })`, not URL params.
 - `src/app/pages/Analyzer.tsx` — input form: either pick preset restaurants (matched against the bundled demo dataset) or paste Google Maps URLs (POSTed to `/api/scrape`). Also holds audit config persisted to `localStorage`. Gemini is the only Stage 2 audit path.
-- `src/app/pages/Results.tsx` — runs the actual audit: Stage 1 heuristics run locally, then ambiguous reviews are sent to the backend `POST /api/audit` for Stage 2 Gemini semantic review. Gemini returns three-dimension scores (`incentiveIntensity`, `sentimentAuthenticity`, `descriptionGranularity`) and a `reasoningPath` (CoT). The frontend computes a confidence score from these dimensions using a power-curve formula (`agreement^1.5 * 100`, range 0–100%; see `TRUE_RATING_LOGIC.md` §4.3) and feeds it into `aggregateAuditedReviews` from `auditEngine.ts` for final Trust Score / Filtered Rating aggregation.
+- `src/app/pages/Results.tsx` — runs the actual audit: Stage 1 heuristics run locally, then ambiguous reviews are sent to the backend `POST /api/audit` for Stage 2 Gemini semantic review. Gemini returns three-dimension scores (`incentiveIntensity`, `sentimentAuthenticity`, `descriptionGranularity`) and a `reasoningPath` (CoT). The frontend computes a confidence score from these dimensions using a power-curve formula (`agreement^1.5 * 100`, range 0–100%; see `docs/TRUE_RATING_LOGIC.md` §4.3) and feeds it into `aggregateAuditedReviews` from `auditEngine.ts` for final Trust Score / Filtered Rating aggregation.
 - `src/app/utils/auditEngine.ts` — `auditReview` (Stage 1 heuristics: incentive keyword/regex matching, Jaccard n-gram template-similarity duplicate detection via `getNGrams`/`calculateJaccardSimilarity`, and a neutral `'no_text'` category for star-only reviews with no written text), `computeShopStats` (Stage-1-only convenience wrapper), and `aggregateAuditedReviews` (the shared weighting/Trust Score/Filtered Rating aggregation, reused by both the Stage-1 pass and the post-Stage-2 merge in `Results.tsx`). Also exports `computeSpikeMonths`/`getReviewTemporalContext`, the shared review-volume-spike detection used both to flag no-text reviews and to build the Stage 2 LLM payload.
 - `src/app/utils/csvParser.ts` + `src/app/data/restaurantsData.ts` — hand-rolled CSV parser that loads 18 CSVs from `restaurant_data/` via Vite's `?raw` import (enabled by `assetsInclude` in `vite.config.ts`) to build the built-in demo dataset.
 - `vite.config.ts` — `@` alias → `src/`; a `figmaAssetResolver()` plugin (template leftover); dev-server proxy `/api` → `http://127.0.0.1:5001` (the Flask backend, so relative `fetch('/api/...')` calls in the frontend reach it without CORS issues).
@@ -60,8 +60,16 @@ Other backend files:
 - `review_scraper/cache_store.py` — caches scraped reviews to avoid redundant Apify calls; bypass with `?force=true`.
 
 ### Data (`restaurant_data/`, `gemini_prompts/`)
-- `restaurant_data/` holds 18 hand-labeled CSVs organized as `<類別>__<有洗|沒洗>/` (category, e.g. 拉麵/手搖/便當, crossed with washed/clean). These back both the frontend demo dataset and the offline `evaluate*.py` scripts.
-- `gemini_prompts/*.txt` are pre-generated prompts (output of `sample_fp.py`) meant for manual copy-paste into the Gemini web UI — not something called programmatically.
+- `restaurant_data/` holds 18 hand-labeled CSVs organized as `<類別>__<有洗|沒洗>/` (category, e.g. 拉麵/手搖/便當, crossed with washed/clean). These back both the frontend demo dataset and the offline `eval/*.py` scripts.
+- `gemini_prompts/*.txt` are pre-generated prompts (output of `eval/sample_fp.py`) meant for manual copy-paste into the Gemini web UI — not something called programmatically.
+
+### Docs (`docs/`)
+- `docs/TRUE_RATING_LOGIC.md` — the authoritative reference for Stage 1 rules, Stage 2 confidence formula, Trust Score / Filtered Rating aggregation math.
+- `docs/HANDOFF.md` — changelog from the semester version to current.
+- `docs/TrueRating_發布前大方向.md` — pre-launch roadmap and architectural decisions.
+
+### Evaluation (`eval/`)
+Offline evaluation scripts (not part of the test suite). Run from the repo root with the venv Python, e.g. `review_scraper/venv/bin/python eval/evaluate.py restaurant_data`. Generated output files (`results.json`, `report.md`, `tune_results.json`, `llm_input.json`) are gitignored.
 
 ### Known limitations (from README)
 - The Python backend (Flask + Apify/Playwright) can't run on serverless platforms; `vercel.json` only does SPA rewrite routing for the static frontend build.
