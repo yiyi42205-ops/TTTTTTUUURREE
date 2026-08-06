@@ -6,7 +6,7 @@
 跑完會輸出 4 個 .txt 檔,每個是一家店的完整 prompt,你打開複製貼到 Gemini 即可。
 
 用法:
-  python3 sample_fp.py restaurant_data
+  python3 eval/sample_fp.py restaurant_data
 """
 import csv
 import json
@@ -189,7 +189,7 @@ def find_csv(base_path, store_name):
 
 def main():
     if len(sys.argv) < 2:
-        print('用法: python3 sample_fp.py <restaurant_data 路徑>')
+        print('用法: python3 eval/sample_fp.py <restaurant_data 路徑>')
         sys.exit(1)
 
     base = sys.argv[1]

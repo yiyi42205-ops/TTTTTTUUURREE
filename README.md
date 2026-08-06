@@ -62,7 +62,7 @@
    視覺化報告(前端渲染)
 ```
 
-判斷邏輯的完整數學公式與規則定義,請參閱 [`TRUE_RATING_LOGIC.md`](./TRUE_RATING_LOGIC.md)。
+判斷邏輯的完整數學公式與規則定義,請參閱 [`TRUE_RATING_LOGIC.md`](./docs/TRUE_RATING_LOGIC.md)。
 
 ---
 
@@ -126,7 +126,7 @@ pytest tests/
 ```
 Google-Map-TrueRating/
 ├── src/                    前端原始碼 (React + TypeScript)
-├── review_scraper/         評論爬蟲 (Python，Apify 主要路徑 + Playwright 備援)
+├── review_scraper/         評論爬蟲與後端 (Python，Flask + Apify/Playwright)
 ├── restaurant_data/        標注資料集 (CSV,依類別與洗評狀態分層)
 │   ├── 拉麵__有洗/
 │   ├── 拉麵__沒洗/
@@ -134,12 +134,19 @@ Google-Map-TrueRating/
 │   ├── 手搖__沒洗/
 │   ├── 便當__有洗/
 │   └── 便當__沒洗/
+├── docs/                   專案文件
+│   ├── TRUE_RATING_LOGIC.md  判斷邏輯與數學公式說明
+│   ├── HANDOFF.md            期末版本改動交接
+│   └── TrueRating_發布前大方向.md
+├── eval/                   離線評估腳本
+│   ├── evaluate.py           Stage 1 規則引擎 F1 評估
+│   ├── evaluate_v2.py        超參數網格搜尋 + Stage 2 LLM 抽樣
+│   ├── sample_fp.py          False Positive 抽樣 → Gemini prompt
+│   └── check_data.py         CSV 資料品質檢查
+├── gemini_prompts/         預生成的 Gemini prompt (sample_fp.py 產出)
 ├── guidelines/             開發規範文件
-├── dist/                   建置輸出
-├── TRUE_RATING_LOGIC.md    判斷邏輯與數學公式說明
+├── tests/                  測試
 ├── ATTRIBUTIONS.md         第三方資源致謝
-├── test_two_stages.cjs     兩階段流程測試腳本
-├── stats_monitor.cjs       統計監控腳本
 ├── vite.config.ts          Vite 設定
 ├── vercel.json             部署設定
 └── package.json

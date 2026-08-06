@@ -104,13 +104,13 @@
 
 **後端測試（pytest）：**
 - `tests/test_*.py` — 涵蓋 normalize、Apify scraper、Gemini client、prompt builder、audit API
-- 跑法：`cd review_scraper && python -m pytest tests/`
+- 跑法：`python -m pytest tests/`（從 repo 根目錄執行）
 
-**離線評估腳本：**
-- `evaluate.py` — 用 18 家標註店跑 Stage 1 精準度/召回率/F1
-- `evaluate_v2.py` — 網格搜尋最佳門檻 + 產出 Stage 2 LLM 抽樣輸入
-- `sample_fp.py` — 抽樣 false positive 店家，產出 Gemini prompt 文字檔
-- `check_data.py` — 檢查 CSV 欄位一致性
+**離線評估腳本（`eval/`）：**
+- `eval/evaluate.py` — 用 18 家標註店跑 Stage 1 精準度/召回率/F1
+- `eval/evaluate_v2.py` — 網格搜尋最佳門檻 + 產出 Stage 2 LLM 抽樣輸入
+- `eval/sample_fp.py` — 抽樣 false positive 店家，產出 Gemini prompt 文字檔
+- `eval/check_data.py` — 檢查 CSV 欄位一致性
 
 ---
 
