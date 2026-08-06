@@ -9,7 +9,7 @@ TrueRating QA 進階評估腳本 v2
   2. Stage 2 LLM 抽樣輸出(把 Stage 1 漏抓的店抽出來給 LLM 分析)
 
 用法:
-  python3 evaluate_v2.py restaurant_data
+  python3 eval/evaluate_v2.py restaurant_data
 
 產出:
   - tune_results.json    網格搜尋完整結果
@@ -351,7 +351,7 @@ def sample_for_llm(results, best_threshold, per_store=8):
 
 def main():
     if len(sys.argv) < 2:
-        print('用法: python3 evaluate_v2.py <restaurant_data 路徑>')
+        print('用法: python3 eval/evaluate_v2.py <restaurant_data 路徑>')
         sys.exit(1)
 
     base = sys.argv[1]

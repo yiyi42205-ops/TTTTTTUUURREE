@@ -8,7 +8,7 @@ TrueRating QA 評估腳本
      算出系統判定 vs 人工標籤的混淆矩陣與 F1 分數。
 
 使用方式:
-    python3 evaluate.py <restaurant_data 路徑>
+    python3 eval/evaluate.py <restaurant_data 路徑>
 
 預期資料夾結構:
     restaurant_data/
@@ -321,7 +321,7 @@ def write_markdown_report(results, cm, out_path):
 
 def main():
     if len(sys.argv) < 2:
-        print('用法:python3 evaluate.py <restaurant_data 路徑>')
+        print('用法:python3 eval/evaluate.py <restaurant_data 路徑>')
         sys.exit(1)
 
     base = sys.argv[1]
