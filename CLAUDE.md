@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 疑騙真星 TrueRating is a tool that audits Google Maps restaurant reviews for authenticity. Restaurants in Taiwan commonly run "check-in for a free dish" / "5-star review for a drink" promotions that inflate their star rating with non-experience-driven reviews. Given a Google Maps store URL, the app scrapes recent reviews, runs a two-stage audit pipeline (local heuristics + LLM semantic review) to flag likely "washed" reviews, and produces a trust-weighted "Filtered Rating" alongside the official rating. See [`TRUE_RATING_LOGIC.md`](./TRUE_RATING_LOGIC.md) for the exact scoring math (Stage 1 rules, Stage 2 confidence formula, Trust Score / Filtered Rating aggregation) — don't re-derive it from code, it's spelled out there.
 
+## Workflow
+
+This is a multi-contributor project. **All changes go through pull requests** — do not push directly to `main`. When making changes:
+1. Create a feature branch (`git checkout -b <branch-name>`).
+2. Commit your work to the branch.
+3. Push the branch and open a PR via `gh pr create`.
+4. Merge only after review.
+
 ## Commands
 
 - `npm i` — install frontend dependencies
