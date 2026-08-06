@@ -480,14 +480,14 @@ export function aggregateAuditedReviews(
   });
 
   const originalRating = originalSum / totalReviews;
-  const basicFilteredRating = weightTotal > 0 ? weightedSum / weightTotal : originalRating;
+  const filteredRating = weightTotal > 0 ? weightedSum / weightTotal : originalRating;
 
-  // Calculate trust score based on ratio of suspicious reviews (2x penalty factor)
+  // Trust Score: an independent indicator of how suspicious a store's review
+  // ecosystem is.  Displayed in the UI but does NOT modify filteredRating —
+  // washed reviews are already down-weighted via the confidence-based weight
+  // formula, so applying an additional star deduction from the same signal
+  // would be double-punishment (removed in this version; see commit history).
   const trustScore = Math.max(0, 100 - (suspiciousReviewsCount / totalReviews) * 100 * 2.0);
-
-  // Apply a trust penalty to the de-watered rating to reflect the reputational fraud risk
-  const trustPenalty = (100 - trustScore) * 0.02;
-  const filteredRating = Math.max(1.0, basicFilteredRating - trustPenalty);
 
   return {
     storeName,

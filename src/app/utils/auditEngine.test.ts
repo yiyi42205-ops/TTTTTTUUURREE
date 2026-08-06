@@ -62,9 +62,9 @@ describe('aggregateAuditedReviews', () => {
     // originalRating = (5+5+1+5)/4 = 4.00
     expect(result.originalRating).toBe(4.00);
     // weightedSum = 5*0 + 5*0.8 + 1*0.8 + 5*0.35 = 6.55; weightTotal = 0+0.8+0.8+0.35 = 1.95
-    // basicFilteredRating = 6.55/1.95 = 3.358974...; trustScore = 100-(2/4)*100*2 = 0; penalty = 2
-    // filteredRating = 3.358974... - 2 = 1.358974... -> 1.36
-    expect(result.filteredRating).toBe(1.36);
+    // filteredRating = 6.55/1.95 = 3.358974... -> 3.36
+    // Trust Score is display-only, does NOT modify filteredRating.
+    expect(result.filteredRating).toBe(3.36);
     expect(result.trustScore).toBe(0);
     expect(result.suspiciousReviews).toBe(2);
     expect(result.issues.timeAnomaly).toBe(1);
@@ -90,7 +90,7 @@ describe('aggregateAuditedReviews', () => {
     expect(result.suspiciousReviews).toBe(0);
   });
 
-  it('extreme case: every review judged washed at 100% confidence zeroes out the weight total and floors trust score at 0', () => {
+  it('extreme case: every review judged washed at 100% confidence zeroes out the weight total and falls back to originalRating', () => {
     const reviews = [
       audited(review({ stars: 5 }), { isWashed: true, reason: '', confidenceScore: 100, issueType: 'incentive' }),
       audited(review({ stars: 5 }), { isWashed: true, reason: '', confidenceScore: 100, issueType: 'incentive' }),
@@ -100,11 +100,11 @@ describe('aggregateAuditedReviews', () => {
 
     const result = aggregateAuditedReviews('All Washed Shop', reviews);
 
-    // weightTotal = 0 for every review -> basicFilteredRating falls back to originalRating (4.00)
+    // weightTotal = 0 for every review -> filteredRating falls back to originalRating
+    // Trust Score is display-only and does NOT apply a penalty to filteredRating.
     expect(result.originalRating).toBe(4.00);
+    expect(result.filteredRating).toBe(4.00);
     expect(result.trustScore).toBe(0);
-    // trustPenalty = (100-0)*0.02 = 2 -> filteredRating = max(1.0, 4.00 - 2) = 2.00
-    expect(result.filteredRating).toBe(2.00);
     expect(result.suspiciousReviews).toBe(4);
     expect(result.issues.timeAnomaly).toBe(3);
     expect(result.issues.templateText).toBe(1);
@@ -118,6 +118,37 @@ describe('aggregateAuditedReviews', () => {
     expect(result.filteredRating).toBe(0);
     expect(result.trustScore).toBe(100);
     expect(result.suspiciousReviews).toBe(0);
+  });
+
+  it('regression: filteredRating equals pure weighted average with no trustPenalty deduction', () => {
+    // This test locks in the removal of the trustPenalty double-punishment.
+    // filteredRating must equal sum(stars*weight)/sum(weight), with NO
+    // additional deduction from Trust Score.
+    const reviews = [
+      audited(review({ stars: 5 }), { isWashed: true, reason: '', confidenceScore: 90, issueType: 'template' }),
+      audited(review({ stars: 5 }), { isWashed: true, reason: '', confidenceScore: 90, issueType: 'template' }),
+      audited(review({ stars: 5 }), { isWashed: true, reason: '', confidenceScore: 90, issueType: 'template' }),
+      audited(review({ stars: 4 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+      audited(review({ stars: 3 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+      audited(review({ stars: 5 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+      audited(review({ stars: 4 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+      audited(review({ stars: 2 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+      audited(review({ stars: 5 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+      audited(review({ stars: 4 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+    ];
+
+    const result = aggregateAuditedReviews('Penalty-Free Shop', reviews);
+
+    // 3 washed (weight=0.10 each): 5*0.1*3 = 1.5
+    // 7 clean  (weight=0.80 each): (4+3+5+4+2+5+4)*0.8 = 27*0.8 = 21.6
+    // weightedSum = 23.1; weightTotal = 0.3+5.6 = 5.9
+    // expectedFilteredRating = 23.1 / 5.9 = 3.915254... -> 3.92
+    const expectedWeightedAvg = 3.92;
+    expect(result.filteredRating).toBe(expectedWeightedAvg);
+
+    // Trust Score should still exist as a display metric (30% washed, 10 total)
+    // trustScore = max(0, 100 - (3/10)*100*2) = max(0, 100-60) = 40
+    expect(result.trustScore).toBe(40);
   });
 
   it('store with low_info reviews: neutral 0.55 weight is distinct from no_text (0.5) and clean (0.8)', () => {

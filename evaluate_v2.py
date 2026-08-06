@@ -17,11 +17,26 @@ TrueRating QA 進階評估腳本 v2
 """
 import csv
 import json
+import os
 import re
 import sys
 from collections import defaultdict
 from datetime import datetime, date
 from pathlib import Path
+
+# Guard: if the frontend audit pipeline is being used for evaluation, it must
+# run in "evaluate" mode (VITE_AUDIT_MODE=evaluate) so that all ambiguous
+# reviews are sent to Stage 2 without the 15-review production cap.  This
+# offline script doesn't go through the frontend, but we surface a warning if
+# the env var is set to "production" — someone may have forgotten to switch.
+_audit_mode = os.getenv("VITE_AUDIT_MODE", "").lower()
+if _audit_mode == "production":
+    print(
+        "⚠️  警告：VITE_AUDIT_MODE 目前設為 production（Stage 2 抽樣上限 15 則）。\n"
+        "   若要透過前端進行完整評估，請改為 VITE_AUDIT_MODE=evaluate 以解除上限。\n"
+        "   本離線腳本不受此變數影響，但請確認前端環境一致。",
+        file=sys.stderr,
+    )
 
 TODAY = date.today()
 

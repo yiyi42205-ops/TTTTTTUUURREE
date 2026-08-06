@@ -146,10 +146,45 @@ export function Results() {
         // genuinely ambiguous 5-star reviews (issueType === null) go to Stage 2.
         const stage1Count = reviews.filter(r => r.stars === 5 && r.audit.issueType !== null).length;
 
-        const ambiguousReviews = reviews.filter(r => r.stars === 5 && r.audit.issueType === null);
+        const allAmbiguous = reviews.filter(r => r.stars === 5 && r.audit.issueType === null);
 
-        // No sampling cap — every ambiguous 5-star review with text gets sent for
-        // Stage 2 review; the backend splits them into batches itself.
+        // Audit mode: "evaluate" sends all ambiguous reviews (full coverage for
+        // offline evaluation); "production" (default) caps at 15 with stratified
+        // sampling to control Gemini API cost.
+        const auditMode = (import.meta.env.VITE_AUDIT_MODE || 'production').toLowerCase();
+        const STAGE2_CAP = 15;
+
+        let ambiguousReviews: typeof allAmbiguous;
+        if (auditMode === 'evaluate' || allAmbiguous.length <= STAGE2_CAP) {
+          ambiguousReviews = allAmbiguous;
+        } else {
+          // Stratified sampling: split by isSpikePeriod, proportionally sample
+          const spikePool = allAmbiguous.filter(r => {
+            const { isSpikePeriod } = getReviewTemporalData(r);
+            return isSpikePeriod;
+          });
+          const normalPool = allAmbiguous.filter(r => {
+            const { isSpikePeriod } = getReviewTemporalData(r);
+            return !isSpikePeriod;
+          });
+
+          const spikeRatio = spikePool.length / allAmbiguous.length;
+          const spikeCount = Math.round(STAGE2_CAP * spikeRatio);
+          const normalCount = STAGE2_CAP - spikeCount;
+
+          // Within each stratum, pick evenly spaced indices for temporal spread
+          const evenSample = (pool: typeof allAmbiguous, n: number) => {
+            if (n >= pool.length) return pool;
+            const step = pool.length / n;
+            return Array.from({ length: n }, (_, i) => pool[Math.floor(i * step)]);
+          };
+
+          ambiguousReviews = [
+            ...evenSample(spikePool, Math.min(spikeCount, spikePool.length)),
+            ...evenSample(normalPool, Math.min(normalCount, normalPool.length)),
+          ];
+        }
+
         const stage2Sent = ambiguousReviews.length;
 
         let stage2Flagged = 0;

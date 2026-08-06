@@ -13,7 +13,7 @@ flowchart TD
     C -- 是 --> D["標記為洗評 (信心指數: 90% - 100%)"]
     C -- 否 --> E["預計算時間特徵信號 (isSpikePeriod / daysElapsed)"]
     
-    E --> F["分層抽樣 (最多 15 則模糊評論)"]
+    E --> F["分層抽樣 (生產模式最多 15 則 / 評估模式全送)"]
     F --> G["階段二：Gemini 2.5 語意複審"]
     G --> H["思維鏈推理與細分維度評分 (1-5 分)"]
     H --> I["動態加權信心指數計算 (50% - 99%)"]
@@ -57,7 +57,11 @@ flowchart TD
 
 ## 4. 階段二：Gemini 2.5 雲端語意複審 (Stage 2: Gemini Cloud Audit)
 
-針對階段一未被匹配，但星等為 5 星且有文字描述的「模糊 / 高風險評論」進行分層抽樣（最多抽樣 15 則），送交 Gemini 進行語意分析。
+針對階段一未被匹配，但星等為 5 星且有文字描述的「模糊 / 高風險評論」，送交 Gemini 進行語意分析。
+
+**抽樣策略（由 `VITE_AUDIT_MODE` 環境變數控制）：**
+*   **生產模式 (`production`，預設)**：最多抽樣 15 則，按 `isSpikePeriod` 分層等距取樣，控制 Gemini API 成本。
+*   **評估模式 (`evaluate`)**：全數送出，不設上限，確保離線評估的全覆蓋數字不失真。
 
 ### 4.1 思維鏈模式 (Chain-of-Thought, CoT)
 Gemini 被強制作答輸出 `reasoningPath` 欄位，在給出結論前必須一步步推導以下要素：
@@ -71,20 +75,23 @@ Gemini 針對三個獨立維度進行打分：
 *   **情感真實度 (`sentimentAuthenticity`, $A$)**：情感表達是否真誠自然（1 分最假，5 分最真）。
 *   **描述細緻度 (`descriptionGranularity`, $D$)**：對餐點、服務、細節描述的具體程度（1 分最空洞，5 分最細緻）。
 
-### 4.3 對稱指標加權信心指數 (Symmetric Confidence Score)
-本機接收到評分後，根據以下公式動態計算該則評論的信心指數：
+### 4.3 冪次曲線信心指數 (Power-Curve Confidence Score)
+本機接收到評分後，根據以下公式動態計算該則評論的信心指數。信心指數的下游語意是**過濾權重**（而非判定正確率），因此採用 0–100% 全範圍，並以冪次曲線壓低中間模糊地帶、拉開兩端區分度。
 
 1.  **計算偏差總分 (Score Deviation)**：
     $$S_{val} = (I - 1) + (5 - A) + (5 - D)$$
     *(洗評特徵越重，$S_{val}$ 分數越高，範圍為 0 到 12 分。)*
 
-2.  **動態信心指數計算**：
-    *   **若 AI 判定此評論為洗評 (`isWashed = true`)**：
-        $$Confidence\% = 50 + \left( \frac{S_{val}}{12} \times 49 \right)$$
-        *(洗評特徵越強，AI 判定為洗評的信心越高，範圍在 50% ~ 99% 之間)*
-    *   **若 AI 判定此評論為真實 (`isWashed = false`)**：
-        $$Confidence\% = 99 - \left( \frac{S_{val}}{12} \times 49 \right)$$
-        *(洗評特徵越弱，AI 判定為真實的信心越高，範圍在 50% ~ 99% 之間)*
+2.  **計算一致性 (Agreement)**：
+    $$washRatio = \frac{S_{val}}{12}$$
+    *   若 AI 判定為洗評 (`isWashed = true`)：$agreement = washRatio$
+    *   若 AI 判定為真實 (`isWashed = false`)：$agreement = 1 - washRatio$
+
+3.  **冪次曲線信心指數**：
+    $$Confidence\% = \mathrm{round}\!\left( agreement^{1.5} \times 100 \right),\quad \text{clamp to } [0, 100]$$
+    *（冪次 1.5 將模糊中間點從 50% 壓至約 35%，使得維度評分與二元判定不一致時信心明顯降低。）*
+
+4.  **UI 分級門檻**：當 `isWashed = true` 且 $Confidence < 50\%$ 時，前端以琥珀色「疑似洗評」標籤取代紅色「判定：灌水洗評」，提示此判定仍具不確定性。
 
 ---
 
@@ -99,8 +106,14 @@ Gemini 針對三個獨立維度進行打分：
         $$Weight = \frac{Confidence}{100}$$
     *(例如：一則被 99% 信心判定為洗評的評論，其評分權重僅佔 1%，接近被完全過濾)*
 
-*   **商家真實信譽評分 (Trust Score)**：
-    $$Trust\ Score = \left( \frac{\sum Weight}{Total\ Reviews} \right) \times 100\%$$
-
 *   **過濾後之真實星等 (Filtered Rating)**：
     $$Filtered\ Rating = \frac{\sum (Stars \times Weight)}{\sum Weight}$$
+    純加權平均，無額外扣減。
+
+*   **商家真實信譽評分 (Trust Score)**：
+    $$Trust\ Score = \max\!\left(0,\ 100 - \frac{Suspicious\ Reviews}{Total\ Reviews} \times 200\right)$$
+    Trust Score 為**獨立顯示指標**，反映「這家店的評論生態有多可疑」，**不參與 Filtered Rating 的計算**。UI 上與 Filtered Rating 並列呈現，供使用者自行參考。
+
+> **歷史紀錄：trustPenalty 移除說明**
+>
+> 早期版本曾在 Filtered Rating 上額外施加一個 Trust Score 衍生的星等扣減（`trustPenalty = (100 - trustScore) * 0.02`，最高扣 2 星）。此設計導致同一批洗評的計數被重複懲罰——Weight 公式已按信心指數壓低洗評的星等貢獻，trustPenalty 又按洗評比例再次扣分，造成系統性向下偏誤（例：4.5 星 / 30% 洗評的店，Weight 過濾降 0.4 星，trustPenalty 再扣 1.2 星，後者佔總降幅 75%）。因無設計文件支持且屬歷史遺留，已於本版移除。
