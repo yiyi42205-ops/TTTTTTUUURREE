@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run dev:scraper` — start the Flask backend (`review_scraper/server.py`, port 5001), which serves `/api/scrape` and `/api/audit`. Must be running for both scraping and Stage 2 Gemini audit to work (the frontend calls the backend for both).
 - `npm run dev` — start the Vite dev server. Vite proxies `/api/*` to `http://127.0.0.1:5001`, so `npm run dev:scraper` needs to be running alongside it (two terminals, or via `./run.sh`).
 - `npm run build` — production build (`vite build`)
-- `./run.sh` — interactive one-shot setup + run script (macOS-oriented): detects a compatible Python (3.9–3.13), creates `review_scraper/venv`, installs `review_scraper/requirements.txt`, installs the Playwright Chromium browser, optionally installs/pulls an Ollama model, then starts both `npm run dev:scraper` (backgrounded) and `npm run dev`. This is the recommended first-run path.
+- `./run.sh` — interactive one-shot setup + run script (macOS-oriented): detects a compatible Python (3.9–3.13), creates `review_scraper/venv`, installs `review_scraper/requirements.txt`, installs the Playwright Chromium browser, then starts both `npm run dev:scraper` (backgrounded) and `npm run dev`. This is the recommended first-run path.
 - Python offline evaluation scripts (not a test suite — see below), run with the venv Python, e.g. `review_scraper/venv/bin/python evaluate.py`:
   - `evaluate.py` — runs the Stage 1 rule engine over labeled CSVs in `restaurant_data/`, reports precision/recall/F1 against human labels
   - `evaluate_v2.py` — grid-searches the Stage 1 confidence threshold and produces Stage 2 LLM sampling input (writes `tune_results.json`, `llm_input.json`)
@@ -21,7 +21,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Audit mode** (`VITE_AUDIT_MODE` env var): `production` (default) caps Stage 2 at 15 reviews with stratified sampling; `evaluate` removes the cap for full-coverage offline evaluation. Always use `evaluate` mode when running evaluation scripts against the frontend pipeline.
 
-There is **no lint script, no automated test suite (JS or Python), and no `tsconfig.json`** in this repo. Don't go looking for a test runner or type-check command — none is configured.
+**Testing:**
+- `npm test` — runs vitest (`src/app/utils/auditEngine.test.ts`): covers `aggregateAuditedReviews` weighting/Trust Score/Filtered Rating, `auditReview` Stage 1 heuristics, similarity signals, hot term signals, and nearby long review counts.
+- `cd review_scraper && python -m pytest tests/` — Python backend tests (normalize, Apify scraper, Gemini client, prompt builder, audit API).
+- There is **no lint script and no `tsconfig.json`** in this repo.
 
 ## Architecture
 
@@ -53,7 +56,7 @@ Other backend files:
 - `gemini_prompts/*.txt` are pre-generated prompts (output of `sample_fp.py`) meant for manual copy-paste into the Gemini web UI — not something called programmatically.
 
 ### Known limitations (from README)
-- The scraper needs a local Playwright browser, so it can't run on serverless platforms as-is; `vercel.json` only does SPA rewrite routing for the static frontend build, it doesn't run the Python backend.
+- The Python backend (Flask + Apify/Playwright) can't run on serverless platforms; `vercel.json` only does SPA rewrite routing for the static frontend build.
 - Each analysis samples roughly the most recent 100 reviews per store.
 - Keyword rules and prompts are tuned for Traditional Chinese restaurant reviews.
-- Scraper CSS selectors depend on Google Maps' current DOM structure and can break on redesigns.
+- Playwright fallback scraper's CSS selectors depend on Google Maps' current DOM structure and can break on redesigns.
