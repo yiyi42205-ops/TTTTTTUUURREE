@@ -158,30 +158,53 @@ export function Results() {
         if (auditMode === 'evaluate' || allAmbiguous.length <= STAGE2_CAP) {
           ambiguousReviews = allAmbiguous;
         } else {
-          // Stratified sampling: split by isSpikePeriod, proportionally sample
-          const spikePool = allAmbiguous.filter(r => {
-            const { isSpikePeriod } = getReviewTemporalData(r);
-            return isSpikePeriod;
-          });
-          const normalPool = allAmbiguous.filter(r => {
-            const { isSpikePeriod } = getReviewTemporalData(r);
-            return !isSpikePeriod;
-          });
+          // Length-Weighted Stratified Sampling
+          const longPool = allAmbiguous.filter(r => (r.text || '').length > 30);
+          const mediumPool = allAmbiguous.filter(r => (r.text || '').length >= 10 && (r.text || '').length <= 30);
+          const shortPool = allAmbiguous.filter(r => (r.text || '').length < 10);
 
-          const spikeRatio = spikePool.length / allAmbiguous.length;
-          const spikeCount = Math.round(STAGE2_CAP * spikeRatio);
-          const normalCount = STAGE2_CAP - spikeCount;
+          // Give priority to long and medium reviews. Cap short reviews to max 2.
+          const shortCap = 2;
+          const shortSampleCount = Math.min(shortPool.length, shortCap);
+          
+          const remainingSlots = STAGE2_CAP - shortSampleCount;
+          const longMediumTotal = longPool.length + mediumPool.length;
+          
+          let longSampleCount = 0;
+          let mediumSampleCount = 0;
+          
+          if (longMediumTotal > 0) {
+            const longRatio = longPool.length / longMediumTotal;
+            longSampleCount = Math.round(remainingSlots * longRatio);
+            mediumSampleCount = remainingSlots - longSampleCount;
+            
+            // Adjust if rounding caused overflow
+            longSampleCount = Math.min(longSampleCount, longPool.length);
+            mediumSampleCount = Math.min(mediumSampleCount, mediumPool.length);
+            
+            // Re-distribute any unused slots (due to caps)
+            const unusedSlots = remainingSlots - (longSampleCount + mediumSampleCount);
+            if (unusedSlots > 0) {
+                if (longSampleCount < longPool.length) {
+                    longSampleCount = Math.min(longSampleCount + unusedSlots, longPool.length);
+                } else if (mediumSampleCount < mediumPool.length) {
+                    mediumSampleCount = Math.min(mediumSampleCount + unusedSlots, mediumPool.length);
+                }
+            }
+          }
 
           // Within each stratum, pick evenly spaced indices for temporal spread
           const evenSample = (pool: typeof allAmbiguous, n: number) => {
+            if (n <= 0) return [];
             if (n >= pool.length) return pool;
             const step = pool.length / n;
             return Array.from({ length: n }, (_, i) => pool[Math.floor(i * step)]);
           };
 
           ambiguousReviews = [
-            ...evenSample(spikePool, Math.min(spikeCount, spikePool.length)),
-            ...evenSample(normalPool, Math.min(normalCount, normalPool.length)),
+            ...evenSample(longPool, longSampleCount),
+            ...evenSample(mediumPool, mediumSampleCount),
+            ...evenSample(shortPool, shortSampleCount),
           ];
         }
 
@@ -312,7 +335,28 @@ export function Results() {
             };
           }
 
-          return r;
+          // Unsampled fallback
+          if ((r.text || '').length < 10) {
+             return {
+                 ...r,
+                 audit: {
+                     isWashed: false,
+                     reason: `評論字數過短、內容空泛，受限於抽樣配額未送 LLM，暫以中性偏低權重採計。`,
+                     confidenceScore: 55,
+                     issueType: 'low_info'
+                 }
+             };
+          } else {
+             return {
+                 ...r,
+                 audit: {
+                     isWashed: false,
+                     reason: `評論無顯性利益交換跡象（受限於抽樣配額，未經 LLM 複審）。`,
+                     confidenceScore: 70,
+                     issueType: null
+                 }
+             };
+          }
         });
 
         // Re-aggregate through the same shared formula computeShopStats used for the

@@ -52,21 +52,13 @@ const INCENTIVE_KEYWORDS = [
   '送小菜', '送起司球', '送飲料', '送肉', '送單點', '送麻糬', '送奶酪'
 ];
 
-const EMPTY_WORDS = new Set([
-  '讚', '超讚', '好吃', '推', '棒', '美味', '讚的', '讚啦', '很讚', '推推', 
-  '讚喔', '好喝', '讚讚', '不錯', '好讚', '好店', '優', '優質', '讚哩',
-  '讚啊', '極推', '大推', '好食', '真讚', '好美味'
-]);
 
 export interface AuditReviewContext {
   isSpikePeriod?: boolean;
   similarCount?: number;
 }
 
-// A short generic review only escalates from "low_info" to "washed" when it
-// co-occurs with another suspicious signal — otherwise "字數少" alone is being
-// used as if it were washing evidence, which it isn't.
-const LOW_INFO_ESCALATION_SIMILAR_COUNT = 2;
+
 
 /**
  * Audit an individual review based on local heuristic rules. `context` carries
@@ -128,30 +120,7 @@ export function auditReview(review: Review, context: AuditReviewContext = {}): A
     }
   }
 
-  // 3. Extremely short generic reviews (e.g. "讚", "推", "好吃") are low-information,
-  // not washing evidence by themselves — plenty of genuine customers just don't
-  // write much. Only escalate to a washed "template" verdict when a short review
-  // co-occurs with another suspicious signal: a review-volume spike period, or a
-  // high cross-review similarity count (structurally repeated across the store).
-  const cleanText = text.replace(/[\s!！~～.。?？,，、]/g, '');
-  const isRepeatingPraise = /^讚+$/.test(cleanText) || /^推+$/.test(cleanText) || /^棒+$/.test(cleanText) || /^好+$/.test(cleanText) || /^讚+推+$/.test(cleanText);
-  if (review.stars >= 4 && (EMPTY_WORDS.has(cleanText) || isRepeatingPraise)) {
-    const isEscalated = Boolean(context.isSpikePeriod) || (context.similarCount ?? 0) >= LOW_INFO_ESCALATION_SIMILAR_COUNT;
-    if (isEscalated) {
-      return {
-        isWashed: true,
-        reason: `⚠️ 評論為極短空洞模板（『${text}』），且發布於評論量異常暴增期間或與店內其他評論高度相似，判定為洗評。`,
-        confidenceScore: 85,
-        issueType: 'template',
-      };
-    }
-    return {
-      isWashed: false,
-      reason: `評論字數過短、內容空泛（『${text}』），屬低資訊評論而非洗評證據，暫以中性偏低權重採計。`,
-      confidenceScore: 55,
-      issueType: 'low_info',
-    };
-  }
+
 
   // Fallback (Non-washed in Stage 1)
   return {

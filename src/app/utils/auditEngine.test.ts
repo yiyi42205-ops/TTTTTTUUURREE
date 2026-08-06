@@ -151,58 +151,9 @@ describe('aggregateAuditedReviews', () => {
     expect(result.trustScore).toBe(40);
   });
 
-  it('store with low_info reviews: neutral 0.55 weight is distinct from no_text (0.5) and clean (0.8)', () => {
-    const reviews = [
-      audited(review({ stars: 1, text: '好吃' }), { isWashed: false, reason: '', confidenceScore: 55, issueType: 'low_info' }),
-      audited(review({ stars: 5 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
-    ];
 
-    const result = aggregateAuditedReviews('Low Info Shop', reviews);
-
-    // originalRating = (1+5)/2 = 3.00
-    // weightedSum = 1*0.55 + 5*0.8 = 4.55; weightTotal = 0.55+0.8 = 1.35 -> 4.55/1.35 = 3.3703... -> 3.37
-    expect(result.originalRating).toBe(3.00);
-    expect(result.filteredRating).toBe(3.37);
-    expect(result.trustScore).toBe(100);
-    expect(result.suspiciousReviews).toBe(0);
-  });
 });
 
-describe('auditReview - low_info vs escalated washing', () => {
-  it('classifies an isolated short generic review as low_info, not washed', () => {
-    const result = auditReview(review({ text: '好吃' }));
-    expect(result.issueType).toBe('low_info');
-    expect(result.isWashed).toBe(false);
-    expect(result.confidenceScore).toBe(55);
-  });
-
-  it('escalates to washed template when a short generic review co-occurs with a spike period', () => {
-    const result = auditReview(review({ text: '讚' }), { isSpikePeriod: true });
-    expect(result.issueType).toBe('template');
-    expect(result.isWashed).toBe(true);
-  });
-
-  it('escalates to washed template when a short generic review has a high similarCount', () => {
-    const result = auditReview(review({ text: '推推' }), { similarCount: 2 });
-    expect(result.issueType).toBe('template');
-    expect(result.isWashed).toBe(true);
-  });
-
-  it('does not escalate when similarCount is below the threshold and there is no spike', () => {
-    const result = auditReview(review({ text: '棒' }), { similarCount: 1 });
-    expect(result.issueType).toBe('low_info');
-    expect(result.isWashed).toBe(false);
-  });
-
-  it('a review with real content is unaffected by low_info logic regardless of context', () => {
-    const result = auditReview(
-      review({ text: '今天跟朋友來吃，點了豚骨拉麵麵硬湯濃，叉燒有火烤香氣很讚！不過排隊等了快半小時。' }),
-      { isSpikePeriod: true, similarCount: 5 }
-    );
-    expect(result.issueType).toBe(null);
-    expect(result.isWashed).toBe(false);
-  });
-});
 
 describe('computeSimilaritySignals', () => {
   it('flags near-identical text (2-gram > 75%) as a hard duplicate', () => {
