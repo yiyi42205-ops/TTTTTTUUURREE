@@ -8,16 +8,16 @@ TrueRating QA 評估腳本
      算出系統判定 vs 人工標籤的混淆矩陣與 F1 分數。
 
 使用方式:
-    python3 evaluate.py <restaurant_data 路徑>
+    python3 eval/evaluate.py <restaurant_data 路徑>
 
 預期資料夾結構:
     restaurant_data/
-    ├── 拉麵__有洗/
+    ├── 餐廳__有洗/
     │   ├── 店A.csv
     │   └── 店B.csv
-    ├── 拉麵__沒洗/
+    ├── 餐廳__沒洗/
     │   └── ...
-    ├── 手搖__有洗/
+    ├── 飲料店__有洗/
     └── ...
 
 CSV 欄位:Username, Stars, Time, RawTime, Text, Images
@@ -140,7 +140,20 @@ def detect_spike_months(reviews):
 # 分析單家店
 # ============================================================
 
-def analyze_restaurant(csv_path):
+DEFAULT_EVAL_WINDOW = 100
+
+
+def _sort_reviews_newest_first(reviews):
+    """Sort reviews by Time descending; missing/unparseable dates go last."""
+    def _parse_date(r):
+        try:
+            return datetime.strptime(r.get('Time', ''), '%Y-%m-%d')
+        except (ValueError, TypeError):
+            return datetime.min
+    return sorted(reviews, key=_parse_date, reverse=True)
+
+
+def analyze_restaurant(csv_path, window=DEFAULT_EVAL_WINDOW):
     reviews = []
     with open(csv_path, encoding='utf-8-sig') as f:
         reader = csv.DictReader(f)
@@ -149,6 +162,9 @@ def analyze_restaurant(csv_path):
 
     if not reviews:
         return None
+    reviews = _sort_reviews_newest_first(reviews)
+    if window and window > 0:
+        reviews = reviews[:window]
 
     bribe_flags = [check_explicit_bribe(r.get('Text', '')) for r in reviews]
     template_flags = detect_template_clusters(reviews)
@@ -194,7 +210,7 @@ def analyze_restaurant(csv_path):
 # 評估資料集
 # ============================================================
 
-def evaluate_dataset(base_path):
+def evaluate_dataset(base_path, window=DEFAULT_EVAL_WINDOW):
     base = Path(base_path)
     results = []
 
@@ -203,7 +219,7 @@ def evaluate_dataset(base_path):
             continue
         category, label = subdir.name.split('__', 1)
         for csv_file in sorted(subdir.glob('*.csv')):
-            stats = analyze_restaurant(csv_file)
+            stats = analyze_restaurant(csv_file, window=window)
             if stats:
                 results.append({
                     'restaurant': csv_file.stem,
@@ -320,16 +336,19 @@ def write_markdown_report(results, cm, out_path):
 # ============================================================
 
 def main():
-    if len(sys.argv) < 2:
-        print('用法:python3 evaluate.py <restaurant_data 路徑>')
-        sys.exit(1)
+    import argparse
+    parser = argparse.ArgumentParser(description='TrueRating QA 評估腳本')
+    parser.add_argument('base_path', help='restaurant_data 路徑')
+    parser.add_argument('--window', type=int, default=DEFAULT_EVAL_WINDOW,
+                        help=f'每家店只取最新 N 則評論 (預設 {DEFAULT_EVAL_WINDOW})')
+    args = parser.parse_args()
 
-    base = sys.argv[1]
-    results = evaluate_dataset(base)
+    base = args.base_path
+    results = evaluate_dataset(base, window=args.window)
 
     if not results:
         print(f'錯誤:在 {base} 找不到資料。')
-        print('預期結構:子資料夾命名為「類別__標籤」(如 拉麵__有洗),內含 CSV 檔。')
+        print('預期結構:子資料夾命名為「類別__標籤」(如 餐廳__有洗),內含 CSV 檔。')
         sys.exit(1)
 
     cm = confusion_matrix(results)

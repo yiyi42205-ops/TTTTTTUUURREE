@@ -4,7 +4,7 @@
 資料品質診斷:檢查所有 CSV 的欄位 + Time 格式是否一致。
 
 用法:
-  python3 check_data.py restaurant_data
+  python3 eval/check_data.py restaurant_data
 """
 import csv
 import sys
@@ -49,7 +49,7 @@ def check_file(csv_path):
 
 def main():
     if len(sys.argv) < 2:
-        print('用法: python3 check_data.py <restaurant_data 路徑>')
+        print('用法: python3 eval/check_data.py <restaurant_data 路徑>')
         sys.exit(1)
 
     base = Path(sys.argv[1])
