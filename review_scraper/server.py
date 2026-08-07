@@ -117,6 +117,11 @@ def audit():
     user_api_key = request.headers.get("X-Gemini-API-Key")
     client_to_use = genai_client
     if user_api_key:
+        user_api_key = user_api_key.strip()
+        if not user_api_key.startswith("AIza") or len(user_api_key) < 35:
+            logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
+            return jsonify({"error": "無效的用戶 API Key 格式 (請確認長度與開頭)"}), 400
+
         try:
             client_to_use = genai.Client(api_key=user_api_key)
             logger.info("Using user-provided Gemini API Key for audit request.")

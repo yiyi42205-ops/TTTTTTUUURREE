@@ -1,14 +1,15 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Loader2, Link as LinkIcon, X, Search, Info, Plus, Globe, Sliders, Database, ShieldCheck, Sparkles, Shield, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Loader2, Link as LinkIcon, X, Search, Info, Plus, Globe, Sliders, Database, ShieldCheck, Sparkles, Shield, AlertTriangle, ClipboardPaste } from 'lucide-react';
+import { useIsPWA } from '../hooks/useIsPWA';
 import { RESTAURANTS_DATA, Restaurant } from '../data/restaurantsData';
 
 export function Analyzer() {
   const navigate = useNavigate();
   const [urls, setUrls] = useState<string[]>(['', '', '']);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isPWA, setIsPWA] = useState(false);
+  const isPWA = useIsPWA();
   
   // Suggestion Dropdown states for each slot
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
@@ -22,48 +23,36 @@ export function Analyzer() {
   const [scrapeLoadingStep, setScrapeLoadingStep] = useState('');
   const [scrapeError, setScrapeError] = useState('');
 
-  // Detect PWA mode on mount
-  useEffect(() => {
-    const checkPWA = window.matchMedia('(display-mode: standalone)').matches 
-                  || (window.navigator as any).standalone === true;
-    setIsPWA(checkPWA);
-  }, []);
-
-  // Clipboard Auto-paste for Google Maps URLs in PWA mode
-  useEffect(() => {
-    const checkClipboard = async () => {
-      const checkPWA = window.matchMedia('(display-mode: standalone)').matches 
-                    || (window.navigator as any).standalone === true;
-      if (!checkPWA) return;
-
-      try {
-        const text = await navigator.clipboard.readText();
-        const trimmed = (text || '').trim();
-        const isGoogleMapsUrl = trimmed.startsWith('http://') || 
-                               trimmed.startsWith('https://') || 
-                               trimmed.includes('google.com/maps') || 
-                               trimmed.includes('maps.app.goo.gl') || 
-                               trimmed.includes('/maps/');
+  // Manual Clipboard Paste for Google Maps URLs
+  const handlePasteFromClipboard = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const trimmed = (text || '').trim();
+      const isGoogleMapsUrl = trimmed.startsWith('https://') && 
+                             (trimmed.includes('google.com/maps') || 
+                              trimmed.includes('maps.app.goo.gl') || 
+                              trimmed.includes('/maps/') ||
+                              trimmed.includes('g.page'));
+      
+      if (isGoogleMapsUrl) {
+        if (scrapeUrls.includes(trimmed)) return;
         
-        if (isGoogleMapsUrl) {
-          if (scrapeUrls.includes(trimmed)) return;
-
-          if (confirm(`偵測到您的剪貼簿有 Google Maps 連結，是否自動填入並切換至即時爬網？\n\n連結：${trimmed}`)) {
-            const newScrapeUrls = [...scrapeUrls];
-            newScrapeUrls[0] = trimmed;
-            setScrapeUrls(newScrapeUrls);
-            setActiveTab('scraper');
-          }
+        const newScrapeUrls = [...scrapeUrls];
+        const emptyIndex = newScrapeUrls.findIndex(url => url === '');
+        if (emptyIndex !== -1) {
+           newScrapeUrls[emptyIndex] = trimmed;
+        } else {
+           newScrapeUrls[0] = trimmed;
         }
-      } catch (err) {
-        console.warn('Clipboard read permission denied or not supported:', err);
+        setScrapeUrls(newScrapeUrls);
+        setActiveTab('scraper');
+      } else {
+        alert('剪貼簿中未偵測到有效的 Google Maps 連結。');
       }
-    };
-
-    checkClipboard();
-
-    window.addEventListener('focus', checkClipboard);
-    return () => window.removeEventListener('focus', checkClipboard);
+    } catch (err) {
+      console.warn('Clipboard read permission denied or not supported:', err);
+      alert('無法讀取剪貼簿，請確認瀏覽器授權。');
+    }
   }, [scrapeUrls]);
 
   // Close dropdown on click outside
@@ -365,6 +354,21 @@ export function Analyzer() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
 
 
+        {/* Info Banner */}
+        {!isPWA && (
+          <motion.div
+            initial={{ opacity: 0, y: -15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/95 backdrop-blur-xs rounded-2xl p-4.5 mb-8 shadow-xs border border-[#e8c547]/40 flex items-start gap-3.5"
+          >
+            <Info className="w-5 h-5 text-[#e8c547] shrink-0 mt-0.5" />
+            <div className="text-xs md:text-sm text-[#4a5d52] leading-relaxed">
+              <span className="font-extrabold text-[#8b7534] bg-[#e8c547]/20 px-1.5 py-0.5 rounded mr-1">測試數據庫已加載</span>
+              系統內建拉麵、手搖飲、健康餐等 18 間店家真實歷史評論。您可以直接在對比欄位搜尋，或從下方推薦庫快速加載店家進行多店「濾水」對照！
+            </div>
+          </motion.div>
+        )}
+
         {/* Main Analysis Dashboard Box */}
         <div className="relative w-full max-w-3xl mx-auto mb-8">
           <div className="bg-white rounded-[32px] shadow-md p-6 md:p-8 border-2 border-[#d4c5b0]/60">
@@ -563,6 +567,19 @@ export function Analyzer() {
                   </div>
                 )}
 
+                <div className="flex justify-between items-end mb-4">
+                  <h3 className="text-[#4a5d52] font-black font-display text-sm">輸入即時爬取網址</h3>
+                  <motion.button
+                    onClick={handlePasteFromClipboard}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center gap-1.5 text-xs font-black bg-white text-[#4a5d52] border-2 border-[#4a5d52] rounded-xl px-3 py-1.5 cursor-pointer shadow-[2px_2px_0px_0px_#4a5d52] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all"
+                  >
+                    <ClipboardPaste className="w-3.5 h-3.5 text-[#6b8e7f]" />
+                    從剪貼簿貼上
+                  </motion.button>
+                </div>
+
                 <div className="space-y-4 mb-4">
                   {scrapeUrls.map((url, index) => {
                     const isEmpty = !url.trim();
@@ -756,6 +773,29 @@ export function Analyzer() {
             </div>
           </div>
         </motion.div>
+
+        {/* AI Config Card */}
+        {!isPWA && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-8 bg-white/90 backdrop-blur-xs rounded-[32px] p-6 border border-[#d4c5b0] shadow-xs flex flex-col md:flex-row items-center gap-6"
+          >
+            <div className="flex-1 space-y-3">
+              <h3 className="text-[#4a5d52] font-black flex items-center gap-2 font-display">
+                <ShieldCheck className="w-5 h-5 text-[#6b8e7f]" />
+                雙階段審查：正則規則引擎 + AI 語意防護網
+              </h3>
+              <p className="text-xs text-[#6b8e7f] leading-relaxed font-bold">
+                這套工具並非單純呼叫語言模型。第一階段先由 Python Regex 引擎掃描評論區「五星贈送」、「打卡送」等字詞，進行硬性剃除；第二階段才會將剩餘模糊評論（以及密集期）整包送到 Gemini Flash 1.5 進行上下文語意溯源，判斷是否為集團化網軍操作，實現極高準確度的洗評過濾。
+              </p>
+            </div>
+            <div className="shrink-0">
+              <Sliders className="w-12 h-12 text-[#d4c5b0]/50" />
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );

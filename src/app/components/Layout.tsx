@@ -1,17 +1,12 @@
 import { Outlet, useNavigate, useLocation } from 'react-router';
 import { Search, Clock, Settings } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useIsPWA } from '../hooks/useIsPWA';
 
 export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isPWA, setIsPWA] = useState(false);
-
-  useEffect(() => {
-    const checkPWA = window.matchMedia('(display-mode: standalone)').matches 
-                  || (window.navigator as any).standalone === true;
-    setIsPWA(checkPWA);
-  }, []);
+  const isPWA = useIsPWA();
 
   const tabs = [
     {

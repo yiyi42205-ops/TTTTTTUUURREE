@@ -33,12 +33,14 @@ export const historyStore = {
       };
 
       if (existingIdx !== -1) {
-        history[existingIdx] = newEntry;
-      } else {
-        history.push(newEntry);
+        history.splice(existingIdx, 1);
       }
+      history.unshift(newEntry);
+      
+      // Limit to max 20 entries to prevent localStorage quota exhaustion
+      const limitedHistory = history.slice(0, 20);
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(limitedHistory));
     } catch (e) {
       console.error('Failed to save audit history to localStorage:', e);
     }

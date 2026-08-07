@@ -40,8 +40,8 @@ export default defineConfig(({ mode }) => {
         name: '疑騙真星 TrueRating',
         short_name: 'TrueRating',
         description: 'Google Maps 商家真實信譽與洗評過濾審核器',
-        theme_color: '#4f46e5',
-        background_color: '#0f172a',
+        theme_color: '#f5f1e8',
+        background_color: '#f5f1e8',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

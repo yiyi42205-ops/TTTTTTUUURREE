@@ -9,7 +9,7 @@ export function Settings() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const savedKey = localStorage.getItem('truerating_gemini_api_key');
+    const savedKey = sessionStorage.getItem('truerating_gemini_api_key');
     if (savedKey) {
       setApiKey(savedKey);
     }
@@ -18,7 +18,7 @@ export function Settings() {
   const handleSave = () => {
     const trimmed = apiKey.trim();
     if (!trimmed) {
-      localStorage.removeItem('truerating_gemini_api_key');
+      sessionStorage.removeItem('truerating_gemini_api_key');
       setStatus('success');
       setMessage('設定已清除，系統將使用預設的伺服器金鑰。');
       return;
@@ -30,16 +30,16 @@ export function Settings() {
       return;
     }
 
-    localStorage.setItem('truerating_gemini_api_key', trimmed);
+    sessionStorage.setItem('truerating_gemini_api_key', trimmed);
     setStatus('success');
-    setMessage('金鑰已安全儲存於瀏覽器本地！');
+    setMessage('金鑰已安全儲存於當前 Session！關閉分頁即會清除。');
   };
 
   const handleClear = () => {
     setApiKey('');
-    localStorage.removeItem('truerating_gemini_api_key');
+    sessionStorage.removeItem('truerating_gemini_api_key');
     setStatus('success');
-    setMessage('已清除本地金鑰，將回到伺服器託管金鑰。');
+    setMessage('已清除 Session 金鑰，將回到伺服器託管金鑰。');
   };
 
   return (
@@ -63,7 +63,7 @@ export function Settings() {
           </div>
 
           <p className="text-xs text-[#6b8e7f] font-bold leading-relaxed mb-6">
-            疑騙真星 TrueRating 為免費開源軟體。為了防止公共 API 流量遭濫用，您可以填入自己的免費 Google Gemini API Key。您的金鑰會安全地保存在此裝置的瀏覽器快取中，絕不上傳資料庫。
+            疑騙真星 TrueRating 為免費開源軟體。為了防止公共 API 流量遭濫用，您可以填入自己的免費 Google Gemini API Key。您的金鑰會安全地保存在當前分頁的 Session 中，關閉分頁或重整過久即會清除，絕不上傳資料庫。
           </p>
 
           <div className="space-y-4">

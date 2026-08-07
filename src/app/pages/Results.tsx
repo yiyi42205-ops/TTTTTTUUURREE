@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router';
 import { 
@@ -10,6 +10,7 @@ import { RESTAURANTS_DATA } from '../data/restaurantsData';
 import { parseReviews, Review } from '../utils/csvParser';
 import { computeShopStats, aggregateAuditedReviews, computeSpikeMonths, getReviewTemporalContext, computeSimilaritySignals, computeHotTermSignals, computeNearbyLongReviewCounts, ShopStats, AuditResult } from '../utils/auditEngine';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
+import { useIsPWA } from '../hooks/useIsPWA';
 
 function cleanStoreName(name: string): string {
   if (!name) return '';
@@ -40,16 +41,11 @@ export function Results() {
   const location = useLocation();
   
   // PWA Mode and Swipe States
-  const [isPWA, setIsPWA] = useState(false);
+  const isPWA = useIsPWA();
+  const isHistoryCache = !!location.state?.cachedShopResults;
   const [activeSlide, setActiveSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
-  useEffect(() => {
-    const checkPWA = window.matchMedia('(display-mode: standalone)').matches 
-                  || (window.navigator as any).standalone === true;
-    setIsPWA(checkPWA);
-  }, []);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
@@ -270,7 +266,7 @@ export function Results() {
             };
           });
 
-          const localApiKey = localStorage.getItem('truerating_gemini_api_key') || '';
+          const localApiKey = sessionStorage.getItem('truerating_gemini_api_key') || '';
           const response = await fetch('/api/audit', {
             method: 'POST',
             headers: {
@@ -866,9 +862,16 @@ export function Results() {
             <ArrowLeft className="w-4 h-4 text-[#6b8e7f] stroke-[3]" />
             返回
           </button>
-          <span className="font-display font-black text-sm text-[#4a5d52] truncate max-w-[150px]">
-            {cleanStoreName(result.storeName)}
-          </span>
+          <div className="flex items-center gap-2 max-w-[180px]">
+            <span className="font-display font-black text-sm text-[#4a5d52] truncate">
+              {cleanStoreName(result.storeName)}
+            </span>
+            {isHistoryCache && (
+              <span className="shrink-0 bg-[#e8c547]/20 text-[#8b7534] border border-[#e8c547]/40 px-1.5 py-0.5 rounded text-[10px] font-black">
+                快取
+              </span>
+            )}
+          </div>
           <div className="w-8"></div> {/* Spacer */}
         </header>
 
@@ -965,6 +968,25 @@ export function Results() {
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl md:text-3xl font-black text-[#4a5d52] flex items-center gap-3 font-display">
+              <Trophy className="w-8 h-8 text-[#e8c547]" />
+              審計結果儀表板
+              {isHistoryCache && (
+                <span className="text-xs bg-[#e8c547]/20 text-[#8b7534] border border-[#e8c547]/40 px-2 py-1 rounded-full font-black flex items-center gap-1 shadow-xs">
+                  <Database className="w-3.5 h-3.5" />
+                  歷史快取
+                </span>
+              )}
+            </h1>
+          </div>
+        </motion.div>
+
         {apiError && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
