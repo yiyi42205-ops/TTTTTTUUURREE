@@ -41,6 +41,21 @@ def index():
         "message": "Google Maps Scraper Service is running"
     })
 
+import urllib.request
+
+def resolve_google_share_url(url: str) -> str:
+    if "share.google" in url:
+        try:
+            # Follow redirects using HEAD request
+            req = urllib.request.Request(url, method="HEAD")
+            with urllib.request.urlopen(req, timeout=5) as response:
+                final_url = response.geturl()
+                logger.info(f"Resolved share.google URL {url} to: {final_url}")
+                return final_url
+        except Exception as e:
+            logger.warning(f"Failed to resolve share.google URL {url}: {e}")
+    return url
+
 @app.route("/api/scrape", methods=["POST"])
 def scrape():
     start_time = time.time()
@@ -52,6 +67,8 @@ def scrape():
     if not url:
         logger.error(f"Scrape request from {ip} failed validation: Missing required field 'url'")
         return jsonify({"error": "Missing required field: url"}), 400
+    
+    url = resolve_google_share_url(url)
     
     max_reviews = data.get("maxReviews") or 50
     try:
