@@ -657,22 +657,7 @@ export function Analyzer() {
           </div>
         </div>
 
-        {/* AI Configuration Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-[28px] p-6 shadow-sm border border-[#e8dcc8] max-w-3xl mx-auto mb-8 relative overflow-hidden"
-        >
-          <h3 className="font-extrabold text-sm md:text-base text-[#4a5d52] mb-3 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-[#6b8e7f]" />
-            AI 深度審查引擎（二階段語意分析）
-          </h3>
 
-          <p className="text-[11px] text-[#6b8e7f] leading-relaxed font-semibold">
-            本地啟發式規則過濾顯性好評後，所有疑似水軍的五星好評都會送交後端由 Gemini 2.5 Flash 進行「語意一致性」比對。Gemini 金鑰安全保存於伺服器端，瀏覽器端不會接觸金鑰。
-          </p>
-        </motion.div>
 
         {/* Preset Store Recommendations Grid */}
         <motion.div
