@@ -16,6 +16,10 @@ export const router = createBrowserRouter([
         Component: Home,
       },
       {
+        path: "analyzer",
+        Component: Analyzer,
+      },
+      {
         path: "history",
         Component: History,
       },
@@ -24,10 +28,6 @@ export const router = createBrowserRouter([
         Component: Settings,
       },
     ],
-  },
-  {
-    path: "/analyzer",
-    Component: Analyzer,
   },
   {
     path: "/results",
