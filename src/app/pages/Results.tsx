@@ -852,7 +852,7 @@ export function Results() {
 
     return (
       <div 
-        className="min-h-screen flex flex-col bg-[#f5f1e8] pb-16"
+        className="h-[100dvh] flex flex-col bg-[#f5f1e8] overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -913,21 +913,21 @@ export function Results() {
         </div>
 
         {/* Swipe Viewport */}
-        <div className="flex-1 overflow-x-hidden p-4 relative">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSlide}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.15, ease: 'easeInOut' }}
-              className="w-full h-full"
-            >
-              {activeSlide === 0 && renderPwaDashboard(result)}
-              {activeSlide === 1 && renderPwaAnomalies(result)}
-              {activeSlide === 2 && renderPwaReviews(result, activeStoreIdx)}
-            </motion.div>
-          </AnimatePresence>
+        <div className="flex-1 overflow-hidden relative">
+          <div 
+            className="flex w-[300%] h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${activeSlide * 33.333}%)` }}
+          >
+            <div className="w-[33.333%] h-full shrink-0 px-4 overflow-y-auto pb-16 custom-scrollbar">
+              {renderPwaDashboard(result)}
+            </div>
+            <div className="w-[33.333%] h-full shrink-0 px-4 overflow-y-auto pb-16 custom-scrollbar">
+              {renderPwaAnomalies(result)}
+            </div>
+            <div className="w-[33.333%] h-full shrink-0 px-4 overflow-y-auto pb-16 custom-scrollbar flex flex-col">
+              {renderPwaReviews(result, activeStoreIdx)}
+            </div>
+          </div>
         </div>
       </div>
     );
