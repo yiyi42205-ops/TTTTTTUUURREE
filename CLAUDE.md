@@ -8,7 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Workflow
 
-This is a multi-contributor project. **All changes go through pull requests** — do not push directly to `main`. When making changes:
+This is a multi-contributor project. Push rules:
+- **程式碼走 PR** — 所有程式碼變更必須開 PR，不可直接推 `main`。
+- **文件可直接推** — `docs/`、`CLAUDE.md`、`README.md` 等純文件修改可直接推到 `main`，不需開 PR。
+- **緊急修復事後補說明** — hotfix 可先合併，但事後必須在 PR 或 commit message 補上原因與影響範圍。
+
+Standard PR flow:
 1. Create a feature branch (`git checkout -b <branch-name>`).
 2. Commit your work to the branch.
 3. Push the branch and open a PR via `gh pr create`.
@@ -60,7 +65,7 @@ Other backend files:
 - `review_scraper/cache_store.py` — caches scraped reviews to avoid redundant Apify calls; bypass with `?force=true`.
 
 ### Data (`restaurant_data/`, `gemini_prompts/`)
-- `restaurant_data/` holds 18 hand-labeled CSVs organized as `<類別>__<有洗|沒洗>/` (category, e.g. 拉麵/手搖/便當, crossed with washed/clean). These back both the frontend demo dataset and the offline `eval/*.py` scripts.
+- `restaurant_data/` holds 18 hand-labeled CSVs organized as `<類別>__<有洗|沒洗>/` (category, e.g. 餐廳/飲料店/觀光店/連鎖店, crossed with washed/clean). These back both the frontend demo dataset and the offline `eval/*.py` scripts.
 - `gemini_prompts/*.txt` are pre-generated prompts (output of `eval/sample_fp.py`) meant for manual copy-paste into the Gemini web UI — not something called programmatically.
 
 ### Docs (`docs/`)

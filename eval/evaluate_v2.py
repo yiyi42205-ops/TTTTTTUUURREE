@@ -9,7 +9,8 @@ TrueRating QA 進階評估腳本 v2
   2. Stage 2 LLM 抽樣輸出(把 Stage 1 漏抓的店抽出來給 LLM 分析)
 
 用法:
-  python3 eval/evaluate_v2.py restaurant_data
+  python3 eval/evaluate_v2.py restaurant_data [--window N]
+  --window N  只取每家店最新 N 則評論(預設 100),避免評估吃到未標註的舊評論
 
 產出:
   - tune_results.json    網格搜尋完整結果
@@ -186,13 +187,32 @@ def detect_spike_months(reviews):
     return [(m in spike) if m else False for m in months], spike
 
 
-def analyze_restaurant(csv_path):
+def _sort_reviews_newest_first(reviews):
+    """Sort reviews by Time descending; missing/unparseable dates go last."""
+    def _parse_date(r):
+        try:
+            return datetime.strptime(r.get('Time', ''), '%Y-%m-%d')
+        except (ValueError, TypeError):
+            return datetime.min
+    return sorted(reviews, key=_parse_date, reverse=True)
+
+
+# Default evaluation window — only the newest N reviews are analysed per store.
+# Set to match the labelling window (human annotators reviewed ~50-100 recent
+# reviews).  Pass --window to override.
+DEFAULT_EVAL_WINDOW = 100
+
+
+def analyze_restaurant(csv_path, window=DEFAULT_EVAL_WINDOW):
     reviews = []
     with open(csv_path, encoding='utf-8-sig') as f:
         for row in csv.DictReader(f):
             reviews.append(row)
     if not reviews:
         return None
+    reviews = _sort_reviews_newest_first(reviews)
+    if window and window > 0:
+        reviews = reviews[:window]
 
     bribe = [has_bribe(r.get('Text', '')) for r in reviews]
     tmpl = detect_templates(reviews)
@@ -222,7 +242,7 @@ def analyze_restaurant(csv_path):
     }
 
 
-def evaluate_dataset(base_path):
+def evaluate_dataset(base_path, window=DEFAULT_EVAL_WINDOW):
     base = Path(base_path)
     out = []
     for subdir in sorted(base.iterdir()):
@@ -230,7 +250,7 @@ def evaluate_dataset(base_path):
             continue
         category, label = subdir.name.split('__', 1)
         for csv_file in sorted(subdir.glob('*.csv')):
-            a = analyze_restaurant(csv_file)
+            a = analyze_restaurant(csv_file, window=window)
             if a:
                 out.append({
                     'restaurant': csv_file.stem,
@@ -350,12 +370,15 @@ def sample_for_llm(results, best_threshold, per_store=8):
 # ─── main ───────────────────────────────────────────────────
 
 def main():
-    if len(sys.argv) < 2:
-        print('用法: python3 eval/evaluate_v2.py <restaurant_data 路徑>')
-        sys.exit(1)
+    import argparse
+    parser = argparse.ArgumentParser(description='TrueRating QA 進階評估腳本 v2')
+    parser.add_argument('base_path', help='restaurant_data 路徑')
+    parser.add_argument('--window', type=int, default=DEFAULT_EVAL_WINDOW,
+                        help=f'每家店只取最新 N 則評論 (預設 {DEFAULT_EVAL_WINDOW})')
+    args = parser.parse_args()
 
-    base = sys.argv[1]
-    results = evaluate_dataset(base)
+    base = args.base_path
+    results = evaluate_dataset(base, window=args.window)
     if not results:
         print(f'錯誤:在 {base} 找不到資料。')
         sys.exit(1)

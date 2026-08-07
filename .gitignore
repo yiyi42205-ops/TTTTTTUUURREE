@@ -3,7 +3,7 @@ chrome_auth_data/
 review_scraper/chrome_auth_data
 review_scraper/node_modules
 review_scraper/venv
-review_scraper/__pycache__
+__pycache__/
 .DS_Store
 .vercel
 
