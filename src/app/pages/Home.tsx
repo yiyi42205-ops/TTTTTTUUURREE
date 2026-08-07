@@ -1,9 +1,17 @@
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { Shield, Star, AlertTriangle, ArrowRight, Search, FileText, Sparkles, CheckCircle, Clock } from 'lucide-react';
+import { useEffect } from 'react';
 
 export function Home() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    if (isPWA) {
+      navigate('/analyzer', { replace: true });
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-[#f5f1e8] font-sans selection:bg-[#6b8e7f]/20">

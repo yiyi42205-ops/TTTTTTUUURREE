@@ -8,6 +8,7 @@ export function Analyzer() {
   const navigate = useNavigate();
   const [urls, setUrls] = useState<string[]>(['', '', '']);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isPWA, setIsPWA] = useState(false);
   
   // Suggestion Dropdown states for each slot
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
@@ -20,6 +21,48 @@ export function Analyzer() {
   const [maxReviews, setMaxReviews] = useState(50);
   const [scrapeLoadingStep, setScrapeLoadingStep] = useState('');
   const [scrapeError, setScrapeError] = useState('');
+
+  // Detect PWA mode on mount
+  useEffect(() => {
+    const checkPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    setIsPWA(checkPWA);
+  }, []);
+
+  // Clipboard Auto-paste for Google Maps URLs in PWA mode
+  useEffect(() => {
+    const checkClipboard = async () => {
+      const checkPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+      if (!checkPWA) return;
+
+      try {
+        const text = await navigator.clipboard.readText();
+        const trimmed = (text || '').trim();
+        const isGoogleMapsUrl = trimmed.startsWith('http://') || 
+                               trimmed.startsWith('https://') || 
+                               trimmed.includes('google.com/maps') || 
+                               trimmed.includes('maps.app.goo.gl') || 
+                               trimmed.includes('/maps/');
+        
+        if (isGoogleMapsUrl) {
+          if (scrapeUrls.includes(trimmed)) return;
+
+          if (confirm(`偵測到您的剪貼簿有 Google Maps 連結，是否自動填入並切換至即時爬網？\n\n連結：${trimmed}`)) {
+            const newScrapeUrls = [...scrapeUrls];
+            newScrapeUrls[0] = trimmed;
+            setScrapeUrls(newScrapeUrls);
+            setActiveTab('scraper');
+          }
+        }
+      } catch (err) {
+        console.warn('Clipboard read permission denied or not supported:', err);
+      }
+    };
+
+    checkClipboard();
+
+    window.addEventListener('focus', checkClipboard);
+    return () => window.removeEventListener('focus', checkClipboard);
+  }, [scrapeUrls]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -304,15 +347,17 @@ export function Analyzer() {
             疑騙真星 <span className="text-[#6b8e7f] font-sans font-bold text-sm bg-white border border-[#d4c5b0]/60 px-1.5 py-0.5 rounded-md ml-1">TrueRating</span>
           </span>
         </div>
-        <motion.button
-          onClick={() => navigate('/')}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-1.5 bg-white px-4 py-1.5 rounded-full shadow-xs border border-[#d4c5b0] text-xs font-bold text-[#4a5d52] cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4 text-[#6b8e7f]" />
-          返回首頁
-        </motion.button>
+        {!isPWA && (
+          <motion.button
+            onClick={() => navigate('/')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-1.5 bg-white px-4 py-1.5 rounded-full shadow-xs border border-[#d4c5b0] text-xs font-bold text-[#4a5d52] cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#6b8e7f]" />
+            返回首頁
+          </motion.button>
+        )}
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
