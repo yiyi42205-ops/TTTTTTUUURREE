@@ -36,15 +36,15 @@ export function Layout() {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-[#f5f1e8] font-sans overflow-hidden">
+    <div className="flex flex-col h-[100dvh] bg-[#f5f1e8] font-sans overflow-hidden">
       {/* Content Viewport */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-y-auto pb-4">
         <Outlet />
       </div>
 
       {/* Fixed Bottom Navigation (Mobile PWA Tab Bar) */}
       {isPWA && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#f5f1e8]/90 backdrop-blur-md border-t-3 border-[#4a5d52] px-4 py-2 pb-safe flex items-center justify-around shadow-[0_-4px_0_0_rgba(74,93,82,0.05)]">
+        <nav className="bg-[#f5f1e8]/95 border-t-3 border-[#4a5d52] px-4 py-2 pb-safe flex items-center justify-around shadow-[0_-4px_0_0_rgba(74,93,82,0.05)] shrink-0">
           {tabs.map((tab) => {
             const isActive = location.pathname === tab.path;
             const Icon = tab.icon;
