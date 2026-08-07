@@ -363,18 +363,7 @@ export function Analyzer() {
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Info Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/95 backdrop-blur-xs rounded-2xl p-4.5 mb-8 shadow-xs border border-[#e8c547]/40 flex items-start gap-3.5"
-        >
-          <Info className="w-5 h-5 text-[#e8c547] shrink-0 mt-0.5" />
-          <div className="text-xs md:text-sm text-[#4a5d52] leading-relaxed">
-            <span className="font-extrabold text-[#8b7534] bg-[#e8c547]/20 px-1.5 py-0.5 rounded mr-1">測試數據庫已加載</span>
-            系統內建拉麵、手搖飲、健康餐等 18 間店家真實歷史評論。您可以直接在對比欄位搜尋，或從下方推薦庫快速加載店家進行多店「濾水」對照！
-          </div>
-        </motion.div>
+
 
         {/* Main Analysis Dashboard Box */}
         <div className="relative w-full max-w-3xl mx-auto mb-8">
