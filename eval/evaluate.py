@@ -12,12 +12,12 @@ TrueRating QA 評估腳本
 
 預期資料夾結構:
     restaurant_data/
-    ├── 拉麵__有洗/
+    ├── 餐廳__有洗/
     │   ├── 店A.csv
     │   └── 店B.csv
-    ├── 拉麵__沒洗/
+    ├── 餐廳__沒洗/
     │   └── ...
-    ├── 手搖__有洗/
+    ├── 飲料店__有洗/
     └── ...
 
 CSV 欄位:Username, Stars, Time, RawTime, Text, Images
@@ -329,7 +329,7 @@ def main():
 
     if not results:
         print(f'錯誤:在 {base} 找不到資料。')
-        print('預期結構:子資料夾命名為「類別__標籤」(如 拉麵__有洗),內含 CSV 檔。')
+        print('預期結構:子資料夾命名為「類別__標籤」(如 餐廳__有洗),內含 CSV 檔。')
         sys.exit(1)
 
     cm = confusion_matrix(results)

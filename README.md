@@ -128,12 +128,10 @@ Google-Map-TrueRating/
 ├── src/                    前端原始碼 (React + TypeScript)
 ├── review_scraper/         評論爬蟲與後端 (Python，Flask + Apify/Playwright)
 ├── restaurant_data/        標注資料集 (CSV,依類別與洗評狀態分層)
-│   ├── 拉麵__有洗/
-│   ├── 拉麵__沒洗/
-│   ├── 手搖__有洗/
-│   ├── 手搖__沒洗/
-│   ├── 便當__有洗/
-│   └── 便當__沒洗/
+│   ├── 餐廳__有洗/
+│   ├── 餐廳__沒洗/
+│   ├── 飲料店__有洗/
+│   └── 飲料店__沒洗/
 ├── docs/                   專案文件
 │   ├── TRUE_RATING_LOGIC.md  判斷邏輯與數學公式說明
 │   ├── HANDOFF.md            期末版本改動交接

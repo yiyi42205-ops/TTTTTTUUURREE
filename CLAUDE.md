@@ -65,7 +65,7 @@ Other backend files:
 - `review_scraper/cache_store.py` — caches scraped reviews to avoid redundant Apify calls; bypass with `?force=true`.
 
 ### Data (`restaurant_data/`, `gemini_prompts/`)
-- `restaurant_data/` holds 18 hand-labeled CSVs organized as `<類別>__<有洗|沒洗>/` (category, e.g. 拉麵/手搖/便當, crossed with washed/clean). These back both the frontend demo dataset and the offline `eval/*.py` scripts.
+- `restaurant_data/` holds 18 hand-labeled CSVs organized as `<類別>__<有洗|沒洗>/` (category, e.g. 餐廳/飲料店/觀光店/連鎖店, crossed with washed/clean). These back both the frontend demo dataset and the offline `eval/*.py` scripts.
 - `gemini_prompts/*.txt` are pre-generated prompts (output of `eval/sample_fp.py`) meant for manual copy-paste into the Gemini web UI — not something called programmatically.
 
 ### Docs (`docs/`)
