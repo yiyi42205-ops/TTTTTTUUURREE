@@ -77,6 +77,8 @@ def scrape_via_apify(url: str, max_reviews: int) -> list:
         print('ERROR: APIFY_TOKEN environment variable not set.')
         sys.exit(1)
 
+    from datetime import timedelta
+
     client = ApifyClient(token)
     run = client.actor('compass/Google-Maps-Reviews-Scraper').call(
         run_input={
@@ -85,13 +87,13 @@ def scrape_via_apify(url: str, max_reviews: int) -> list:
             'reviewsSort': 'newest',
             'language': 'zh-TW',
         },
-        timeout_secs=300,
+        timeout=timedelta(seconds=300),
     )
 
-    if run.get('status') != 'SUCCEEDED':
-        raise RuntimeError(f"Apify run failed: {run.get('status')}")
+    if not run or run.status != 'SUCCEEDED':
+        raise RuntimeError(f"Apify run failed: {run.status if run else 'no response'}")
 
-    dataset_id = run.get('defaultDatasetId')
+    dataset_id = run.default_dataset_id
     if not dataset_id:
         raise RuntimeError('No dataset ID returned')
 

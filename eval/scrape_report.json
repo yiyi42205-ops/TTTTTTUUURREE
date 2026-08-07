@@ -1,0 +1,157 @@
+{
+  "results": [
+    {
+      "name": "詹記",
+      "category": "餐廳",
+      "label": "沒洗",
+      "total": 300,
+      "no_text": 90,
+      "social_mentions": 12,
+      "path": "restaurant_data/餐廳__沒洗/詹記.csv"
+    },
+    {
+      "name": "池先生",
+      "category": "餐廳",
+      "label": "沒洗",
+      "total": 300,
+      "no_text": 71,
+      "social_mentions": 22,
+      "path": "restaurant_data/餐廳__沒洗/池先生.csv"
+    },
+    {
+      "name": "藍家割包",
+      "category": "觀光客店",
+      "label": "沒洗",
+      "total": 300,
+      "no_text": 73,
+      "social_mentions": 16,
+      "path": "restaurant_data/觀光客店__沒洗/藍家割包.csv"
+    },
+    {
+      "name": "Yoyo韓式飯捲",
+      "category": "餐廳",
+      "label": "沒洗",
+      "total": 300,
+      "no_text": 39,
+      "social_mentions": 31,
+      "path": "restaurant_data/餐廳__沒洗/Yoyo韓式飯捲.csv"
+    },
+    {
+      "name": "Rice & Roux",
+      "category": "餐廳",
+      "label": "沒洗",
+      "total": 116,
+      "no_text": 14,
+      "social_mentions": 6,
+      "path": "restaurant_data/餐廳__沒洗/Rice & Roux.csv"
+    },
+    {
+      "name": "高記-信義小館",
+      "category": "餐廳",
+      "label": "有洗",
+      "total": 300,
+      "no_text": 58,
+      "social_mentions": 33,
+      "path": "restaurant_data/餐廳__有洗/高記-信義小館.csv"
+    },
+    {
+      "name": "立馬吃一鍋 仁愛店",
+      "category": "餐廳",
+      "label": "有洗",
+      "total": 300,
+      "no_text": 48,
+      "social_mentions": 44,
+      "path": "restaurant_data/餐廳__有洗/立馬吃一鍋 仁愛店.csv"
+    },
+    {
+      "name": "燒肉政宗",
+      "category": "餐廳",
+      "label": "有洗",
+      "total": 300,
+      "no_text": 63,
+      "social_mentions": 18,
+      "path": "restaurant_data/餐廳__有洗/燒肉政宗.csv"
+    },
+    {
+      "name": "麥當勞-台北新生餐廳",
+      "category": "連鎖店",
+      "label": "沒洗",
+      "total": 300,
+      "no_text": 137,
+      "social_mentions": 2,
+      "path": "restaurant_data/連鎖店__沒洗/麥當勞-台北新生餐廳.csv"
+    },
+    {
+      "name": "青山青茶",
+      "category": "飲料店",
+      "label": "有洗",
+      "total": 300,
+      "no_text": 160,
+      "social_mentions": 4,
+      "path": "restaurant_data/飲料店__有洗/青山青茶.csv"
+    },
+    {
+      "name": "龜記茗品 公館店",
+      "category": "飲料店",
+      "label": "沒洗",
+      "total": 300,
+      "no_text": 44,
+      "social_mentions": 14,
+      "path": "restaurant_data/飲料店__沒洗/龜記茗品 公館店.csv"
+    },
+    {
+      "name": "小王煮瓜",
+      "category": "觀光客店",
+      "label": "沒洗",
+      "total": 300,
+      "no_text": 90,
+      "social_mentions": 22,
+      "path": "restaurant_data/觀光客店__沒洗/小王煮瓜.csv"
+    },
+    {
+      "name": "韓國時間",
+      "category": "餐廳",
+      "label": "沒洗",
+      "total": 300,
+      "no_text": 76,
+      "social_mentions": 9,
+      "path": "restaurant_data/餐廳__沒洗/韓國時間.csv"
+    },
+    {
+      "name": "芋芋甜點舖",
+      "category": "餐廳",
+      "label": "沒洗",
+      "total": 300,
+      "no_text": 61,
+      "social_mentions": 13,
+      "path": "restaurant_data/餐廳__沒洗/芋芋甜點舖.csv"
+    }
+  ],
+  "failures": [
+    {
+      "name": "老哥雞肉飯乾拌麵",
+      "url": "https://maps.app.goo.gl/iztbntTgKYDeEqAp6",
+      "error": "Monthly usage hard limit exceeded. Please upgrade your subscription or contact support@apify.com"
+    },
+    {
+      "name": "格芮潘義式創意廚房",
+      "url": "https://maps.app.goo.gl/SxZwW1GGUBVGFi1D6",
+      "error": "Monthly usage hard limit exceeded. Please upgrade your subscription or contact support@apify.com"
+    },
+    {
+      "name": "女九餐廳",
+      "url": "https://share.google/q1Gk3mMbFBVyLPDqf",
+      "error": "Monthly usage hard limit exceeded. Please upgrade your subscription or contact support@apify.com"
+    },
+    {
+      "name": "活大餐廳",
+      "url": "https://share.google/4WAt3vInFTWFha9Iu",
+      "error": "Monthly usage hard limit exceeded"
+    },
+    {
+      "name": "嘎逼GABI COFFEE-公館店",
+      "url": "https://share.google/aru0kTHTVhNE8M3I2",
+      "error": "Monthly usage hard limit exceeded"
+    }
+  ]
+}
