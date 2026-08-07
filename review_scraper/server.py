@@ -68,7 +68,13 @@ def scrape():
         logger.error(f"Scrape request from {ip} failed validation: Missing required field 'url'")
         return jsonify({"error": "Missing required field: url"}), 400
     
-    url = resolve_google_share_url(url)
+    url = url.strip()
+    if not (url.startswith("http://") or url.startswith("https://")):
+        from urllib.parse import quote
+        url = f"https://www.google.com/maps/search/{quote(url)}"
+        logger.info(f"Converted text query to Google Maps search URL: {url}")
+    else:
+        url = resolve_google_share_url(url)
     
     max_reviews = data.get("maxReviews") or 50
     try:

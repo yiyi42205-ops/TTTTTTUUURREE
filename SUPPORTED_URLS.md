@@ -39,4 +39,4 @@ If a URL is not provided, the scraper will fall back to search.
 
 * **"Business Name / Search Query"**
   * *Example:* `蘇草salvia`
-  * *Status:* The scraper will perform a search on Google Maps for the query and retrieve reviews for the best matching location.
+  * *Status:* **Supported via normalization.** The backend automatically wraps the plain text query in a valid Google Maps search URL (`https://www.google.com/maps/search/<query>`), which is natively supported and executed by Apify. This completely removes the reliance on Playwright fallback for plain text inputs.
