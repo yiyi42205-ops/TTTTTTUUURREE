@@ -913,10 +913,21 @@ export function Results() {
         </div>
 
         {/* Swipe Viewport */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {activeSlide === 0 && renderPwaDashboard(result)}
-          {activeSlide === 1 && renderPwaAnomalies(result)}
-          {activeSlide === 2 && renderPwaReviews(result, activeStoreIdx)}
+        <div className="flex-1 overflow-x-hidden p-4 relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSlide}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.15, ease: 'easeInOut' }}
+              className="w-full h-full"
+            >
+              {activeSlide === 0 && renderPwaDashboard(result)}
+              {activeSlide === 1 && renderPwaAnomalies(result)}
+              {activeSlide === 2 && renderPwaReviews(result, activeStoreIdx)}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     );
