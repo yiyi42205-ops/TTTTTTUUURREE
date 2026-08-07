@@ -46,7 +46,9 @@ export function Results() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   useEffect(() => {
-    const checkPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    const checkPWA = window.matchMedia('(display-mode: standalone)').matches 
+                  || (window.navigator as any).standalone === true
+                  || window.matchMedia('(max-width: 767px)').matches;
     setIsPWA(checkPWA);
   }, []);
 

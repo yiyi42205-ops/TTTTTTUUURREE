@@ -24,14 +24,18 @@ export function Analyzer() {
 
   // Detect PWA mode on mount
   useEffect(() => {
-    const checkPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    const checkPWA = window.matchMedia('(display-mode: standalone)').matches 
+                  || (window.navigator as any).standalone === true
+                  || window.matchMedia('(max-width: 767px)').matches;
     setIsPWA(checkPWA);
   }, []);
 
   // Clipboard Auto-paste for Google Maps URLs in PWA mode
   useEffect(() => {
     const checkClipboard = async () => {
-      const checkPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+      const checkPWA = window.matchMedia('(display-mode: standalone)').matches 
+                    || (window.navigator as any).standalone === true
+                    || window.matchMedia('(max-width: 767px)').matches;
       if (!checkPWA) return;
 
       try {

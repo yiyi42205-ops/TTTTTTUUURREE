@@ -8,7 +8,9 @@ export function Layout() {
   const [isPWA, setIsPWA] = useState(false);
 
   useEffect(() => {
-    const checkPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    const checkPWA = window.matchMedia('(display-mode: standalone)').matches 
+                  || (window.navigator as any).standalone === true
+                  || window.matchMedia('(max-width: 767px)').matches;
     setIsPWA(checkPWA);
   }, []);
 

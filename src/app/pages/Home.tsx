@@ -7,7 +7,9 @@ export function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches 
+               || (window.navigator as any).standalone === true
+               || window.matchMedia('(max-width: 767px)').matches;
     if (isPWA) {
       navigate('/analyzer', { replace: true });
     }
