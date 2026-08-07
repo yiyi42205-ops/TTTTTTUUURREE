@@ -410,19 +410,7 @@ export function Analyzer() {
 
             {activeTab === 'preset' ? (
               <>
-                {/* Status Bar */}
-                <div className="bg-[#f5f1e8]/70 rounded-2xl p-3.5 mb-6 border border-[#e8dcc8] flex items-center justify-between text-xs font-bold">
-                  <div className="flex items-center gap-2 text-[#6b8e7f]">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6b8e7f] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6b8e7f]"></span>
-                    </span>
-                    <span>就緒，請至少添加 1 間店家進行對照</span>
-                  </div>
-                  <span className="text-[#4a5d52] bg-white px-3 py-1 rounded-full border border-[#d4c5b0]/60">
-                    已選 {matchedCount} / 3 間
-                  </span>
-                </div>
+
 
                 {/* URL Input Slots */}
                 <div className="space-y-4 mb-8 relative" ref={dropdownRef}>
@@ -560,18 +548,7 @@ export function Analyzer() {
               </>
             ) : (
               <div className="space-y-4">
-                <div className="bg-[#f5f1e8]/70 rounded-2xl p-3.5 border border-[#e8dcc8] flex items-center justify-between text-xs font-bold">
-                  <div className="flex items-center gap-2 text-[#6b8e7f]">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e8c547] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#e8c547]"></span>
-                    </span>
-                    <span>即時爬蟲就緒，請至少提供 1 間商家網址</span>
-                  </div>
-                  <span className="text-[#4a5d52] bg-white px-3 py-1 rounded-full border border-[#d4c5b0]/60 font-bold whitespace-nowrap">
-                    已選 {filledScrapeCount} / 3 間
-                  </span>
-                </div>
+
 
                 {scrapeError && (
                   <div className="p-3.5 bg-[#fde8e8] border-2 border-[#e53e3e] text-[#9b2c2c] rounded-2xl flex items-start gap-2.5">
