@@ -8,8 +8,7 @@ export function Home() {
 
   useEffect(() => {
     const isPWA = window.matchMedia('(display-mode: standalone)').matches 
-               || (window.navigator as any).standalone === true
-               || window.matchMedia('(max-width: 767px)').matches;
+               || (window.navigator as any).standalone === true;
     if (isPWA) {
       navigate('/analyzer', { replace: true });
     }

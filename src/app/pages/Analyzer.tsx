@@ -25,8 +25,7 @@ export function Analyzer() {
   // Detect PWA mode on mount
   useEffect(() => {
     const checkPWA = window.matchMedia('(display-mode: standalone)').matches 
-                  || (window.navigator as any).standalone === true
-                  || window.matchMedia('(max-width: 767px)').matches;
+                  || (window.navigator as any).standalone === true;
     setIsPWA(checkPWA);
   }, []);
 
@@ -34,8 +33,7 @@ export function Analyzer() {
   useEffect(() => {
     const checkClipboard = async () => {
       const checkPWA = window.matchMedia('(display-mode: standalone)').matches 
-                    || (window.navigator as any).standalone === true
-                    || window.matchMedia('(max-width: 767px)').matches;
+                    || (window.navigator as any).standalone === true;
       if (!checkPWA) return;
 
       try {
