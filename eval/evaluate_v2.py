@@ -31,30 +31,14 @@ TrueRating QA 進階評估腳本 v2 — 支援參數掃描
 import argparse
 import csv
 import json
+import math
 import os
+import re
 import sys
-from dataclasses import asdict
+from collections import defaultdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, date
 from pathlib import Path
-
-# Allow importing from review_scraper/
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'review_scraper'))
-
-from rule_engine import (
-    RuleConfig,
-    has_bribe,
-    get_ngram,
-    jaccard,
-    detect_templates,
-    detect_similarity_signals,
-    detect_hot_term_signals,
-    detect_nearby_long_review_counts,
-    detect_spike_months,
-    detect_low_info_and_escalated,
-    is_generic_short_review,
-    _extract_candidate_terms,
-    _parse_timestamp,
-)
 
 # Guard: if the frontend audit pipeline is being used for evaluation, it must
 # run in "evaluate" mode (VITE_AUDIT_MODE=evaluate) so that all ambiguous
@@ -72,8 +56,39 @@ if _audit_mode == "production":
 
 TODAY = date.today()
 
+# ─── Stage 1 規則(摘自 TRUE_RATING_LOGIC.md)───────────────
+NON_SEND_KEYWORDS = ['打卡', '活動', '五星', '五顆星', '好評']
+SEND_KEYWORDS = ['評論送', '打卡送', '好評送', '免費送', '送小菜', '送起司球',
+                 '送飲料', '送肉', '送單點', '送麻糬', '送奶酪']
+
+# Mirrors auditEngine.ts's EMPTY_WORDS / low_info logic, so this offline
+# evaluator's washed_ratio stays behaviorally consistent with the live Stage 1
+# engine: a short generic review is low-information, not washing evidence by
+# itself, unless it co-occurs with a spike period or high cross-review
+# similarity (see detect_low_info_and_escalated below).
+EMPTY_WORDS = {
+    '讚', '超讚', '好吃', '推', '棒', '美味', '讚的', '讚啦', '很讚', '推推',
+    '讚喔', '好喝', '讚讚', '不錯', '好讚', '好店', '優', '優質', '讚哩',
+    '讚啊', '極推', '大推', '好食', '真讚', '好美味',
+}
+REPEATING_PRAISE_RE = re.compile(r'^(讚+|推+|棒+|好+|讚+推+)$')
+STRIP_PUNCT_RE = re.compile(r'[\s!！~～.。?？,，、]')
+
 
 # ─── 參數設定 ───────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class RuleConfig:
+    """規則引擎的所有門檻值集中於此一個物件，供參數掃描逐組覆寫。
+    欄位對應 auditEngine.ts 裡的同名常數，兩邊的預設值刻意保持一致。"""
+    label: str = 'default'
+    jaccard_threshold: float = 0.75            # 硬性重複判定用的 2-gram Jaccard 門檻
+    min_template_chars: int = 6                # 短於此字數的評論不參與相似度比對
+    similarity_ngram: int = 3                  # 軟性結構相似度訊號用的 n-gram 長度
+    similarity_threshold: float = 0.45         # 軟性結構相似度訊號門檻 (similarCount)
+    low_info_escalation_similar_count: int = 2  # 短評升級為洗評所需的 similarCount
+    wash_verdict_threshold: float = 0.03       # 店家層級 washed_ratio 門檻(有洗/沒洗)
+
 
 # 預設要掃描的參數組合清單 —— 可用 --sweep-config 換成自訂清單
 DEFAULT_SWEEP = [
@@ -97,31 +112,246 @@ def load_sweep_configs(path: str) -> list:
     return [RuleConfig(**item) for item in raw]
 
 
-def _normalize_csv_row(row):
-    """Convert PascalCase CSV row to lowercase keys expected by rule_engine.
+# ─── 規則引擎 ───────────────────────────────────────────────
 
-    CSV columns: Username, Stars, Time, Text, Label, ...
-    rule_engine expects: username, stars, time, text, ...
-    Stars is converted from string to int.
-    The original row keys are preserved alongside lowercase ones for
-    evaluation-specific code that still needs them (e.g. Label).
-    """
-    return {
-        'username': row.get('Username', ''),
-        'stars': int(row.get('Stars', 0) or 0),
-        'time': row.get('Time', ''),
-        'text': row.get('Text', '') or '',
-        # Preserve original keys for evaluation access
-        '_label': row.get('Label', ''),
-        '_raw': row,
-    }
+def has_bribe(text):
+    if not text:
+        return False
+    return any(kw in text for kw in NON_SEND_KEYWORDS + SEND_KEYWORDS)
+
+
+def get_ngram(text, n=2):
+    text = re.sub(r'\s+', '', text or '')
+    return set(text[i:i + n] for i in range(len(text) - n + 1)) if len(text) >= n else set()
+
+
+def jaccard(a, b):
+    if not a or not b:
+        return 0
+    return len(a & b) / len(a | b)
+
+
+def detect_templates(reviews, config: RuleConfig):
+    grams = []
+    for r in reviews:
+        text = r.get('Text', '') or ''
+        cleaned = re.sub(r'\s+', '', text)
+        grams.append(get_ngram(text, 2) if len(cleaned) > config.min_template_chars else None)
+    flags = [False] * len(reviews)
+    for i in range(len(reviews)):
+        if grams[i] is None:
+            continue
+        for j in range(i + 1, len(reviews)):
+            if grams[j] is None:
+                continue
+            if jaccard(grams[i], grams[j]) > config.jaccard_threshold:
+                flags[i] = flags[j] = True
+    return flags
+
+
+def detect_similarity_signals(reviews, config: RuleConfig):
+    """Mirrors auditEngine.ts's computeSimilaritySignals soft signal (n-gram
+    Jaccard, configurable threshold) — returns (max_similarity, similar_count)
+    per review. Purely a diagnostic/escalation signal here, not a standalone
+    washed criterion by itself."""
+    grams = []
+    for r in reviews:
+        text = r.get('Text', '') or ''
+        cleaned = re.sub(r'\s+', '', text)
+        grams.append(get_ngram(text, config.similarity_ngram) if len(cleaned) > config.min_template_chars else None)
+
+    max_similarity = [0.0] * len(reviews)
+    similar_count = [0] * len(reviews)
+    for i in range(len(reviews)):
+        if grams[i] is None:
+            continue
+        for j in range(i + 1, len(reviews)):
+            if grams[j] is None:
+                continue
+            sim = jaccard(grams[i], grams[j])
+            if sim > max_similarity[i]:
+                max_similarity[i] = sim
+            if sim > max_similarity[j]:
+                max_similarity[j] = sim
+            if sim >= config.similarity_threshold:
+                similar_count[i] += 1
+                similar_count[j] += 1
+    return max_similarity, similar_count
+
+
+# Candidate "hot term" phrase lengths — mirrors auditEngine.ts's
+# HOT_TERM_MIN_LENGTH/HOT_TERM_MAX_LENGTH/HOT_TERM_MIN_REVIEW_COUNT/
+# HOT_TERM_MIN_COVERAGE_RATIO exactly (values must stay in sync between the
+# two implementations — see the cross-language fixture test).
+HOT_TERM_MIN_LENGTH = 4
+HOT_TERM_MAX_LENGTH = 8
+HOT_TERM_MIN_REVIEW_COUNT = 3
+HOT_TERM_MIN_COVERAGE_RATIO = 0.2
+
+
+def _extract_candidate_terms(text):
+    cleaned = re.sub(r'\s+', '', text or '')
+    terms = set()
+    for length in range(HOT_TERM_MIN_LENGTH, HOT_TERM_MAX_LENGTH + 1):
+        for i in range(0, len(cleaned) - length + 1):
+            terms.add(cleaned[i:i + length])
+    return terms
+
+
+def detect_hot_term_signals(reviews):
+    """Mirrors auditEngine.ts's computeHotTermSignals. Identifies phrases
+    (candidate dish/product names) that recur across a disproportionate share
+    of the store's 5-star reviews, then reports per review how many of those
+    "hot terms" it hits and the highest coverage ratio among them. See that
+    function's docstring for the full rationale (the n-gram-overlap collapse
+    to maximal terms, etc.) — this is a line-for-line port, not a reinterpretation.
+    Returns (hot_term_counts, hot_term_max_ratios), each a list aligned to `reviews`."""
+    five_star_reviews = [r for r in reviews if r.get('Stars') == '5' and (r.get('Text') or '').strip()]
+    total_five_star = len(five_star_reviews)
+
+    if total_five_star == 0:
+        return [0] * len(reviews), [0.0] * len(reviews)
+
+    term_review_count = defaultdict(int)
+    for r in five_star_reviews:
+        for term in _extract_candidate_terms(r.get('Text', '')):
+            term_review_count[term] += 1
+
+    min_count = max(HOT_TERM_MIN_REVIEW_COUNT, math.ceil(total_five_star * HOT_TERM_MIN_COVERAGE_RATIO))
+    candidate_terms = [term for term, count in term_review_count.items() if count >= min_count]
+
+    # Collapse to maximal terms: drop any candidate that's a substring of a
+    # longer candidate also in the set (the longer one already implies it).
+    hot_terms = {}
+    for term in candidate_terms:
+        is_substring_of_another = any(
+            other != term and len(other) > len(term) and term in other
+            for other in candidate_terms
+        )
+        if not is_substring_of_another:
+            hot_terms[term] = term_review_count[term] / total_five_star
+
+    hot_term_counts = []
+    hot_term_max_ratios = []
+    for r in reviews:
+        text = (r.get('Text') or '').strip()
+        if r.get('Stars') != '5' or not text:
+            hot_term_counts.append(0)
+            hot_term_max_ratios.append(0.0)
+            continue
+        terms = _extract_candidate_terms(r.get('Text', ''))
+        count = 0
+        max_ratio = 0.0
+        for term, ratio in hot_terms.items():
+            if term in terms:
+                count += 1
+                if ratio > max_ratio:
+                    max_ratio = ratio
+        hot_term_counts.append(count)
+        hot_term_max_ratios.append(round(max_ratio, 2))
+    return hot_term_counts, hot_term_max_ratios
+
+
+# Mirrors auditEngine.ts's NEARBY_WINDOW_MS/LONG_REVIEW_MIN_LENGTH.
+NEARBY_WINDOW_SECONDS = 30 * 60
+LONG_REVIEW_MIN_LENGTH = 50
+
+
+def _parse_timestamp(time_str):
+    """Best-effort ISO-ish datetime parse, mirroring the leniency of
+    JavaScript's `new Date(str)` — handles both plain dates (YYYY-MM-DD,
+    parsed as midnight) and full ISO datetimes (with optional 'Z' suffix)."""
+    if not time_str:
+        return None
+    try:
+        return datetime.fromisoformat(time_str.replace('Z', '+00:00')).timestamp()
+    except (ValueError, TypeError):
+        return None
+
+
+def detect_nearby_long_review_counts(reviews):
+    """Mirrors auditEngine.ts's computeNearbyLongReviewCounts: for each
+    review, counts other reviews in the store that are "long" (>50 chars) and
+    posted within 30 minutes of it. Needs minute-level timestamp precision to
+    be meaningful — this dataset's Time field is normally date-only (day-
+    level, from the Playwright scraping path), so same-day reviews are
+    trivially "nearby" in that case, mirroring the exact same known caveat
+    documented in the TypeScript version."""
+    timestamps = [_parse_timestamp(r.get('Time', '')) for r in reviews]
+    is_long = [len((r.get('Text') or '').strip()) > LONG_REVIEW_MIN_LENGTH for r in reviews]
+
+    counts = []
+    for i, t in enumerate(timestamps):
+        if t is None:
+            counts.append(0)
+            continue
+        count = 0
+        for j, tj in enumerate(timestamps):
+            if j == i or not is_long[j] or tj is None:
+                continue
+            if abs(tj - t) <= NEARBY_WINDOW_SECONDS:
+                count += 1
+        counts.append(count)
+    return counts
+
+
+def is_generic_short_review(text, stars):
+    if stars < 4:
+        return False
+    cleaned = STRIP_PUNCT_RE.sub('', text or '')
+    return cleaned in EMPTY_WORDS or bool(REPEATING_PRAISE_RE.match(cleaned))
+
+
+def detect_low_info_and_escalated(reviews, bribe_flags, spike_flags, similar_counts, config: RuleConfig):
+    """Mirrors auditEngine.ts's low_info category. Short, generic, no-incentive
+    reviews are informationally weak rather than washed evidence — UNLESS they
+    also co-occur with a spike period or a high cross-review similarity count,
+    which together indicate deliberate templated posting rather than an
+    authentic (if terse) customer. Returns (low_info_flags, escalated_flags);
+    escalated_flags should be folded into washed_flags, low_info_flags should not."""
+    low_info_flags = []
+    escalated_flags = []
+    for r, bribe, spike, sim_count in zip(reviews, bribe_flags, spike_flags, similar_counts):
+        text = r.get('Text', '') or ''
+        try:
+            stars = int(r.get('Stars') or 0)
+        except ValueError:
+            stars = 0
+
+        if bribe or not is_generic_short_review(text, stars):
+            low_info_flags.append(False)
+            escalated_flags.append(False)
+            continue
+
+        escalated = bool(spike) or sim_count >= config.low_info_escalation_similar_count
+        low_info_flags.append(not escalated)
+        escalated_flags.append(escalated)
+    return low_info_flags, escalated_flags
+
+
+def detect_spike_months(reviews):
+    counts = defaultdict(int)
+    months = []
+    for r in reviews:
+        try:
+            dt = datetime.strptime(r.get('Time', ''), '%Y-%m-%d')
+            mk = dt.strftime('%Y-%m')
+            counts[mk] += 1
+            months.append(mk)
+        except (ValueError, TypeError):
+            months.append(None)
+    if not counts:
+        return [False] * len(reviews), set()
+    avg = sum(counts.values()) / len(counts)
+    spike = {m for m, c in counts.items() if c > avg * 2 and c >= 10}
+    return [(m in spike) if m else False for m in months], spike
 
 
 def _sort_reviews_newest_first(reviews):
-    """Sort reviews by time descending; missing/unparseable dates go last."""
+    """Sort reviews by Time descending; missing/unparseable dates go last."""
     def _parse_date(r):
         try:
-            return datetime.strptime(r.get('time', ''), '%Y-%m-%d')
+            return datetime.strptime(r.get('Time', ''), '%Y-%m-%d')
         except (ValueError, TypeError):
             return datetime.min
     return sorted(reviews, key=_parse_date, reverse=True)
@@ -134,20 +364,17 @@ DEFAULT_EVAL_WINDOW = 100
 
 
 def analyze_restaurant(csv_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW):
-    raw_rows = []
+    reviews = []
     with open(csv_path, encoding='utf-8-sig') as f:
         for row in csv.DictReader(f):
-            raw_rows.append(row)
-    if not raw_rows:
+            reviews.append(row)
+    if not reviews:
         return None
-
-    # Convert PascalCase CSV rows to lowercase keys for rule_engine
-    reviews = [_normalize_csv_row(row) for row in raw_rows]
     reviews = _sort_reviews_newest_first(reviews)
     if window and window > 0:
         reviews = reviews[:window]
 
-    bribe = [has_bribe(r.get('text', '')) for r in reviews]
+    bribe = [has_bribe(r.get('Text', '')) for r in reviews]
     tmpl = detect_templates(reviews, config)
     spike_flags, spike_months = detect_spike_months(reviews)
     max_similarity, similar_counts = detect_similarity_signals(reviews, config)
@@ -286,16 +513,16 @@ def sample_for_llm(results, threshold, per_store=8):
     output = []
     for store in missed:
         five_star = [r for r in store['reviews']
-                     if r.get('stars') == 5 and (r.get('text') or '').strip()]
+                     if r.get('Stars') == '5' and (r.get('Text') or '').strip()]
         sample = []
         for r in five_star:
             try:
-                dt = datetime.strptime(r['time'], '%Y-%m-%d').date()
+                dt = datetime.strptime(r['Time'], '%Y-%m-%d').date()
                 days = (TODAY - dt).days
                 month = dt.strftime('%Y-%m')
-                text = r['text'].strip()
+                text = r['Text'].strip()
                 sample.append({
-                    'username': r.get('username', '?'),
+                    'username': r.get('Username', '?'),
                     'text': text,
                     'stars': 5,
                     'daysElapsed': days,
@@ -342,13 +569,17 @@ def run_llm_sample_mode(base_path, config: RuleConfig, num_stores=3, store_names
     precision/recall。這個模式會產生真實 API 費用與配額消耗，因此僅抽
     {num_stores} 家店（預設 3 家）以控制成本，且必須透過 --llm-sample 明確啟用。
 
-    所有訊號函式（detect_similarity_signals / detect_hot_term_signals /
-    detect_nearby_long_review_counts 等）直接從 rule_engine.py 匯入，
-    與後端 /api/audit-rules 共用同一份實作。
+    maxSimilarity/similarCount/hotTermCount/hotTermMaxRatio/nearbyLongReviewCount
+    都與規則引擎共用同一套 Python mirror 實作（detect_similarity_signals /
+    detect_hot_term_signals / detect_nearby_long_review_counts），與
+    auditEngine.ts 的對應函式以共同 fixture 交叉驗證數值一致。
 
     需要環境變數 GEMINI_API_KEY（可透過專案根目錄的 .env 設定）。
     """
-    repo_root = Path(__file__).resolve().parent.parent
+    repo_root = Path(__file__).resolve().parent
+    scraper_dir = repo_root / 'review_scraper'
+    if str(scraper_dir) not in sys.path:
+        sys.path.insert(0, str(scraper_dir))
 
     import os
     try:
@@ -391,18 +622,18 @@ def run_llm_sample_mode(base_path, config: RuleConfig, num_stores=3, store_names
         ):
             if bribe or tmpl or escalated:
                 continue
-            if r.get('stars') != 5 or not (r.get('text') or '').strip():
+            if r.get('Stars') != '5' or not (r.get('Text') or '').strip():
                 continue
             try:
-                dt = datetime.strptime(r['time'], '%Y-%m-%d').date()
+                dt = datetime.strptime(r['Time'], '%Y-%m-%d').date()
                 days_elapsed = (TODAY - dt).days
                 month = dt.strftime('%Y-%m')
             except (ValueError, KeyError):
                 days_elapsed = 0
                 month = None
             ambiguous.append({
-                'username': r.get('username', '?'),
-                'text': r['text'].strip(),
+                'username': r.get('Username', '?'),
+                'text': r['Text'].strip(),
                 'stars': 5,
                 'daysElapsed': days_elapsed,
                 'isSpikePeriod': month in spike_months if month else False,
