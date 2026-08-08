@@ -107,3 +107,38 @@ def test_audit_splits_100_reviews_into_multiple_batches(client, monkeypatch):
     assert len(seen_batch_sizes) > 1
     assert sum(seen_batch_sizes) == 100
     assert all(size <= 50 for size in seen_batch_sizes)
+
+
+def test_audit_api_key_validation(client, monkeypatch):
+    monkeypatch.setattr(server, "call_gemini_batch", lambda genai_client, store_name, batch: fake_audit_items(batch))
+    reviews = [make_review(0)]
+
+    # 1. Valid API key (starts with AIzaSy and is >= 35 chars)
+    valid_key = "AIzaSy" + "A" * 30
+    resp = client.post(
+        "/api/audit",
+        json={"storeName": "測試", "reviews": reviews},
+        headers={"X-Gemini-API-Key": valid_key}
+    )
+    assert resp.status_code == 200
+
+    # 2. Invalid API key prefix (starts with AIza but not AIzaSy)
+    invalid_prefix = "AIzaXy" + "A" * 30
+    resp = client.post(
+        "/api/audit",
+        json={"storeName": "測試", "reviews": reviews},
+        headers={"X-Gemini-API-Key": invalid_prefix}
+    )
+    assert resp.status_code == 400
+    assert "無效的用戶 API Key 格式" in resp.get_json()["error"]
+
+    # 3. Too short API key
+    too_short = "AIzaSy" + "A" * 20
+    resp = client.post(
+        "/api/audit",
+        json={"storeName": "測試", "reviews": reviews},
+        headers={"X-Gemini-API-Key": too_short}
+    )
+    assert resp.status_code == 400
+    assert "無效的用戶 API Key 格式" in resp.get_json()["error"]
+
