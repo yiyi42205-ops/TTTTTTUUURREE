@@ -29,7 +29,7 @@ Standard PR flow:
 - `.env` (not committed) needs `GEMINI_API_KEY` (required — server.py refuses to start without it) and `APIFY_TOKEN` (optional — falls back to Playwright only if `ENABLE_PLAYWRIGHT_FALLBACK=true`, see Architecture). See `.env.example`.
 - Python offline evaluation scripts live in `eval/` (not a test suite — see below), run with the venv Python from the repo root, e.g. `review_scraper/venv/bin/python eval/evaluate.py restaurant_data`:
   - `eval/evaluate.py` — runs the Stage 1 rule engine over labeled CSVs in `restaurant_data/`, reports precision/recall/F1 against human labels
-  - `eval/evaluate_v2.py` — parameter-sweep evaluator; `--window N` limits to newest N reviews (default 100), `--sweep-config file.json` for a custom combo list, `--llm-sample N` for the opt-in real-Gemini small-sample mode (costs real API quota — not run automatically)
+  - `eval/evaluate_v2.py` — parameter-sweep evaluator; `--window N` limits to newest N reviews (default 100), `--sweep-config file.json` for a custom combo list, `--holdout N` splits N stores into a holdout set (stratified by 有洗/沒洗, deterministic via `--holdout-seed`, or manually via `--holdout-stores`), `--llm-sample N` for the opt-in real-Gemini small-sample mode (costs real API quota — not run automatically)
   - `eval/sample_fp.py` — samples false-positive stores and writes ready-to-paste Gemini prompts into `gemini_prompts/*.txt`
   - `eval/check_data.py` — checks CSV column consistency / `Time` field format across `restaurant_data/`
 
