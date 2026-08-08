@@ -7,6 +7,8 @@ import logging
 import os
 import time
 import traceback
+import urllib.request
+from urllib.parse import urlparse
 
 from normalize import normalize_review
 from gemini_client import make_batches, call_gemini_batch, MAX_CONCURRENT_BATCHES
@@ -41,19 +43,22 @@ def index():
         "message": "Google Maps Scraper Service is running"
     })
 
-import urllib.request
-
 def resolve_google_share_url(url: str) -> str:
-    if "share.google" in url:
-        try:
-            # Follow redirects using HEAD request
-            req = urllib.request.Request(url, method="HEAD")
+    try:
+        parsed = urlparse(url)
+        if parsed.hostname == "share.google":
+            # Follow redirects using HEAD request with a standard browser User-Agent
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"},
+                method="HEAD"
+            )
             with urllib.request.urlopen(req, timeout=5) as response:
                 final_url = response.geturl()
                 logger.info(f"Resolved share.google URL {url} to: {final_url}")
                 return final_url
-        except Exception as e:
-            logger.warning(f"Failed to resolve share.google URL {url}: {e}")
+    except Exception as e:
+        logger.warning(f"Failed to resolve share.google URL {url}: {e}")
     return url
 
 @app.route("/api/scrape", methods=["POST"])
@@ -64,11 +69,14 @@ def scrape():
     
     data = request.get_json() or {}
     url = data.get("url")
-    if not url:
-        logger.error(f"Scrape request from {ip} failed validation: Missing required field 'url'")
-        return jsonify({"error": "Missing required field: url"}), 400
+    if not url or not isinstance(url, str):
+        logger.error(f"Scrape request from {ip} failed validation: Missing or invalid field 'url'")
+        return jsonify({"error": "Missing or invalid field: url (must be a non-empty string)"}), 400
     
     url = url.strip()
+    if len(url) > 2048:
+        logger.error(f"Scrape request from {ip} failed validation: URL length exceeds limit")
+        return jsonify({"error": "URL length exceeds limit of 2048 characters"}), 400
     if not (url.startswith("http://") or url.startswith("https://")):
         from urllib.parse import quote
         url = f"https://www.google.com/maps/search/{quote(url)}"

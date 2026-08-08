@@ -258,3 +258,92 @@ def test_scrape_force_true_bypasses_cache(client, monkeypatch):
     resp = client.post("/api/scrape?force=true", json={"url": url})
     assert resp.get_json()["source"] == "apify"
     assert call_count["n"] == 2
+
+
+# ---- URL Normalization, Redirection & SSRF mitigation tests ----
+
+def test_resolve_google_share_url_valid_redirect(monkeypatch):
+    class FakeResponse:
+        def __init__(self, url):
+            self._url = url
+        def geturl(self):
+            return self._url
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+    urlopen_calls = []
+    def fake_urlopen(req, timeout=5):
+        urlopen_calls.append(req)
+        return FakeResponse("https://www.google.com/maps/place/SomeRestaurant")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    resolved = server.resolve_google_share_url("https://share.google/abc")
+    assert resolved == "https://www.google.com/maps/place/SomeRestaurant"
+    assert len(urlopen_calls) == 1
+    assert urlopen_calls[0].get_full_url() == "https://share.google/abc"
+    assert urlopen_calls[0].method == "HEAD"
+
+
+def test_resolve_google_share_url_ssrf_mitigation(monkeypatch):
+    urlopen_calls = []
+    def fake_urlopen(req, timeout=5):
+        urlopen_calls.append(req)
+        raise RuntimeError("Should not be called")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    # Hostname is evil.com, should bypass resolving and return original URL
+    resolved = server.resolve_google_share_url("http://evil.com/share.google/xyz")
+    assert resolved == "http://evil.com/share.google/xyz"
+    assert len(urlopen_calls) == 0
+
+
+def test_resolve_google_share_url_handles_exceptions(monkeypatch):
+    def fake_urlopen(req, timeout=5):
+        raise ValueError("Network issue")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    # Should catch exception and gracefully fallback to returning the original URL
+    resolved = server.resolve_google_share_url("https://share.google/fail")
+    assert resolved == "https://share.google/fail"
+
+
+def test_scrape_normalizes_plain_text_query(client, monkeypatch):
+    captured_url = []
+    def fake_scrape_via_apify(url, max_reviews=50):
+        captured_url.append(url)
+        return [{"username": "u1", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}]
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape_via_apify)
+
+    # Send plain text query that doesn't start with http/https
+    resp = client.post("/api/scrape", json={"url": "蘇草salvia", "maxReviews": 10})
+    assert resp.status_code == 200
+    assert len(captured_url) == 1
+    # Check that query is normalized to Google Maps Search URL and properly encoded
+    assert captured_url[0] == "https://www.google.com/maps/search/%E8%98%87%E8%8D%89salvia"
+
+
+def test_scrape_rejects_non_string_url(client):
+    # Test with an integer url
+    resp = client.post("/api/scrape", json={"url": 12345})
+    assert resp.status_code == 400
+    assert "must be a non-empty string" in resp.get_json()["error"]
+
+    # Test with a dict url
+    resp = client.post("/api/scrape", json={"url": {"not": "a string"}})
+    assert resp.status_code == 400
+    assert "must be a non-empty string" in resp.get_json()["error"]
+
+
+def test_scrape_rejects_oversized_url(client):
+    oversized_url = "https://www.google.com/maps/place/" + ("A" * 2050)
+    resp = client.post("/api/scrape", json={"url": oversized_url})
+    assert resp.status_code == 400
+    assert "URL length exceeds limit" in resp.get_json()["error"]
+
+
