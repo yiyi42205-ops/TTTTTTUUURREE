@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { RESTAURANTS_DATA } from '../data/restaurantsData';
 import { parseReviews, Review } from '../utils/csvParser';
-import { computeShopStats, aggregateAuditedReviews, mergeStage2Results, computeStage2Confidence, computeSpikeMonths, getReviewTemporalContext, computeSimilaritySignals, computeHotTermSignals, computeNearbyLongReviewCounts, ShopStats, AuditResult } from '../utils/auditEngine';
+import { aggregateAuditedReviews, mergeStage2Results, computeStage2Confidence, ShopStats, AuditResult, SimilaritySignal, HotTermSignal } from '../utils/auditEngine';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
 import { useIsPWA } from '../hooks/useIsPWA';
 
@@ -82,6 +82,14 @@ export function Results() {
   const [inspectSearch, setInspectSearch] = useState<{ [key: number]: string }>({});
   const [inspectFilter, setInspectFilter] = useState<{ [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' }>({});
 
+  // Backend signals from /api/audit-rules, keyed by store ID
+  const [shopSignals, setShopSignals] = useState<{ [storeId: string]: {
+    similarity: SimilaritySignal[];
+    hotTerm: HotTermSignal[];
+    nearbyLongReviewCounts: number[];
+    spikeMonths: string[];
+  } }>({});
+
   const [isAiAuditing, setIsAiAuditing] = useState(false);
   const [aiAuditResults, setAiAuditResults] = useState<{ [storeId: string]: { [username: string]: AuditResult } }>({});
   const [apiError, setApiError] = useState('');
@@ -110,12 +118,12 @@ export function Results() {
   }
   const [pipelineLogs, setPipelineLogs] = useState<PipelineLog[]>([]);
 
-  // 1. Initial Parse and Compute local heuristics
+  // 1. Initial Parse → call backend /api/audit-rules for Stage 1 heuristics
   useEffect(() => {
     if (location.state?.cachedShopResults) {
       const computed = location.state.cachedShopResults as ShopStats[];
       setShopResults(computed);
-      
+
       // Initialize search & filter states
       const initialSearch: { [key: number]: string } = {};
       const initialFilter: { [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' } = {};
@@ -128,34 +136,70 @@ export function Results() {
       return;
     }
 
-    const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[] }>) || [];
+    const runStage1 = async () => {
+      const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[] }>) || [];
 
-    let computed: ShopStats[] = [];
-    if (customShops.length > 0) {
-      computed = customShops.map(shop => {
-        return computeShopStats(shop.name, shop.reviews);
+      let shopsToProcess: { id: string; name: string; reviews: Review[] }[];
+      if (customShops.length > 0) {
+        shopsToProcess = customShops;
+      } else {
+        const activeIds = storeIds.length > 0 ? storeIds : ['ramen_washed_3', 'ramen_clean_2'];
+        shopsToProcess = activeIds.map(id => {
+          const store = RESTAURANTS_DATA.find(r => r.id === id);
+          if (!store) return null;
+          const reviews = parseReviews(store.csvContent);
+          return { id, name: store.name, reviews };
+        }).filter(Boolean) as { id: string; name: string; reviews: Review[] }[];
+      }
+
+      const computed: ShopStats[] = [];
+      const newSignals: typeof shopSignals = {};
+
+      for (const shop of shopsToProcess) {
+        try {
+          const response = await fetch('/api/audit-rules', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reviews: shop.reviews }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Stage 1 API returned ${response.status}`);
+          }
+
+          const data = await response.json();
+          const auditedReviews = data.auditedReviews.map((r: any) => ({
+            username: r.username,
+            stars: typeof r.stars === 'number' ? r.stars : Number(r.stars),
+            time: r.time,
+            text: r.text,
+            images: r.images || [],
+            audit: r.audit as AuditResult,
+          }));
+
+          computed.push(aggregateAuditedReviews(shop.name, auditedReviews));
+          newSignals[shop.id] = data.signals;
+        } catch (e: any) {
+          console.error(`Stage 1 failed for ${shop.name}:`, e);
+          setApiError(e.message || 'Stage 1 規則引擎 API 請求失敗');
+        }
+      }
+
+      setShopResults(computed);
+      setShopSignals(newSignals);
+
+      // Initialize search & filter states
+      const initialSearch: { [key: number]: string } = {};
+      const initialFilter: { [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' } = {};
+      computed.forEach((_, idx) => {
+        initialSearch[idx] = '';
+        initialFilter[idx] = 'all';
       });
-    } else {
-      const activeIds = storeIds.length > 0 ? storeIds : ['ramen_washed_3', 'ramen_clean_2'];
-      computed = activeIds.map(id => {
-        const store = RESTAURANTS_DATA.find(r => r.id === id);
-        if (!store) return null;
-        const reviews = parseReviews(store.csvContent);
-        return computeShopStats(store.name, reviews);
-      }).filter(Boolean) as ShopStats[];
-    }
-    
-    setShopResults(computed);
-    
-    // Initialize search & filter states
-    const initialSearch: { [key: number]: string } = {};
-    const initialFilter: { [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' } = {};
-    computed.forEach((_, idx) => {
-      initialSearch[idx] = '';
-      initialFilter[idx] = 'all';
-    });
-    setInspectSearch(initialSearch);
-    setInspectFilter(initialFilter);
+      setInspectSearch(initialSearch);
+      setInspectFilter(initialFilter);
+    };
+
+    runStage1();
   }, [location.state?.storeIds, location.state?.customShops, location.state?.cachedShopResults]);
 
   // 1.5. Auto-trigger AI Audit on mount once shopResults are computed
@@ -184,14 +228,12 @@ export function Results() {
         const id = storeIds[idx] || `custom_${idx}`;
         const reviews = result.auditedReviews;
 
-        const spikeMonths = computeSpikeMonths(reviews);
-        const getReviewTemporalData = (r: Review) => getReviewTemporalContext(r, spikeMonths, new Date('2026-05-19'));
-
-        // Precomputed cross-review signals, aligned by index to `reviews`, fed
-        // to Gemini as context (not used to auto-decide a verdict here).
-        const similaritySignals = computeSimilaritySignals(reviews);
-        const hotTermSignals = computeHotTermSignals(reviews);
-        const nearbyLongReviewCounts = computeNearbyLongReviewCounts(reviews);
+        // Use precomputed signals from the backend /api/audit-rules response
+        const signals = shopSignals[id];
+        const spikeMonthsSet = new Set(signals?.spikeMonths || []);
+        const similaritySignals = signals?.similarity || [];
+        const hotTermSignals = signals?.hotTerm || [];
+        const nearbyLongReviewCounts = signals?.nearbyLongReviewCounts || [];
 
         // Stage 1 already reached a confident verdict (incentive/template/
         // no_text/low_info) for anything with a non-null issueType — re-litigating
@@ -213,14 +255,12 @@ export function Results() {
           ambiguousReviews = allAmbiguous;
         } else {
           // Stratified sampling: split by isSpikePeriod, proportionally sample
-          const spikePool = allAmbiguous.filter(r => {
-            const { isSpikePeriod } = getReviewTemporalData(r);
-            return isSpikePeriod;
-          });
-          const normalPool = allAmbiguous.filter(r => {
-            const { isSpikePeriod } = getReviewTemporalData(r);
-            return !isSpikePeriod;
-          });
+          const isReviewInSpike = (r: Review & { audit: AuditResult }) => {
+            const month = r.time ? r.time.substring(0, 7) : '';
+            return spikeMonthsSet.has(month);
+          };
+          const spikePool = allAmbiguous.filter(r => isReviewInSpike(r));
+          const normalPool = allAmbiguous.filter(r => !isReviewInSpike(r));
 
           const spikeRatio = spikePool.length / allAmbiguous.length;
           const spikeCount = Math.round(STAGE2_CAP * spikeRatio);
@@ -250,12 +290,21 @@ export function Results() {
         const signalContextByUsername: { [username: string]: { similarCount: number; hotTermMaxRatio: number; nearbyLongReviewCount: number } } = {};
 
         if (stage2Sent > 0) {
+          const now = new Date();
           const reviewsPayload = ambiguousReviews.map(r => {
-            const { isSpikePeriod, daysElapsed } = getReviewTemporalData(r);
+            const month = r.time ? r.time.substring(0, 7) : '';
+            const isSpikePeriod = spikeMonthsSet.has(month);
+            let daysElapsed = 0;
+            if (r.time) {
+              const reviewDate = new Date(r.time);
+              if (!isNaN(reviewDate.getTime())) {
+                daysElapsed = Math.max(0, Math.floor((now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24)));
+              }
+            }
             const idx = reviews.indexOf(r);
-            const { maxSimilarity, similarCount } = similaritySignals[idx];
-            const { hotTermCount, hotTermMaxRatio } = hotTermSignals[idx];
-            const nearbyLongReviewCount = nearbyLongReviewCounts[idx];
+            const { maxSimilarity = 0, similarCount = 0 } = similaritySignals[idx] || {};
+            const { hotTermCount = 0, hotTermMaxRatio = 0 } = hotTermSignals[idx] || {};
+            const nearbyLongReviewCount = nearbyLongReviewCounts[idx] || 0;
             signalContextByUsername[r.username] = { similarCount, hotTermMaxRatio, nearbyLongReviewCount };
             return {
               username: r.username,
