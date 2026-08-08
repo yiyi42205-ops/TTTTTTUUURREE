@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   aggregateAuditedReviews,
   auditReview,
+  mergeStage2Results,
+  computeStage2Confidence,
   computeSimilaritySignals,
   computeHotTermSignals,
   computeNearbyLongReviewCounts,
@@ -275,6 +277,61 @@ describe('computeHotTermSignals', () => {
   });
 });
 
+describe('mergeStage2Results', () => {
+  it('leaves every Stage 1 non-null-issueType verdict completely untouched, even if aiStoreMap has a stray entry for the same username', () => {
+    const stage1Audits: Record<string, AuditResult> = {
+      incentive: { isWashed: true, reason: 'stage1-incentive', confidenceScore: 100, issueType: 'incentive' },
+      template: { isWashed: true, reason: 'stage1-template', confidenceScore: 90, issueType: 'template' },
+      no_text: { isWashed: false, reason: 'stage1-no_text', confidenceScore: 50, issueType: 'no_text' },
+      low_info: { isWashed: false, reason: 'stage1-low_info', confidenceScore: 55, issueType: 'low_info' },
+    };
+
+    const auditedReviews = Object.entries(stage1Audits).map(([username, audit]) =>
+      audited(review({ username, text: username }), audit)
+    );
+
+    // Simulate the exact bug scenario: Gemini (or a matching bug) somehow has
+    // an entry for these usernames even though they were never sent to Stage 2.
+    const aiStoreMap: { [username: string]: AuditResult } = {};
+    Object.keys(stage1Audits).forEach(username => {
+      aiStoreMap[username] = {
+        isWashed: !stage1Audits[username].isWashed,
+        reason: 'gemini-should-not-apply',
+        confidenceScore: 1,
+        issueType: 'discrepancy',
+        reasoningPath: 'this must never surface',
+      };
+    });
+
+    const merged = mergeStage2Results(auditedReviews, aiStoreMap);
+
+    merged.forEach(r => {
+      expect(r.audit).toEqual(stage1Audits[r.username]);
+    });
+  });
+
+  it('applies the Gemini result for a genuinely ambiguous (issueType: null) review that was sent to Stage 2', () => {
+    const stage1Audit: AuditResult = { isWashed: false, reason: 'stage1-none', confidenceScore: 80, issueType: null };
+    const auditedReviews = [audited(review({ username: 'ambiguous_user' }), stage1Audit)];
+
+    const geminiResult: AuditResult = {
+      isWashed: true, reason: 'gemini-verdict', confidenceScore: 72, issueType: 'template', reasoningPath: 'CoT',
+    };
+    const merged = mergeStage2Results(auditedReviews, { ambiguous_user: geminiResult });
+
+    expect(merged[0].audit).toEqual(geminiResult);
+  });
+
+  it('leaves an issueType: null review unchanged when Gemini returned no matching result for it', () => {
+    const stage1Audit: AuditResult = { isWashed: false, reason: 'stage1-none', confidenceScore: 80, issueType: null };
+    const auditedReviews = [audited(review({ username: 'unmatched_user' }), stage1Audit)];
+
+    const merged = mergeStage2Results(auditedReviews, {});
+
+    expect(merged[0].audit).toEqual(stage1Audit);
+  });
+});
+
 describe('computeNearbyLongReviewCounts', () => {
   const longText = '這是一則超過五十個字的長評論，內容詳細描述了餐點的口感、店內環境、服務態度以及排隊等待的體驗，總之細節非常豐富完整。';
 
@@ -294,5 +351,120 @@ describe('computeNearbyLongReviewCounts', () => {
   it('returns 0 for reviews with unparseable or missing timestamps', () => {
     const counts = computeNearbyLongReviewCounts([review({ text: longText, time: '' })]);
     expect(counts[0]).toBe(0);
+  });
+});
+
+describe('computeStage2Confidence - structural template verdicts stay decoupled from content dimensions', () => {
+  // Regression fixture for the real failure case: same store, same opening
+  // structure, same signature-dish combo ("有機蝦／黑鑽蜆湯／三品海鮮匯"), same
+  // closing line — but scheduled 20 days apart specifically to dodge any
+  // time-clustering check. Both reviews read as detailed and well-written
+  // (high I/A/D), which is exactly what made the old content-based formula
+  // score them at ~2% confidence despite Gemini correctly calling them washed.
+  const scheduledTemplateReviews = [
+    review({
+      username: 'poster1',
+      text: '一走進門就被熱情招呼，主廚特製有機蝦鮮甜彈牙，黑鑽蜆湯濃郁鮮美，三品海鮮匯份量十足，CP值爆表，全家都愛，強力推薦！',
+      time: '2025-01-01',
+    }),
+    review({
+      username: 'poster2',
+      text: '服務態度真的很好，主廚特製有機蝦鮮甜彈牙，黑鑽蜆湯濃郁鮮美，三品海鮮匯份量十足，物超所值，全家都愛，大力推薦！',
+      time: '2025-01-21', // 20 days later
+    }),
+  ];
+
+  it('the two reviews are recognized as structurally similar (soft signal) without being hard duplicates', () => {
+    const signals = computeSimilaritySignals(scheduledTemplateReviews);
+    expect(signals[0].isDuplicate).toBe(false); // not literal copy-paste
+    expect(signals[0].maxSimilarity).toBeGreaterThanOrEqual(0.45);
+    expect(signals[0].similarCount).toBe(1);
+  });
+
+  it('scores a structural template verdict at >=60% confidence, and weight is significantly below 0.5', () => {
+    const signals = computeSimilaritySignals(scheduledTemplateReviews);
+    const hotTermSignals = computeHotTermSignals(scheduledTemplateReviews);
+    const nearbyLongReviewCounts = computeNearbyLongReviewCounts(scheduledTemplateReviews);
+
+    // Simulates Gemini's response for review[1]: well-written content (high
+    // I/A/D) but correctly identified as a structurally-triggered template.
+    const geminiItem = {
+      isWashed: true,
+      issueType: 'template' as const,
+      verdictBasis: 'structural' as const,
+      incentiveIntensity: 1,
+      sentimentAuthenticity: 4,
+      descriptionGranularity: 5,
+    };
+
+    const confidence = computeStage2Confidence(geminiItem, {
+      similarCount: signals[1].similarCount,
+      hotTermMaxRatio: hotTermSignals[1].hotTermMaxRatio,
+      nearbyLongReviewCount: nearbyLongReviewCounts[1],
+    });
+    const weight = geminiItem.isWashed ? 1 - confidence / 100 : confidence / 100;
+
+    expect(confidence).toBeGreaterThanOrEqual(60);
+    expect(weight).toBeLessThanOrEqual(0.4);
+  });
+
+  it('demonstrates the bug the fix corrects: the old content-based (I/A/D) formula would have scored the same verdict at ~2%', () => {
+    // Same I/A/D as above, but WITHOUT verdictBasis routing — i.e. the old
+    // behavior, reproduced here via the content branch (issueType !== 'template'
+    // takes the same agreement^1.5 path regardless of verdictBasis).
+    const oldStyleItem = {
+      isWashed: true,
+      issueType: 'incentive' as const, // forces the content-formula branch for this assertion
+      incentiveIntensity: 1,
+      sentimentAuthenticity: 4,
+      descriptionGranularity: 5,
+    };
+    const oldConfidence = computeStage2Confidence(oldStyleItem);
+    expect(oldConfidence).toBeLessThanOrEqual(5);
+  });
+});
+
+describe('cross-language fixture: computeHotTermSignals / computeNearbyLongReviewCounts', () => {
+  // This exact fixture (same usernames/stars/time/text) is mirrored in
+  // evaluate_v2.py's test_evaluate_v2_signal_mirrors.py as CSV-row dicts.
+  // Both sides assert the same golden values below — if either
+  // implementation (TS or the Python mirror) drifts, its own test fails,
+  // catching divergence between the two engines.
+  const sharedFixture: Review[] = [
+    {
+      username: 'u1', stars: 5, time: '2025-01-01T09:00:00',
+      text: '今天特地來嚐鮮，招牌黑蒜油豚骨拉麵真的很推薦，湯頭濃郁順口，叉燒軟嫩多汁，非常值得一試，下次還會再來品嚐更多菜色。',
+      images: [],
+    },
+    {
+      username: 'u2', stars: 5, time: '2025-01-01T09:15:00',
+      text: '朋友介紹來吃黑蒜油豚骨拉麵，確實好吃，湯頭順口不油膩，叉燒也很入味，服務態度親切，整體用餐體驗相當不錯值得推薦。',
+      images: [],
+    },
+    {
+      username: 'u3', stars: 5, time: '2025-01-05T10:00:00',
+      text: '特地來吃黑蒜油豚骨拉麵，果然名不虛傳，湯頭濃郁香醇，麵條彈牙有嚼勁，是我吃過最好吃的拉麵之一，強力推薦給大家。',
+      images: [],
+    },
+    {
+      username: 'u4', stars: 5, time: '2025-01-10T08:00:00',
+      text: '隨便點了個東西，普普通通沒有特別感覺，服務也普通，可能不會再來了。',
+      images: [],
+    },
+  ];
+
+  it('computeHotTermSignals matches the golden values (must match the Python mirror)', () => {
+    const signals = computeHotTermSignals(sharedFixture);
+    expect(signals).toEqual([
+      { hotTermCount: 1, hotTermMaxRatio: 0.75 },
+      { hotTermCount: 1, hotTermMaxRatio: 0.75 },
+      { hotTermCount: 1, hotTermMaxRatio: 0.75 },
+      { hotTermCount: 0, hotTermMaxRatio: 0 },
+    ]);
+  });
+
+  it('computeNearbyLongReviewCounts matches the golden values (must match the Python mirror)', () => {
+    const counts = computeNearbyLongReviewCounts(sharedFixture);
+    expect(counts).toEqual([1, 1, 0, 0]);
   });
 });

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { RESTAURANTS_DATA } from '../data/restaurantsData';
 import { parseReviews, Review } from '../utils/csvParser';
-import { computeShopStats, aggregateAuditedReviews, computeSpikeMonths, getReviewTemporalContext, computeSimilaritySignals, computeHotTermSignals, computeNearbyLongReviewCounts, ShopStats, AuditResult } from '../utils/auditEngine';
+import { computeShopStats, aggregateAuditedReviews, mergeStage2Results, computeStage2Confidence, computeSpikeMonths, getReviewTemporalContext, computeSimilaritySignals, computeHotTermSignals, computeNearbyLongReviewCounts, ShopStats, AuditResult } from '../utils/auditEngine';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
 import { useIsPWA } from '../hooks/useIsPWA';
 
@@ -245,12 +245,18 @@ export function Results() {
         let stage2Passed = 0;
         const storeMap: { [username: string]: AuditResult } = {};
 
+        // Looked up by username when processing Gemini's response, so the
+        // structural confidence formula has the same signal values the model saw.
+        const signalContextByUsername: { [username: string]: { similarCount: number; hotTermMaxRatio: number; nearbyLongReviewCount: number } } = {};
+
         if (stage2Sent > 0) {
           const reviewsPayload = ambiguousReviews.map(r => {
             const { isSpikePeriod, daysElapsed } = getReviewTemporalData(r);
             const idx = reviews.indexOf(r);
             const { maxSimilarity, similarCount } = similaritySignals[idx];
             const { hotTermCount, hotTermMaxRatio } = hotTermSignals[idx];
+            const nearbyLongReviewCount = nearbyLongReviewCounts[idx];
+            signalContextByUsername[r.username] = { similarCount, hotTermMaxRatio, nearbyLongReviewCount };
             return {
               username: r.username,
               text: r.text,
@@ -262,7 +268,7 @@ export function Results() {
               similarCount,
               hotTermCount,
               hotTermMaxRatio,
-              nearbyLongReviewCount: nearbyLongReviewCounts[idx]
+              nearbyLongReviewCount
             };
           });
 
@@ -298,23 +304,13 @@ export function Results() {
             const aut = item.sentimentAuthenticity || 3;
             const gra = item.descriptionGranularity || 3;
 
-            // S_val: 0 (dimensions read as clean) .. 12 (dimensions read as washed),
-            // independent of the model's own isWashed call.
-            const sVal = (inc - 1) + (5 - aut) + (5 - gra);
-            const washRatio = sVal / 12;
-
-            // agreement: how strongly the I/A/D dimensions back up the model's binary
-            // verdict. 1 = fully backed, 0 = fully contradicted, 0.5 = genuinely
-            // ambiguous (dimensions don't lean either way — this is also what you get
-            // when the model omits the dimension scores, since they default to 3/3/3).
-            const agreement = item.isWashed ? washRatio : (1 - washRatio);
-
-            // Full 0-100 range. The ^1.5 curve pulls the ambiguous midpoint
-            // (agreement=0.5) down to ~35% instead of pinning it at 50+/60+, so a low
-            // number visibly reads as "treat this verdict with caution" rather than
-            // looking like moderate confidence.
-            let confidence = Math.round(Math.pow(agreement, 1.5) * 100);
-            confidence = Math.max(0, Math.min(100, confidence));
+            // Confidence is routed by what actually triggered the verdict — a
+            // structural "template" call (review-homogeneity/recurring-dish/
+            // clustered-posting evidence) is scored from that signal strength,
+            // not from I/A/D (a well-written ghost review "disagreeing" with
+            // its own washed verdict on content dimensions previously produced
+            // ~2% confidence and a near-1.0 weight — no real filtering effect).
+            const confidence = computeStage2Confidence(item, signalContextByUsername[item.username]);
 
             storeMap[item.username] = {
               isWashed: item.isWashed,
@@ -324,7 +320,8 @@ export function Results() {
               reasoningPath: item.reasoningPath,
               incentiveIntensity: inc,
               sentimentAuthenticity: aut,
-              descriptionGranularity: gra
+              descriptionGranularity: gra,
+              verdictBasis: item.verdictBasis
             };
           });
         }
@@ -351,25 +348,7 @@ export function Results() {
         if (!newAiResults[matchingId]) return shop;
 
         const aiStoreMap = newAiResults[matchingId];
-
-        const updatedReviews = shop.auditedReviews.map(r => {
-          // Reviews Stage 1 already reached a confident verdict on were never
-          // sent to Gemini — keep their original Stage 1 audit untouched
-          // rather than accepting an aiStoreMap entry that shouldn't exist
-          // for them (or silently losing the verdict).
-          if (r.audit.issueType !== null) {
-            return r;
-          }
-
-          if (aiStoreMap[r.username]) {
-            return {
-              ...r,
-              audit: aiStoreMap[r.username]
-            };
-          }
-
-          return r;
-        });
+        const updatedReviews = mergeStage2Results(shop.auditedReviews, aiStoreMap);
 
         // Re-aggregate through the same shared formula computeShopStats used for the
         // Stage-1-only pass, instead of recomputing the weighting/Trust Score math here.

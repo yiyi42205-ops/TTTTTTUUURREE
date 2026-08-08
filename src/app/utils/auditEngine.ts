@@ -9,6 +9,7 @@ export interface AuditResult {
   incentiveIntensity?: number;
   sentimentAuthenticity?: number;
   descriptionGranularity?: number;
+  verdictBasis?: 'content' | 'structural';
 }
 
 export interface TemporalContext {
@@ -404,6 +405,103 @@ export function getReviewTemporalContext(review: Review, spikeMonths: Set<string
     }
   }
   return { isSpikePeriod, daysElapsed };
+}
+
+export interface Stage2Item {
+  isWashed: boolean;
+  issueType?: string | null;
+  verdictBasis?: 'content' | 'structural';
+  incentiveIntensity?: number;
+  sentimentAuthenticity?: number;
+  descriptionGranularity?: number;
+}
+
+export interface Stage2SignalContext {
+  similarCount?: number;
+  hotTermMaxRatio?: number;
+  nearbyLongReviewCount?: number;
+}
+
+// Caps used to normalize the structural signals into a 0-1 composite before
+// mapping to the confidence range — these are "how much is a lot" judgment
+// calls, not measured constants.
+const STRUCTURAL_SIMILAR_COUNT_CAP = 5;
+const STRUCTURAL_NEARBY_LONG_REVIEW_CAP = 5;
+const STRUCTURAL_CONFIDENCE_MIN = 60;
+const STRUCTURAL_CONFIDENCE_MAX = 95;
+
+/**
+ * Stage 2 confidence, routed by what actually triggered the verdict:
+ *
+ * - A "template" verdict triggered by structural evidence (verdictBasis:
+ *   "structural" — same-store review homogeneity, recurring signature dishes,
+ *   clustered posting) has nothing to do with how the *content* of this one
+ *   review reads. Scoring it via the I/A/D agreement formula was the bug: a
+ *   well-written, detailed ghost-written review "disagrees" with its own
+ *   washed verdict on those dimensions, producing ~2% confidence and a
+ *   near-1.0 weight — i.e. no actual filtering effect. So this branch scores
+ *   confidence directly from the structural signal strength instead.
+ * - Everything else (incentive keyword matches, content-driven "empty
+ *   template" verdicts, and genuine clean verdicts) keeps the existing I/A/D
+ *   agreement^1.5 formula unchanged.
+ */
+export function computeStage2Confidence(item: Stage2Item, context: Stage2SignalContext = {}): number {
+  const isStructuralTemplate = item.isWashed && item.issueType === 'template' && item.verdictBasis === 'structural';
+
+  if (isStructuralTemplate) {
+    const similarComponent = Math.min((context.similarCount ?? 0) / STRUCTURAL_SIMILAR_COUNT_CAP, 1);
+    const hotTermComponent = Math.min(context.hotTermMaxRatio ?? 0, 1);
+    const nearbyComponent = Math.min((context.nearbyLongReviewCount ?? 0) / STRUCTURAL_NEARBY_LONG_REVIEW_CAP, 1);
+
+    const compositeScore = 0.4 * similarComponent + 0.4 * hotTermComponent + 0.2 * nearbyComponent;
+    const confidence = STRUCTURAL_CONFIDENCE_MIN + compositeScore * (STRUCTURAL_CONFIDENCE_MAX - STRUCTURAL_CONFIDENCE_MIN);
+    return Math.round(Math.max(STRUCTURAL_CONFIDENCE_MIN, Math.min(STRUCTURAL_CONFIDENCE_MAX, confidence)));
+  }
+
+  const inc = item.incentiveIntensity || 3;
+  const aut = item.sentimentAuthenticity || 3;
+  const gra = item.descriptionGranularity || 3;
+
+  // S_val: 0 (dimensions read as clean) .. 12 (dimensions read as washed),
+  // independent of the model's own isWashed call.
+  const sVal = (inc - 1) + (5 - aut) + (5 - gra);
+  const washRatio = sVal / 12;
+
+  // agreement: how strongly the I/A/D dimensions back up the model's binary
+  // verdict. 1 = fully backed, 0 = fully contradicted, 0.5 = genuinely
+  // ambiguous (dimensions don't lean either way — this is also what you get
+  // when the model omits the dimension scores, since they default to 3/3/3).
+  const agreement = item.isWashed ? washRatio : (1 - washRatio);
+
+  // Full 0-100 range. The ^1.5 curve pulls the ambiguous midpoint
+  // (agreement=0.5) down to ~35% instead of pinning it at 50+/60+, so a low
+  // number visibly reads as "treat this verdict with caution" rather than
+  // looking like moderate confidence.
+  const confidence = Math.round(Math.pow(agreement, 1.5) * 100);
+  return Math.max(0, Math.min(100, confidence));
+}
+
+/**
+ * Merges Stage 2 (Gemini) results into a store's Stage-1-audited reviews.
+ * Any review Stage 1 already reached a confident verdict on (issueType !== null)
+ * was never sent to Gemini and must come out of this merge with its original
+ * Stage 1 audit untouched — regression coverage for a bug where recomputing/
+ * re-matching reviews let a Gemini result silently overwrite a Stage 1 verdict
+ * that should have been left alone (see mergeStage2Results tests).
+ */
+export function mergeStage2Results(
+  auditedReviews: (Review & { audit: AuditResult })[],
+  aiStoreMap: { [username: string]: AuditResult }
+): (Review & { audit: AuditResult })[] {
+  return auditedReviews.map(r => {
+    if (r.audit.issueType !== null) {
+      return r;
+    }
+    if (aiStoreMap[r.username]) {
+      return { ...r, audit: aiStoreMap[r.username] };
+    }
+    return r;
+  });
 }
 
 /**
