@@ -1,8 +1,9 @@
 # TrueRating 疑騙真星──發布前大方向規劃
 
-> 狀態：規劃中，尚未開始執行。
+> 狀態：第一階段已完成，第二階段進行中（規則引擎遷移已開發完成，待 PR 合併）。
 > 目標：一個月後（新生入學期）發布初版，供台大周邊使用者實際查店。
 > 本文件為方向層級規劃；技術細節以專案根目錄 CLAUDE.md 為準，每完成一個階段同步更新該文件。
+> 最後更新：2026-08-08
 
 ---
 
@@ -32,16 +33,16 @@
 
 ## 三、執行路線圖（依序，前置關係固定）
 
-### 第一階段：資料品質與一致性（發布前必做）
-1. 修 low_info 入口條件不一致（「好吃」vs「蛤蜊好吃」判定要統一）。
-2. 補回歸測試：鎖住「階段一判定不可被 Gemini 覆寫」。
+### 第一階段：資料品質與一致性 ✅ 已完成
+1. ✅ 修 low_info 入口條件不一致（「好吃」vs「蛤蜊好吃」判定要統一）。
+2. ✅ 補回歸測試：鎖住「階段一判定不可被 Gemini 覆寫」（`mergeStage2Results` 回歸測試已加入 `auditEngine.test.ts`）。
 3. ~~確認「改 prompt 前」的舊版本有可 checkout 的 commit，打 tag（如 `pre-prompt-v2`）。~~ **已取消**——evaluate 腳本與 prompt 改版同 commit 加入，舊版不可重現。基準版本改為 `pre-migration-baseline` tag（`5110afb`，2026-08-06），用於 B1 遷移後 TS/Python 輸出一致性驗證及後續所有評估對照。
 
-### 第二階段：引擎遷移與評估（發布前必做）
-4. 規則引擎從 auditEngine.ts 整體遷移到 Python 後端，消除雙鏡像；`computeHotTermSignals`、`computeNearbyLongReviewCounts` 隨遷移一起補齊，不另做鏡射。
+### 第二階段：引擎遷移與評估（發布前必做）— 進行中
+4. 🔶 規則引擎從 auditEngine.ts 整體遷移到 Python 後端，消除雙鏡像。**開發已完成**（branch `feat/issue-3-rule-engine-migration`，新增 `rule_engine.py`、`POST /api/audit-rules`、18 個測試），曾推上 main（`94e4a5d`）但因違反 PR 流程被 revert（`4ba5af9`），**待開 PR 重新合併**。`computeHotTermSignals`、`computeNearbyLongReviewCounts` 的 Python 鏡像已在遷移前補齊（`evaluate_v2.py`，commit `b7ff0a1`），遷移後改為從 `rule_engine` 直接 import。
 5. 快取 key 由 URL 正規化為 place_id（見爬蟲層事項 3）。
-6. evaluate_v2.py 改為直連 Python 引擎。
-7. 切四家 holdout 店後跑純規則參數掃描（DEFAULT_SWEEP）。注意：十八家樣本小，holdout F1 波動大，看方向與幅度，不對單一數字過度反應。
+6. 🔶 evaluate_v2.py 改為直連 Python 引擎。**已在遷移 branch 中完成**，待遷移 PR 合併後生效。
+7. 切四家 holdout 店後跑純規則參數掃描（DEFAULT_SWEEP）。注意：十八家樣本小，holdout F1 波動大，看方向與幅度，不對單一數字過度反應。**holdout split 功能已開發**（branch `feat/issue-6-holdout-split`，commit `34bbebb`）。
 8. 十八家店前後 F1 對照（tag 版 vs 現在），確認這輪大改淨效果。
 
 ### 第三階段：新訊號（發布前做完）

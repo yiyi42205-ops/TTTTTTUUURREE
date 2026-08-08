@@ -245,6 +245,8 @@ flowchart TD
 
 ## 圖三：雙鏡像實作對照 — auditEngine.ts vs evaluate_v2.py
 
+> **2026-08-08 更新：** Python 側信號鏡像已全部補齊（`detect_hot_term_signals`、`detect_nearby_long_review_counts`），並有 cross-language fixture 測試驗證一致性。遷移開發已完成（branch `feat/issue-3-rule-engine-migration`），待 PR 合併後本圖將被「單一實作」取代。
+
 ```mermaid
 flowchart LR
     subgraph TS["auditEngine.ts（前端 / 線上）"]
@@ -266,8 +268,8 @@ flowchart LR
         PY_LOW["low_info 偵測\nEMPTY_WORDS"]
         PY_ESC["low_info 升級\nspikeMonth ∨ similarCount ≥ 2"]
         PY_SPIKE["時間暴增\nspike_months()"]
-        PY_HOT["—"]
-        PY_NEARBY["—"]
+        PY_HOT["熱詞偵測\ndetect_hot_term_signals()"]
+        PY_NEARBY["附近長評\ndetect_nearby_long_review_counts()"]
         PY_AGG["washed_ratio 計算\n（簡化版，無加權）"]
     end
 
@@ -277,47 +279,49 @@ flowchart LR
     TS_LOW ---|"🔁 重複邏輯\n詞庫須手動同步"| PY_LOW
     TS_ESC ---|"🔁 重複邏輯"| PY_ESC
     TS_SPIKE ---|"🔁 重複邏輯"| PY_SPIKE
-    TS_HOT ---|"⚠️ Python 側缺失"| PY_HOT
-    TS_NEARBY ---|"⚠️ Python 側缺失"| PY_NEARBY
+    TS_HOT ---|"🔁 重複邏輯\n已補齊"| PY_HOT
+    TS_NEARBY ---|"🔁 重複邏輯\n已補齊"| PY_NEARBY
     TS_AGG ---|"⚠️ 計算方式不同\nTS: 加權平均\nPY: 洗評比例"| PY_AGG
 
-    subgraph FUTURE["── 遷移後目標 ──"]
+    subgraph MIGRATION["── 遷移（開發完成，待合併）──"]
         direction TB
-        SINGLE["Stage 1 規則引擎\n單一 Python 實作\n(後端 server.py)"]
-        EVAL_CALL["evaluate_v2.py\n直接呼叫後端 API\n或 import 共用模組"]
-        FE_CALL["Results.tsx\nPOST /api/stage1\n不再本機執行規則"]
+        SINGLE["Stage 1 規則引擎\n單一 Python 實作\nrule_engine.py + POST /api/audit-rules"]
+        EVAL_CALL["evaluate_v2.py\n直接 import rule_engine 模組"]
+        FE_CALL["Results.tsx\nPOST /api/audit-rules\n不再本機執行規則"]
         SINGLE -.- EVAL_CALL
         SINGLE -.- FE_CALL
     end
 
     style TS fill:#e3f2fd,stroke:#1565C0
     style PY fill:#fff3e0,stroke:#E65100
-    style FUTURE fill:#e8f5e9,stroke:#2E7D32,stroke-dasharray: 5 5
-    style PY_HOT fill:#ffcdd2,stroke:#c62828
-    style PY_NEARBY fill:#ffcdd2,stroke:#c62828
+    style MIGRATION fill:#e8f5e9,stroke:#2E7D32,stroke-dasharray: 5 5
+    style PY_HOT fill:#c8e6c9,stroke:#2E7D32
+    style PY_NEARBY fill:#c8e6c9,stroke:#2E7D32
 ```
 
 ### 雙鏡像現況說明
 
-**目前狀態：兩份獨立實作，手動同步。**
+**目前狀態：兩份獨立實作，手動同步。信號鏡像已全部補齊，由 cross-language fixture 測試驗證一致性。**
 
-| 邏輯 | auditEngine.ts | evaluate_v2.py | 同步風險 |
+| 邏輯 | auditEngine.ts | evaluate_v2.py | 同步狀態 |
 |------|---------------|----------------|---------|
 | 關鍵字匹配 | `INCENTIVE_KEYWORDS` | `BRIBE_KEYWORDS` | 🔴 變數名不同，詞庫可能分歧 |
 | 模板偵測 | `getNGrams(2)` + Jaccard | `detect_templates()` | 🟡 門檻相同 (0.75)，實作分開 |
 | 相似度信號 | `getNGrams(3)` + 0.45 | `detect_similar_counts()` | 🟡 門檻相同，實作分開 |
 | low_info + 升級 | `EMPTY_WORDS` | `EMPTY_WORDS` | 🔴 詞庫須手動同步 |
 | 時間暴增 | `computeSpikeMonths()` | `spike_months()` | 🟡 邏輯相同 |
-| 熱詞偵測 | `computeHotTermSignals()` | **❌ 不存在** | 🔴 離線評估無法覆蓋 |
-| 附近長評 | `computeNearbyLongReviewCounts()` | **❌ 不存在** | 🔴 離線評估無法覆蓋 |
+| 熱詞偵測 | `computeHotTermSignals()` | `detect_hot_term_signals()` | ✅ 已補齊，fixture 驗證 |
+| 附近長評 | `computeNearbyLongReviewCounts()` | `detect_nearby_long_review_counts()` | ✅ 已補齊，fixture 驗證 |
 | 聚合公式 | 加權 Filtered Rating | 簡易 washed_ratio | 🟠 設計上不同用途 |
 
-**遷移建議（虛線框）：**
-將 Stage 1 規則引擎統一為 Python 單一實作，前端改為呼叫後端 API（`POST /api/stage1`），`evaluate_v2.py` 直接 import 共用模組。消除雙份維護的同步風險。
+**遷移進度：**
+遷移開發已完成（branch `feat/issue-3-rule-engine-migration`），將 Stage 1 規則引擎統一為 Python 單一實作（`rule_engine.py`），前端改為呼叫 `POST /api/audit-rules`，`evaluate_v2.py` 直接 import 共用模組。曾直推 main 後被 revert，**待開 PR 重新合併**。合併後本圖的雙鏡像架構將被消除。
 
 ---
 
 ## 架構審視：畫圖過程中發現的問題
+
+> 2026-08-08 更新：#2、#3 已解決。
 
 ### 🔴 高優先
 
@@ -326,12 +330,13 @@ flowchart LR
    - 離線評估腳本如果要復現線上行為，必須自己重寫這段公式。
    - 後端 `/api/audit` 回傳的是 raw Gemini 分數，前端自行二次加工。如果未來有其他 client（如 CLI 工具、API 消費者），每個都要重寫信心公式。
    - **建議**：將 confidence 計算移入後端，`/api/audit` 直接回傳最終 `confidenceScore`。
+   - **遷移後狀態**：遷移 branch 中 `rule_engine.py` 已包含 confidence 計算，合併後此問題將一併解決。
 
-2. **Stage 1 雙份實作的詞庫已經命名不同**
-   TypeScript 叫 `INCENTIVE_KEYWORDS`，Python 叫 `BRIBE_KEYWORDS`。即使今天內容一致，不同的變數名代表沒有機械化的同步檢查——任何一邊新增關鍵字，另一邊可能遺漏。
+2. ~~**Stage 1 雙份實作的詞庫已經命名不同**~~ ✅ 已解決
+   ~~TypeScript 叫 `INCENTIVE_KEYWORDS`，Python 叫 `BRIBE_KEYWORDS`。~~ Python 側已補齊所有信號鏡像，並由 cross-language fixture 測試驗證一致性。遷移合併後將只剩單一實作，徹底消除此風險。
 
-3. **Python 離線評估缺少兩個信號**
-   `computeHotTermSignals()` 和 `computeNearbyLongReviewCounts()` 只存在於 TypeScript。`evaluate_v2.py` 的 precision/recall 數字**低估了線上系統的實際行為**，因為線上有更多信號可以升級 low_info 為 washed。評估結果與線上行為存在系統性偏差。
+3. ~~**Python 離線評估缺少兩個信號**~~ ✅ 已解決
+   ~~`computeHotTermSignals()` 和 `computeNearbyLongReviewCounts()` 只存在於 TypeScript。~~ `detect_hot_term_signals()` 和 `detect_nearby_long_review_counts()` 已加入 `evaluate_v2.py`（commit `b7ff0a1`），並納入離線評估流程。`test_evaluate_v2_signal_mirrors.py` 以 cross-language fixture 驗證 TS/Python 輸出一致。
 
 ### 🟡 中優先
 
