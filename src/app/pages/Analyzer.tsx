@@ -1,13 +1,15 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Loader2, Link as LinkIcon, X, Search, Info, Plus, Globe, Sliders, Database, ShieldCheck, Sparkles, Shield, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Loader2, Link as LinkIcon, X, Search, Info, Plus, Globe, Sliders, Database, ShieldCheck, Sparkles, Shield, AlertTriangle, ClipboardPaste } from 'lucide-react';
+import { useIsPWA } from '../hooks/useIsPWA';
 import { RESTAURANTS_DATA, Restaurant } from '../data/restaurantsData';
 
 export function Analyzer() {
   const navigate = useNavigate();
   const [urls, setUrls] = useState<string[]>(['', '', '']);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const isPWA = useIsPWA();
   
   // Suggestion Dropdown states for each slot
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
@@ -20,6 +22,38 @@ export function Analyzer() {
   const [maxReviews, setMaxReviews] = useState(50);
   const [scrapeLoadingStep, setScrapeLoadingStep] = useState('');
   const [scrapeError, setScrapeError] = useState('');
+
+  // Manual Clipboard Paste for Google Maps URLs
+  const handlePasteFromClipboard = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const trimmed = (text || '').trim();
+      const isGoogleMapsUrl = trimmed.startsWith('https://') && 
+                             (trimmed.includes('google.com/maps') || 
+                              trimmed.includes('maps.app.goo.gl') || 
+                              trimmed.includes('/maps/') ||
+                              trimmed.includes('g.page'));
+      
+      if (isGoogleMapsUrl) {
+        if (scrapeUrls.includes(trimmed)) return;
+        
+        const newScrapeUrls = [...scrapeUrls];
+        const emptyIndex = newScrapeUrls.findIndex(url => url === '');
+        if (emptyIndex !== -1) {
+           newScrapeUrls[emptyIndex] = trimmed;
+        } else {
+           newScrapeUrls[0] = trimmed;
+        }
+        setScrapeUrls(newScrapeUrls);
+        setActiveTab('scraper');
+      } else {
+        alert('剪貼簿中未偵測到有效的 Google Maps 連結。');
+      }
+    } catch (err) {
+      console.warn('Clipboard read permission denied or not supported:', err);
+      alert('無法讀取剪貼簿，請確認瀏覽器授權。');
+    }
+  }, [scrapeUrls]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -304,30 +338,36 @@ export function Analyzer() {
             疑騙真星 <span className="text-[#6b8e7f] font-sans font-bold text-sm bg-white border border-[#d4c5b0]/60 px-1.5 py-0.5 rounded-md ml-1">TrueRating</span>
           </span>
         </div>
-        <motion.button
-          onClick={() => navigate('/')}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-1.5 bg-white px-4 py-1.5 rounded-full shadow-xs border border-[#d4c5b0] text-xs font-bold text-[#4a5d52] cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4 text-[#6b8e7f]" />
-          返回首頁
-        </motion.button>
+        {!isPWA && (
+          <motion.button
+            onClick={() => navigate('/')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-1.5 bg-white px-4 py-1.5 rounded-full shadow-xs border border-[#d4c5b0] text-xs font-bold text-[#4a5d52] cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#6b8e7f]" />
+            返回首頁
+          </motion.button>
+        )}
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
+
+
         {/* Info Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/95 backdrop-blur-xs rounded-2xl p-4.5 mb-8 shadow-xs border border-[#e8c547]/40 flex items-start gap-3.5"
-        >
-          <Info className="w-5 h-5 text-[#e8c547] shrink-0 mt-0.5" />
-          <div className="text-xs md:text-sm text-[#4a5d52] leading-relaxed">
-            <span className="font-extrabold text-[#8b7534] bg-[#e8c547]/20 px-1.5 py-0.5 rounded mr-1">測試數據庫已加載</span>
-            系統內建拉麵、手搖飲、健康餐等 18 間店家真實歷史評論。您可以直接在對比欄位搜尋，或從下方推薦庫快速加載店家進行多店「濾水」對照！
-          </div>
-        </motion.div>
+        {!isPWA && (
+          <motion.div
+            initial={{ opacity: 0, y: -15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/95 backdrop-blur-xs rounded-2xl p-4.5 mb-8 shadow-xs border border-[#e8c547]/40 flex items-start gap-3.5"
+          >
+            <Info className="w-5 h-5 text-[#e8c547] shrink-0 mt-0.5" />
+            <div className="text-xs md:text-sm text-[#4a5d52] leading-relaxed">
+              <span className="font-extrabold text-[#8b7534] bg-[#e8c547]/20 px-1.5 py-0.5 rounded mr-1">測試數據庫已加載</span>
+              系統內建拉麵、手搖飲、健康餐等 18 間店家真實歷史評論。您可以直接在對比欄位搜尋，或從下方推薦庫快速加載店家進行多店「濾水」對照！
+            </div>
+          </motion.div>
+        )}
 
         {/* Main Analysis Dashboard Box */}
         <div className="relative w-full max-w-3xl mx-auto mb-8">
@@ -374,19 +414,7 @@ export function Analyzer() {
 
             {activeTab === 'preset' ? (
               <>
-                {/* Status Bar */}
-                <div className="bg-[#f5f1e8]/70 rounded-2xl p-3.5 mb-6 border border-[#e8dcc8] flex items-center justify-between text-xs font-bold">
-                  <div className="flex items-center gap-2 text-[#6b8e7f]">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6b8e7f] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6b8e7f]"></span>
-                    </span>
-                    <span>就緒，請至少添加 1 間店家進行對照</span>
-                  </div>
-                  <span className="text-[#4a5d52] bg-white px-3 py-1 rounded-full border border-[#d4c5b0]/60">
-                    已選 {matchedCount} / 3 間
-                  </span>
-                </div>
+
 
                 {/* URL Input Slots */}
                 <div className="space-y-4 mb-8 relative" ref={dropdownRef}>
@@ -524,18 +552,7 @@ export function Analyzer() {
               </>
             ) : (
               <div className="space-y-4">
-                <div className="bg-[#f5f1e8]/70 rounded-2xl p-3.5 border border-[#e8dcc8] flex items-center justify-between text-xs font-bold">
-                  <div className="flex items-center gap-2 text-[#6b8e7f]">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e8c547] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#e8c547]"></span>
-                    </span>
-                    <span>即時爬蟲就緒，請至少提供 1 間商家網址</span>
-                  </div>
-                  <span className="text-[#4a5d52] bg-white px-3 py-1 rounded-full border border-[#d4c5b0]/60 font-bold whitespace-nowrap">
-                    已選 {filledScrapeCount} / 3 間
-                  </span>
-                </div>
+
 
                 {scrapeError && (
                   <div className="p-3.5 bg-[#fde8e8] border-2 border-[#e53e3e] text-[#9b2c2c] rounded-2xl flex items-start gap-2.5">
@@ -549,6 +566,19 @@ export function Analyzer() {
                     </button>
                   </div>
                 )}
+
+                <div className="flex justify-between items-end mb-4">
+                  <h3 className="text-[#4a5d52] font-black font-display text-sm">輸入即時爬取網址</h3>
+                  <motion.button
+                    onClick={handlePasteFromClipboard}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center gap-1.5 text-xs font-black bg-white text-[#4a5d52] border-2 border-[#4a5d52] rounded-xl px-3 py-1.5 cursor-pointer shadow-[2px_2px_0px_0px_#4a5d52] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all"
+                  >
+                    <ClipboardPaste className="w-3.5 h-3.5 text-[#6b8e7f]" />
+                    從剪貼簿貼上
+                  </motion.button>
+                </div>
 
                 <div className="space-y-4 mb-4">
                   {scrapeUrls.map((url, index) => {
@@ -644,22 +674,7 @@ export function Analyzer() {
           </div>
         </div>
 
-        {/* AI Configuration Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-[28px] p-6 shadow-sm border border-[#e8dcc8] max-w-3xl mx-auto mb-8 relative overflow-hidden"
-        >
-          <h3 className="font-extrabold text-sm md:text-base text-[#4a5d52] mb-3 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-[#6b8e7f]" />
-            AI 深度審查引擎（二階段語意分析）
-          </h3>
 
-          <p className="text-[11px] text-[#6b8e7f] leading-relaxed font-semibold">
-            本地啟發式規則過濾顯性好評後，所有疑似水軍的五星好評都會送交後端由 Gemini 2.5 Flash 進行「語意一致性」比對。Gemini 金鑰安全保存於伺服器端，瀏覽器端不會接觸金鑰。
-          </p>
-        </motion.div>
 
         {/* Preset Store Recommendations Grid */}
         <motion.div
@@ -758,6 +773,29 @@ export function Analyzer() {
             </div>
           </div>
         </motion.div>
+
+        {/* AI Config Card */}
+        {!isPWA && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-8 bg-white/90 backdrop-blur-xs rounded-[32px] p-6 border border-[#d4c5b0] shadow-xs flex flex-col md:flex-row items-center gap-6"
+          >
+            <div className="flex-1 space-y-3">
+              <h3 className="text-[#4a5d52] font-black flex items-center gap-2 font-display">
+                <ShieldCheck className="w-5 h-5 text-[#6b8e7f]" />
+                雙階段審查：正則規則引擎 + AI 語意防護網
+              </h3>
+              <p className="text-xs text-[#6b8e7f] leading-relaxed font-bold">
+                這套工具並非單純呼叫語言模型。第一階段先由 Python Regex 引擎掃描評論區「五星贈送」、「打卡送」等字詞，進行硬性剃除；第二階段才會將剩餘模糊評論（以及密集期）整包送到 Gemini Flash 1.5 進行上下文語意溯源，判斷是否為集團化網軍操作，實現極高準確度的洗評過濾。
+              </p>
+            </div>
+            <div className="shrink-0">
+              <Sliders className="w-12 h-12 text-[#d4c5b0]/50" />
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );

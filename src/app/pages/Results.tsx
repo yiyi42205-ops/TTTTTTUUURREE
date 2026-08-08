@@ -10,6 +10,7 @@ import { RESTAURANTS_DATA } from '../data/restaurantsData';
 import { parseReviews, Review } from '../utils/csvParser';
 import { computeShopStats, aggregateAuditedReviews, computeSpikeMonths, getReviewTemporalContext, computeSimilaritySignals, computeHotTermSignals, computeNearbyLongReviewCounts, ShopStats, AuditResult } from '../utils/auditEngine';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
+import { useIsPWA } from '../hooks/useIsPWA';
 
 function cleanStoreName(name: string): string {
   if (!name) return '';
@@ -33,9 +34,43 @@ function cleanStoreName(name: string): string {
   return parts[parts.length - 1].trim();
 }
 
+import { historyStore } from '../utils/historyStore';
+
 export function Results() {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // PWA Mode and Swipe States
+  const isPWA = useIsPWA();
+  const isHistoryCache = !!location.state?.cachedShopResults;
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 70;
+    const isRightSwipe = distance < -70;
+
+    if (isLeftSwipe && activeSlide < 2) {
+      setActiveSlide(prev => prev + 1);
+    }
+    if (isRightSwipe && activeSlide > 0) {
+      setActiveSlide(prev => prev - 1);
+    }
+
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
   
   // Safe fallback if accessed directly without selecting shops
   const storeIds = (location.state?.storeIds as string[]) || ['ramen_washed_3', 'ramen_clean_2'];
@@ -77,6 +112,22 @@ export function Results() {
 
   // 1. Initial Parse and Compute local heuristics
   useEffect(() => {
+    if (location.state?.cachedShopResults) {
+      const computed = location.state.cachedShopResults as ShopStats[];
+      setShopResults(computed);
+      
+      // Initialize search & filter states
+      const initialSearch: { [key: number]: string } = {};
+      const initialFilter: { [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' } = {};
+      computed.forEach((_, idx) => {
+        initialSearch[idx] = '';
+        initialFilter[idx] = 'all';
+      });
+      setInspectSearch(initialSearch);
+      setInspectFilter(initialFilter);
+      return;
+    }
+
     const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[] }>) || [];
 
     let computed: ShopStats[] = [];
@@ -105,14 +156,17 @@ export function Results() {
     });
     setInspectSearch(initialSearch);
     setInspectFilter(initialFilter);
-  }, [location.state?.storeIds, location.state?.customShops]);
+  }, [location.state?.storeIds, location.state?.customShops, location.state?.cachedShopResults]);
 
   // 1.5. Auto-trigger AI Audit on mount once shopResults are computed
   useEffect(() => {
+    if (location.state?.cachedShopResults) {
+      return; // Skip API audit if we loaded cached stats
+    }
     if (shopResults.length > 0 && !isAiAuditing && Object.keys(aiAuditResults).length === 0) {
       handleGeminiAudit(shopResults);
     }
-  }, [shopResults]);
+  }, [shopResults, location.state?.cachedShopResults]);
 
   // 2. AI Live Audit execution (Two-Stage Hybrid Pipeline)
   const handleGeminiAudit = async (forcedShopResults?: ShopStats[]) => {
@@ -212,10 +266,12 @@ export function Results() {
             };
           });
 
+          const localApiKey = sessionStorage.getItem('truerating_gemini_api_key') || '';
           const response = await fetch('/api/audit', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              ...(localApiKey ? { 'X-Gemini-API-Key': localApiKey } : {})
             },
             body: JSON.stringify({
               storeName: result.storeName,
@@ -321,6 +377,10 @@ export function Results() {
       });
 
       setShopResults(updatedResults);
+      // Auto-save audited shops to history
+      updatedResults.forEach(shop => {
+        historyStore.saveHistory(shop);
+      });
     } catch (e: any) {
       console.error(e);
       setApiError(e.message || '連線 API 時發生未知錯誤');
@@ -493,6 +553,393 @@ export function Results() {
     );
   }
 
+  // Helper renderers for PWA
+  const renderPwaDashboard = (result: ShopStats) => {
+    const hasMajorDrop = result.originalRating - result.filteredRating >= 0.3 || result.trustScore < 80;
+    return (
+      <div className="bg-white rounded-3xl p-5 border-3 border-[#4a5d52] shadow-tactile space-y-4">
+        <h3 className="text-sm font-black text-[#4a5d52] border-b border-[#d4c5b0]/40 pb-2 flex justify-between items-center font-display">
+          <span>評分水分脫水</span>
+          {hasMajorDrop && (
+            <span className="bg-[#d4a5a5] text-[#8c4848] px-2 py-0.5 rounded text-[10px] font-sans font-extrabold animate-pulse">
+              評分水分重
+            </span>
+          )}
+        </h3>
+
+        {/* Rating flow comparison */}
+        <div className="bg-[#f5f1e8]/70 border border-[#d4c5b0]/60 p-4 rounded-2xl flex items-center justify-around text-center">
+          <div>
+            <span className="block text-[10px] text-[#6b8e7f] font-bold mb-0.5">原始</span>
+            <span className="text-lg font-black text-[#4a5d52]">{result.originalRating.toFixed(2)}★</span>
+          </div>
+          <div className="text-sm text-[#d4c5b0] font-black">➔</div>
+          <div>
+            <span className="block text-[10px] text-[#8c4848] font-bold mb-0.5">扣減</span>
+            <span className="text-sm font-black text-[#8c4848]">
+              -{(result.originalRating - result.filteredRating).toFixed(2)}★
+            </span>
+          </div>
+          <div className="text-sm text-[#d4c5b0] font-black">➔</div>
+          <div>
+            <span className="block text-[10px] text-[#6b8e7f] font-bold mb-0.5">真實</span>
+            <span className="text-lg font-black text-[#6b8e7f]">{result.filteredRating.toFixed(2)}★</span>
+          </div>
+        </div>
+
+        {/* Trust Score Box */}
+        <div className="bg-[#f5f1e8]/30 rounded-2xl p-4 border border-[#d4c5b0]/60">
+          <div className="flex justify-between items-center text-xs font-black text-[#6b8e7f] mb-1.5">
+            <span className="flex items-center gap-1">
+              <Shield className="w-4 h-4" />
+              真實信任度分數
+            </span>
+            <span className="text-sm font-black text-[#4a5d52]">{result.trustScore}/100</span>
+          </div>
+          <div className="w-full bg-[#e8dcc8]/60 h-3 rounded-full overflow-hidden mb-2">
+            <div 
+              className={`h-full rounded-full transition-all duration-500 ${
+                result.trustScore >= 75 ? 'bg-[#6b8e7f]' : result.trustScore >= 50 ? 'bg-[#e8c547]' : 'bg-[#d4a5a5]'
+              }`}
+              style={{ width: `${result.trustScore}%` }}
+            ></div>
+          </div>
+          <p className="text-[10px] text-[#6b8e7f] font-bold leading-normal">
+            偵測到 {result.suspiciousReviews} 則疑似洗評（約佔總數的 {result.totalReviews > 0 ? ((result.suspiciousReviews / result.totalReviews) * 100).toFixed(0) : 0}%）
+          </p>
+        </div>
+
+        {/* Explanation text */}
+        <div className="text-xs leading-relaxed text-[#4a5d52] pt-2">
+          {result.trustScore < 80 ? (
+            <div className="bg-[#d4a5a5]/10 border border-[#d4a5a5]/25 p-4 rounded-xl text-[#8c4848] font-bold">
+              系統過濾虛假 5 星洗評後，真實得分降至 <b>{result.filteredRating.toFixed(2)}★</b>，存在灌水引導嫌疑。
+            </div>
+          ) : (
+            <div className="bg-[#6b8e7f]/10 border border-[#6b8e7f]/25 p-4 rounded-xl text-[#304a3e] font-bold">
+              評分多為自然就餐生成，無刻意洗評痕跡，真實口碑約 <b>{result.filteredRating.toFixed(2)}★</b>。
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderPwaAnomalies = (result: ShopStats) => {
+    const distData = [
+      { star: '5★', '原始評價': result.ratingDistribution.original[5] || 0, '濾水真實': result.ratingDistribution.filtered[5] || 0 },
+      { star: '4★', '原始評價': result.ratingDistribution.original[4] || 0, '濾水真實': result.ratingDistribution.filtered[4] || 0 },
+      { star: '3★', '原始評價': result.ratingDistribution.original[3] || 0, '濾水真實': result.ratingDistribution.filtered[3] || 0 },
+      { star: '2★', '原始評價': result.ratingDistribution.original[2] || 0, '濾水真實': result.ratingDistribution.filtered[2] || 0 },
+      { star: '1★', '原始評價': result.ratingDistribution.original[1] || 0, '濾水真實': result.ratingDistribution.filtered[1] || 0 },
+    ];
+
+    return (
+      <div className="bg-white rounded-3xl p-5 border-3 border-[#4a5d52] shadow-tactile space-y-5">
+        {/* Table/Feature count */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-black text-[#4a5d52] border-b border-[#d4c5b0]/40 pb-2 font-display">
+            洗評異常特徵計數
+          </h3>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-[#f5f1e8]/30 rounded-xl p-3 border border-[#d4c5b0]/60 text-center">
+              <span className="block text-lg font-black text-[#8c4848] mb-0.5">{result.issues.timeAnomaly}</span>
+              <span className="text-[10px] text-[#6b8e7f] font-bold">打卡促銷</span>
+            </div>
+            <div className="bg-[#f5f1e8]/30 rounded-xl p-3 border border-[#d4c5b0]/60 text-center">
+              <span className="block text-lg font-black text-[#8b7534] mb-0.5">{result.issues.templateText}</span>
+              <span className="text-[10px] text-[#6b8e7f] font-bold">極短模版</span>
+            </div>
+            <div className="bg-[#f5f1e8]/30 rounded-xl p-3 border border-[#d4c5b0]/60 text-center">
+              <span className="block text-lg font-black text-[#6b8e7f] mb-0.5">{result.issues.vague}</span>
+              <span className="text-[10px] text-[#6b8e7f] font-bold">語意衝突</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts */}
+        <div className="bg-[#f5f1e8]/20 rounded-2xl p-3 border border-[#e8dcc8]">
+          <h4 className="text-[10px] font-black text-[#4a5d52] uppercase tracking-wider mb-3 font-display">
+            星級分佈對比（原始 vs 濾水）
+          </h4>
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={distData} margin={{ top: 5, right: 5, left: -32, bottom: 5 }}>
+                <defs>
+                  <linearGradient id={`pwaColorOriginal`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#e8c547" stopOpacity={0.95}/>
+                    <stop offset="95%" stopColor="#d5b22b" stopOpacity={0.6}/>
+                  </linearGradient>
+                  <linearGradient id={`pwaColorFiltered`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6b8e7f" stopOpacity={0.95}/>
+                    <stop offset="95%" stopColor="#4a5d52" stopOpacity={0.6}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e8dcc8" />
+                <XAxis dataKey="star" tick={{ fontSize: 9, fill: '#4a5d52', fontWeight: 'bold' }} stroke="#d4c5b0" />
+                <YAxis tick={{ fontSize: 9, fill: '#4a5d52' }} stroke="#d4c5b0" />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'white', borderRadius: '10px', border: '1.5px solid #d4c5b0', fontSize: '10px', fontWeight: 'bold' }}
+                />
+                <Bar dataKey="原始評價" fill={`url(#pwaColorOriginal)`} radius={[3, 3, 0, 0]} />
+                <Bar dataKey="濾水真實" fill={`url(#pwaColorFiltered)`} radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderPwaReviews = (result: ShopStats, activeStoreIdx: number) => {
+    const currentSearch = inspectSearch[activeStoreIdx] || '';
+    const currentFilter = inspectFilter[activeStoreIdx] || 'all';
+
+    const filteredReviews = result.auditedReviews.filter(r => {
+      const matchesSearch = currentSearch === '' || 
+        (r.text || '').toLowerCase().includes(currentSearch.toLowerCase()) ||
+        r.username.toLowerCase().includes(currentSearch.toLowerCase());
+      
+      if (!matchesSearch) return false;
+
+      if (currentFilter === 'all') return true;
+      if (currentFilter === 'washed') return r.audit.isWashed;
+      if (currentFilter === 'clean') return !r.audit.isWashed;
+      if (currentFilter === 'stage1') return r.audit.isWashed && !r.audit.reasoningPath;
+      if (currentFilter === 'stage2') return r.audit.isWashed && Boolean(r.audit.reasoningPath);
+      return true;
+    });
+
+    const stage1Count = result.auditedReviews.filter(r => r.audit.isWashed && !r.audit.reasoningPath).length;
+    const stage2Count = result.auditedReviews.filter(r => r.audit.isWashed && Boolean(r.audit.reasoningPath)).length;
+
+    return (
+      <div className="flex-1 flex flex-col space-y-4">
+        {/* Search & Filters block */}
+        <div className="bg-white rounded-2xl p-4 border-2 border-[#4a5d52] shadow-tactile-sm space-y-3">
+          <input
+            type="text"
+            value={currentSearch}
+            onChange={(e) => {
+              const newSearch = { ...inspectSearch };
+              newSearch[activeStoreIdx] = e.target.value;
+              setInspectSearch(newSearch);
+            }}
+            placeholder="搜尋評論關鍵字或用戶名..."
+            className="w-full px-3 py-2 bg-[#f5f1e8] rounded-xl border border-[#d4c5b0] text-xs text-[#4a5d52] focus:outline-hidden focus:border-[#6b8e7f] font-bold"
+          />
+
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: 'all', label: `全部 (${result.auditedReviews.length})` },
+              { id: 'washed', label: `判定洗評 (${result.suspiciousReviews})` },
+              { id: 'stage1', label: `Stage 1 規則 (${stage1Count})` },
+              { id: 'stage2', label: `Stage 2 AI (${stage2Count})` },
+              { id: 'clean', label: `有機真實 (${result.totalReviews - result.suspiciousReviews})` }
+            ].map(f => (
+              <button
+                key={f.id}
+                onClick={() => {
+                  const newFilter = { ...inspectFilter };
+                  newFilter[activeStoreIdx] = f.id as any;
+                  setInspectFilter(newFilter);
+                }}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
+                  currentFilter === f.id
+                    ? 'bg-[#6b8e7f] text-white border-[#4a5d52]'
+                    : 'bg-white text-[#6b8e7f] border-[#d4c5b0]'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* List of comments */}
+        <div className="space-y-3 flex-grow overflow-y-auto max-h-[400px] custom-scrollbar">
+          {filteredReviews.length === 0 ? (
+            <div className="text-center py-10 bg-white rounded-2xl border border-[#d4c5b0] text-xs text-[#6b8e7f] font-bold">
+              無符合篩選條件的評價內容。
+            </div>
+          ) : (
+            filteredReviews.map((r, rIdx) => {
+              const uniqueKey = `${activeStoreIdx}-${rIdx}`;
+              const isExpanded = expandedCoT[uniqueKey];
+              const starArr = Array.from({ length: r.stars });
+              const isWashed = r.audit.isWashed;
+
+              return (
+                <div 
+                  key={rIdx}
+                  className={`bg-white rounded-2xl border-2 p-4 space-y-2.5 transition-all ${
+                    isWashed ? 'border-[#ef4444]/60 bg-red-50/10' : 'border-[#4a5d52]/60'
+                  }`}
+                >
+                  {/* Header */}
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <span className="block font-black text-xs text-[#4a5d52] truncate">{r.username}</span>
+                      <div className="flex gap-0.5 mt-0.5">
+                        {starArr.map((_, i) => (
+                          <Star key={i} className="w-3 h-3 fill-[#e8c547] stroke-[#e8c547]" />
+                        ))}
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-black border uppercase shrink-0 ${
+                      isWashed 
+                        ? 'bg-[#ef4444]/10 border-[#ef4444]/30 text-[#ef4444]'
+                        : 'bg-[#6b8e7f]/10 border-[#6b8e7f]/30 text-[#6b8e7f]'
+                    }`}>
+                      {isWashed ? '洗評' : '真實'}
+                    </span>
+                  </div>
+
+                  {/* Comment content */}
+                  <p className="text-xs text-[#4a5d52] leading-relaxed font-medium">
+                    {r.text || <span className="text-gray-400 italic">（此評論無內文）</span>}
+                  </p>
+
+                  {/* Audit description */}
+                  <div className={`p-3 rounded-xl border text-[10px] leading-relaxed ${
+                    isWashed ? 'bg-red-50/40 border-red-100 text-[#8c4848]' : 'bg-[#6b8e7f]/5 border-[#6b8e7f]/20 text-[#304a3e]'
+                  }`}>
+                    <p className="font-extrabold flex items-center gap-1 mb-0.5">
+                      <Shield className="w-3.5 h-3.5" />
+                      審計判定：
+                    </p>
+                    <p className="font-medium">{r.audit.reason}</p>
+                    
+                    {/* Reasoning expander if CoT is present */}
+                    {r.audit.reasoningPath && (
+                      <div className="mt-2 pt-2 border-t border-red-200/50">
+                        <button
+                          onClick={() => setExpandedCoT(prev => ({ ...prev, [uniqueKey]: !isExpanded }))}
+                          className="text-[9px] font-black text-[#8c4848] underline flex items-center gap-1 cursor-pointer focus:outline-hidden"
+                        >
+                          {isExpanded ? '隱藏 AI 推理鏈 (CoT)' : '展開 AI 推理鏈 (CoT)'}
+                        </button>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="bg-black/5 p-2 rounded-lg mt-1.5 font-mono text-[9px] text-gray-600 leading-normal whitespace-pre-wrap"
+                          >
+                            {r.audit.reasoningPath}
+                          </motion.div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderPwaLayout = () => {
+    const activeStoreIdx = activeStoreTab === 'all' ? 0 : activeStoreTab;
+    const result = shopResults[activeStoreIdx];
+
+    if (!result) return null;
+
+    return (
+      <div 
+        className="h-[100dvh] flex flex-col bg-[#f5f1e8] overflow-hidden"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Mobile Header */}
+        <header className="bg-[#f5f1e8] border-b-3 border-[#4a5d52] px-4 py-3 flex items-center justify-between shadow-xs select-none">
+          <button
+            onClick={() => navigate('/analyzer')}
+            className="flex items-center gap-1 text-xs font-black text-[#4a5d52] cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#6b8e7f] stroke-[3]" />
+            返回
+          </button>
+          <div className="flex items-center gap-2 max-w-[180px]">
+            <span className="font-display font-black text-sm text-[#4a5d52] truncate">
+              {cleanStoreName(result.storeName)}
+            </span>
+            {isHistoryCache && (
+              <span className="shrink-0 bg-[#e8c547]/20 text-[#8b7534] border border-[#e8c547]/40 px-1.5 py-0.5 rounded text-[10px] font-black">
+                快取
+              </span>
+            )}
+          </div>
+          <div className="w-8"></div> {/* Spacer */}
+        </header>
+
+        {/* Multi-store selector if multiple stores are compared */}
+        {shopResults.length > 1 && (
+          <div className="bg-white border-b border-[#d4c5b0]/30 px-4 py-2 flex items-center gap-2 overflow-x-auto select-none custom-scrollbar">
+            <span className="text-[10px] font-black text-[#6b8e7f] uppercase shrink-0">切換店家:</span>
+            {shopResults.map((shop, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setActiveStoreTab(idx);
+                  setSelectedInspectorTab(idx);
+                }}
+                className={`px-3 py-1 rounded-full text-[10px] font-black shrink-0 border-2 transition-all cursor-pointer ${
+                  activeStoreTab === idx
+                    ? 'bg-[#6b8e7f] text-white border-[#4a5d52]'
+                    : 'bg-white text-[#4a5d52] border-[#4a5d52]/30'
+                }`}
+              >
+                {cleanStoreName(shop.storeName)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Segmented Slide Indicators */}
+        <div className="bg-[#f5f1e8] p-2 border-b border-[#d4c5b0]/30 flex justify-center gap-2 select-none">
+          {['📊 總覽', '⚠️ 異常', '💬 評論'].map((title, sIdx) => (
+            <button
+              key={sIdx}
+              onClick={() => setActiveSlide(sIdx)}
+              className={`px-4 py-1.5 rounded-full text-xs font-black border-2 transition-all cursor-pointer ${
+                activeSlide === sIdx
+                  ? 'bg-[#6b8e7f] text-white border-[#4a5d52] shadow-[2px_2px_0_0_#4a5d52]'
+                  : 'bg-white text-[#6b8e7f] border-transparent'
+              }`}
+            >
+              {title}
+            </button>
+          ))}
+        </div>
+
+        {/* Swipe Viewport */}
+        <div className="flex-1 overflow-hidden relative">
+          <div 
+            className="flex w-[300%] h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${activeSlide * 33.333}%)` }}
+          >
+            <div className="w-[33.333%] h-full shrink-0 px-4 overflow-y-auto pb-16 custom-scrollbar">
+              {renderPwaDashboard(result)}
+            </div>
+            <div className="w-[33.333%] h-full shrink-0 px-4 overflow-y-auto pb-16 custom-scrollbar">
+              {renderPwaAnomalies(result)}
+            </div>
+            <div className="w-[33.333%] h-full shrink-0 px-4 overflow-y-auto pb-16 custom-scrollbar flex flex-col">
+              {renderPwaReviews(result, activeStoreIdx)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (isPWA) {
+    return renderPwaLayout();
+  }
+
   const gridLayoutClass = shopResults.length === 1 
     ? 'grid-cols-1 max-w-2xl mx-auto' 
     : shopResults.length === 2 
@@ -521,6 +968,25 @@ export function Results() {
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl md:text-3xl font-black text-[#4a5d52] flex items-center gap-3 font-display">
+              <Trophy className="w-8 h-8 text-[#e8c547]" />
+              審計結果儀表板
+              {isHistoryCache && (
+                <span className="text-xs bg-[#e8c547]/20 text-[#8b7534] border border-[#e8c547]/40 px-2 py-1 rounded-full font-black flex items-center gap-1 shadow-xs">
+                  <Database className="w-3.5 h-3.5" />
+                  歷史快取
+                </span>
+              )}
+            </h1>
+          </div>
+        </motion.div>
+
         {apiError && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}

@@ -113,6 +113,22 @@ def audit():
     ip = request.remote_addr
     logger.info(f"POST /api/audit request from IP: {ip}")
 
+    # Extract user-provided API key from headers if available
+    user_api_key = request.headers.get("X-Gemini-API-Key")
+    client_to_use = genai_client
+    if user_api_key:
+        user_api_key = user_api_key.strip()
+        if not user_api_key.startswith("AIzaSy") or len(user_api_key) < 35:
+            logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
+            return jsonify({"error": "無效的用戶 API Key 格式 (請確認長度與開頭)"}), 400
+
+        try:
+            client_to_use = genai.Client(api_key=user_api_key)
+            logger.info("Using user-provided Gemini API Key for audit request.")
+        except Exception as e:
+            logger.error(f"Failed to initialize Gemini client with user API key: {e}")
+            return jsonify({"error": "無效的用戶 API Key 格式"}), 400
+
     data = request.get_json() or {}
     store_name = data.get("storeName") or "待審查店家"
     raw_reviews = data.get("reviews")
@@ -143,7 +159,7 @@ def audit():
     results = []
     errors = []
     with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_BATCHES) as executor:
-        futures = {executor.submit(call_gemini_batch, genai_client, store_name, batch): batch for batch in batches}
+        futures = {executor.submit(call_gemini_batch, client_to_use, store_name, batch): batch for batch in batches}
         for future in as_completed(futures):
             try:
                 results.extend(future.result())
