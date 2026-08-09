@@ -40,21 +40,7 @@ from pathlib import Path
 # Allow importing from review_scraper/
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'review_scraper'))
 
-from rule_engine import (
-    RuleConfig,
-    has_bribe,
-    get_ngram,
-    jaccard,
-    detect_templates,
-    detect_similarity_signals,
-    detect_hot_term_signals,
-    detect_nearby_long_review_counts,
-    detect_spike_months,
-    detect_low_info_and_escalated,
-    is_generic_short_review,
-    _extract_candidate_terms,
-    _parse_timestamp,
-)
+from rule_engine import RuleConfig, run_stage1_audit
 
 # Guard: if the frontend audit pipeline is being used for evaluation, it must
 # run in "evaluate" mode (VITE_AUDIT_MODE=evaluate) so that all ambiguous
@@ -147,39 +133,25 @@ def analyze_restaurant(csv_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW)
     if window and window > 0:
         reviews = reviews[:window]
 
-    bribe = [has_bribe(r.get('text', '')) for r in reviews]
-    tmpl = detect_templates(reviews, config)
-    spike_flags, spike_months = detect_spike_months(reviews)
-    max_similarity, similar_counts = detect_similarity_signals(reviews, config)
-    hot_term_counts, hot_term_max_ratios = detect_hot_term_signals(reviews)
-    nearby_long_review_counts = detect_nearby_long_review_counts(reviews)
-    low_info_flags, escalated_short_flags = detect_low_info_and_escalated(
-        reviews, bribe, spike_flags, similar_counts, config
-    )
+    # Delegate all Stage 1 logic to run_stage1_audit — the same function
+    # that powers POST /api/audit-rules.  No more manual orchestration.
+    result = run_stage1_audit(reviews, config)
+    audited_reviews = result['auditedReviews']
+    signals = result['signals']
 
-    # escalated_short_flags counts toward washed (spike/similarity-corroborated
-    # short reviews); low_info_flags does NOT — those are reported separately
-    # below so the comparison against true_label stays clear (low_info is
-    # explicitly "not washed", not silently absorbed into either bucket).
-    washed = [b or t or e for b, t, e in zip(bribe, tmpl, escalated_short_flags)]
+    washed_flags = [r['audit']['isWashed'] for r in audited_reviews]
+    low_info_flags = [r['audit']['issueType'] == 'low_info' for r in audited_reviews]
 
     return {
         'reviews': reviews,
-        'bribe_flags': bribe,
-        'template_flags': tmpl,
-        'spike_flags': spike_flags,
-        'spike_months': sorted(spike_months),
-        'max_similarity': max_similarity,
-        'similar_counts': similar_counts,
-        'hot_term_counts': hot_term_counts,
-        'hot_term_max_ratios': hot_term_max_ratios,
-        'nearby_long_review_counts': nearby_long_review_counts,
+        'audited_reviews': audited_reviews,
+        'signals': signals,
+        'spike_months': signals['spikeMonths'],
+        'washed_flags': washed_flags,
+        'washed_ratio': sum(washed_flags) / len(reviews),
         'low_info_flags': low_info_flags,
         'low_info_count': sum(low_info_flags),
         'low_info_ratio': sum(low_info_flags) / len(reviews),
-        'escalated_short_flags': escalated_short_flags,
-        'washed_flags': washed,
-        'washed_ratio': sum(washed) / len(reviews),
         'total': len(reviews),
     }
 
@@ -382,14 +354,13 @@ def run_llm_sample_mode(base_path, config: RuleConfig, num_stores=3, store_names
     report = []
     for store in sample_stores:
         reviews = store['reviews']
+        audited_reviews = store['audited_reviews']
+        signals = store['signals']
         spike_months = set(store['spike_months'])
         ambiguous = []
-        for r, bribe, tmpl, escalated, max_sim, sim_count, hot_count, hot_ratio, nearby_count in zip(
-            reviews, store['bribe_flags'], store['template_flags'],
-            store['escalated_short_flags'], store['max_similarity'], store['similar_counts'],
-            store['hot_term_counts'], store['hot_term_max_ratios'], store['nearby_long_review_counts']
-        ):
-            if bribe or tmpl or escalated:
+        for i, r in enumerate(reviews):
+            # Skip reviews already caught by Stage 1
+            if audited_reviews[i]['audit']['isWashed']:
                 continue
             if r.get('stars') != 5 or not (r.get('text') or '').strip():
                 continue
@@ -400,17 +371,19 @@ def run_llm_sample_mode(base_path, config: RuleConfig, num_stores=3, store_names
             except (ValueError, KeyError):
                 days_elapsed = 0
                 month = None
+            sim = signals['similarity'][i]
+            hot = signals['hotTerm'][i]
             ambiguous.append({
                 'username': r.get('username', '?'),
                 'text': r['text'].strip(),
                 'stars': 5,
                 'daysElapsed': days_elapsed,
                 'isSpikePeriod': month in spike_months if month else False,
-                'maxSimilarity': round(max_sim, 3),
-                'similarCount': sim_count,
-                'hotTermCount': hot_count,
-                'hotTermMaxRatio': hot_ratio,
-                'nearbyLongReviewCount': nearby_count,
+                'maxSimilarity': round(sim['maxSimilarity'], 3),
+                'similarCount': sim['similarCount'],
+                'hotTermCount': hot['hotTermCount'],
+                'hotTermMaxRatio': hot['hotTermMaxRatio'],
+                'nearbyLongReviewCount': signals['nearbyLongReviewCounts'][i],
             })
 
         if not ambiguous:
