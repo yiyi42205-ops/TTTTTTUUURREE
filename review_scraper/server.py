@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 from normalize import normalize_review
 from gemini_client import make_batches, call_gemini_batch, MAX_CONCURRENT_BATCHES
 from cache_store import get_cached_reviews, set_cached_reviews
+from rule_engine import run_stage1_audit
 
 # Configure logging format and level
 logging.basicConfig(
@@ -137,6 +138,32 @@ def scrape():
             logger.error(f"Playwright error: {playwright_err}")
             logger.error(traceback.format_exc())
             return jsonify({"error": str(playwright_err)}), 500
+
+@app.route("/api/audit-rules", methods=["POST"])
+def audit_rules():
+    start_time = time.time()
+    ip = request.remote_addr
+    logger.info(f"POST /api/audit-rules request from IP: {ip}")
+
+    data = request.get_json() or {}
+    raw_reviews = data.get("reviews")
+    if not raw_reviews or not isinstance(raw_reviews, list):
+        logger.error(f"audit-rules request from {ip} failed validation: Missing or invalid field 'reviews'")
+        return jsonify({"error": "Missing or invalid required field: reviews"}), 400
+
+    normalized = []
+    for r in raw_reviews:
+        if not isinstance(r, dict):
+            continue
+        normalized.append(normalize_review(r))
+
+    if not normalized:
+        return jsonify({"auditedReviews": [], "signals": {"similarity": [], "hotTerm": [], "nearbyLongReviewCounts": [], "spikeMonths": []}})
+
+    result = run_stage1_audit(normalized)
+    logger.info(f"audit-rules completed: {len(result['auditedReviews'])} reviews in {time.time() - start_time:.2f}s.")
+    return jsonify(result)
+
 
 @app.route("/api/audit", methods=["POST"])
 def audit():
