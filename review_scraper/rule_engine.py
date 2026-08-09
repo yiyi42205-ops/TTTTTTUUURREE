@@ -426,7 +426,10 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
             }
 
         # Override: no_text 5-star in spike period
-        stars = int(review.get('stars', 0))
+        try:
+            stars = int(review.get('stars') or 0)
+        except (ValueError, TypeError):
+            stars = 0
         if audit['issueType'] == 'no_text' and stars == 5 and is_spike:
             audit = {
                 'isWashed': True,
