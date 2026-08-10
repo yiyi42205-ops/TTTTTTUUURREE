@@ -21,17 +21,24 @@ TrueRating QA 進階評估腳本 v2 — 支援參數掃描
   # 用自訂的參數組合清單（JSON 陣列，每個物件是 RuleConfig 的部分欄位）覆寫預設清單
   python3 evaluate_v2.py restaurant_data --sweep-config my_configs.json
 
+  # 切 4 家 holdout 店，sweep 只在 train 上跑，best config 再到 holdout 上驗證
+  python3 evaluate_v2.py restaurant_data --holdout 4
+
+  # 指定 holdout 店家（逗號分隔，覆寫隨機挑選）
+  python3 evaluate_v2.py restaurant_data --holdout 4 --holdout-stores "店A,店B,店C,店D"
+
   # 小樣本 Gemini 測試模式：實際呼叫 API，僅抽 3 家店（需要 .env 內的 GEMINI_API_KEY）
   python3 evaluate_v2.py restaurant_data --llm-sample 3
 
 產出:
-  - tune_results.json    參數掃描完整結果
+  - tune_results.json    參數掃描完整結果（含 holdout 驗證結果）
   - llm_input.json       給 Claude 跑 Stage 2 模擬的抽樣(把整份貼給 Claude)
 """
 import argparse
 import csv
 import json
 import os
+import random
 import sys
 from dataclasses import asdict
 from datetime import datetime, date
@@ -208,10 +215,46 @@ def confusion_matrix(results, threshold):
     }
 
 
+# ─── Holdout 分割 ──────────────────────────────────────────
+
+def stratified_holdout_split(results, n_holdout, seed=42, store_names=None):
+    """Split results into (train, holdout) stratified by true_label.
+
+    If store_names is provided, those stores are used as holdout directly
+    (ignoring n_holdout and seed). Otherwise, n_holdout stores are randomly
+    selected with proportional representation of 有洗/沒洗."""
+    if store_names:
+        name_set = set(store_names)
+        holdout = [r for r in results if r['restaurant'] in name_set]
+        train = [r for r in results if r['restaurant'] not in name_set]
+        missing = name_set - {r['restaurant'] for r in holdout}
+        if missing:
+            print(f"⚠️  找不到指定的 holdout 店家: {', '.join(sorted(missing))}", file=sys.stderr)
+        return train, holdout
+
+    if n_holdout <= 0 or n_holdout >= len(results):
+        return results, []
+
+    washed = [r for r in results if r['true_label'] == '有洗']
+    clean = [r for r in results if r['true_label'] == '沒洗']
+
+    rng = random.Random(seed)
+    rng.shuffle(washed)
+    rng.shuffle(clean)
+
+    # Proportional split: round to nearest int per class
+    n_washed = round(n_holdout * len(washed) / len(results))
+    n_clean = n_holdout - n_washed
+
+    holdout = washed[:n_washed] + clean[:n_clean]
+    train = washed[n_washed:] + clean[n_clean:]
+    return train, holdout
+
+
 # ─── 參數組合掃描 ───────────────────────────────────────────
 
 def run_param_sweep(base_path, configs, window=DEFAULT_EVAL_WINDOW):
-    """對每組 RuleConfig 重新跑一次規則引擎(18 家店)，並以該組指定的
+    """對每組 RuleConfig 重新跑一次規則引擎，並以該組指定的
     wash_verdict_threshold 計算混淆矩陣。純本地運算，不呼叫 Gemini。"""
     rows = []
     for config in configs:
@@ -229,9 +272,61 @@ def run_param_sweep(base_path, configs, window=DEFAULT_EVAL_WINDOW):
     return rows
 
 
-def print_sweep_table(rows):
+def run_param_sweep_with_holdout(base_path, configs, n_holdout, window=DEFAULT_EVAL_WINDOW,
+                                  seed=42, holdout_store_names=None):
+    """Run sweep on train split, then evaluate best config on holdout split.
+    Returns (train_rows, holdout_metrics, train_stores, holdout_stores)."""
+    # Use first config to get full results for splitting
+    all_results = evaluate_dataset(base_path, configs[0], window=window)
+    if not all_results:
+        return [], None, [], []
+
+    train_results, holdout_results = stratified_holdout_split(
+        all_results, n_holdout, seed=seed, store_names=holdout_store_names)
+
+    train_names = {r['restaurant'] for r in train_results}
+    holdout_names = {r['restaurant'] for r in holdout_results}
+
+    # Sweep on train set only
+    train_rows = []
+    for config in configs:
+        results = evaluate_dataset(base_path, config, window=window)
+        if not results:
+            continue
+        train_only = [r for r in results if r['restaurant'] in train_names]
+        metrics = confusion_matrix(train_only, config.wash_verdict_threshold)
+        avg_low_info = sum(r['low_info_ratio'] for r in train_only) / len(train_only) if train_only else 0
+        train_rows.append({
+            **asdict(config),
+            **metrics,
+            'avg_low_info_ratio': round(avg_low_info, 3),
+            '_results': train_only,
+        })
+
+    if not train_rows:
+        return [], None, [], []
+
+    # Find best config from train
+    best_train = max(train_rows, key=lambda r: r['f1'])
+    best_config = RuleConfig(**{k: v for k, v in best_train.items() if k in RuleConfig.__dataclass_fields__})
+
+    # Evaluate best config on holdout
+    holdout_eval = evaluate_dataset(base_path, best_config, window=window)
+    holdout_only = [r for r in holdout_eval if r['restaurant'] in holdout_names]
+    holdout_metrics = confusion_matrix(holdout_only, best_config.wash_verdict_threshold)
+    holdout_avg_low_info = sum(r['low_info_ratio'] for r in holdout_only) / len(holdout_only) if holdout_only else 0
+    holdout_metrics['avg_low_info_ratio'] = round(holdout_avg_low_info, 3)
+    holdout_metrics['config_label'] = best_config.label
+
+    train_store_info = [(r['restaurant'], r['true_label']) for r in train_results]
+    holdout_store_info = [(r['restaurant'], r['true_label']) for r in holdout_results]
+
+    return train_rows, holdout_metrics, train_store_info, holdout_store_info
+
+
+def print_sweep_table(rows, title='參數組合掃描結果（規則引擎，純本地，未呼叫 Gemini）'):
     print('\n' + '=' * 118)
-    print('參數組合掃描結果（規則引擎，純本地，未呼叫 Gemini）')
+    print(title)
     print('=' * 118)
     print(f"{'label':<28} {'jaccard':<9} {'sim_thr':<9} {'low_info_esc':<13} {'wash_thr':<10} "
           f"{'Prec':<8} {'Rec':<8} {'F1':<8} {'low_info%':<10}")
@@ -247,6 +342,34 @@ def print_sweep_table(rows):
 
     print(f"\n⭐ 最佳組合 = {best['label']} → F1 = {best['f1']}")
     return best
+
+
+def print_holdout_result(holdout_metrics, train_store_info, holdout_store_info):
+    """Print holdout split details and validation result."""
+    print('\n' + '=' * 118)
+    print('Holdout 分割')
+    print('=' * 118)
+
+    n_train_washed = sum(1 for _, label in train_store_info if label == '有洗')
+    n_train_clean = len(train_store_info) - n_train_washed
+    n_holdout_washed = sum(1 for _, label in holdout_store_info if label == '有洗')
+    n_holdout_clean = len(holdout_store_info) - n_holdout_washed
+
+    print(f"Train: {len(train_store_info)} 家 ({n_train_washed} 有洗 / {n_train_clean} 沒洗)")
+    for name, label in sorted(train_store_info):
+        print(f"  {'🔴' if label == '有洗' else '🟢'} {name}")
+
+    print(f"\nHoldout: {len(holdout_store_info)} 家 ({n_holdout_washed} 有洗 / {n_holdout_clean} 沒洗)")
+    for name, label in sorted(holdout_store_info):
+        print(f"  {'🔴' if label == '有洗' else '🟢'} {name}")
+
+    print(f"\n{'─' * 70}")
+    print(f"Holdout 驗證（使用 train 最佳組合: {holdout_metrics['config_label']}）")
+    print(f"{'─' * 70}")
+    m = holdout_metrics
+    print(f"  TP={m['TP']}  FN={m['FN']}  FP={m['FP']}  TN={m['TN']}")
+    print(f"  Precision={m['precision']:.1%}  Recall={m['recall']:.1%}  F1={m['f1']:.3f}")
+    print(f"  low_info%={m['avg_low_info_ratio']:.1%}")
 
 
 # ─── Stage 2 LLM 抽樣(人工貼給 Claude 模擬) ──────────────────
@@ -426,6 +549,11 @@ def parse_args():
     parser.add_argument('--window', type=int, default=DEFAULT_EVAL_WINDOW,
                         help=f'每家店只取最新 N 則評論 (預設 {DEFAULT_EVAL_WINDOW})')
     parser.add_argument('--sweep-config', help='自訂參數組合清單的 JSON 檔案路徑（覆寫內建 DEFAULT_SWEEP）')
+    parser.add_argument('--holdout', type=int, default=0, metavar='N',
+                        help='切 N 家店為 holdout，sweep 只在 train 上跑，best config 再到 holdout 上驗證')
+    parser.add_argument('--holdout-seed', type=int, default=42,
+                        help='holdout 隨機分割的 seed（預設 42，確保可重現）')
+    parser.add_argument('--holdout-stores', help='指定 holdout 店家名稱，逗號分隔（覆寫隨機挑選）')
     parser.add_argument('--llm-sample', type=int, metavar='N', default=None,
                          help='啟用小樣本 Gemini 測試模式，抽 N 家店實際呼叫 API（會產生真實費用，需要 GEMINI_API_KEY）')
     parser.add_argument('--llm-sample-stores', help='小樣本模式要測試的店家名稱清單，逗號分隔（覆寫自動挑選）')
@@ -438,27 +566,72 @@ def main():
 
     configs = load_sweep_configs(args.sweep_config) if args.sweep_config else DEFAULT_SWEEP
 
-    rows = run_param_sweep(base, configs, window=args.window)
-    if not rows:
-        print(f'錯誤:在 {base} 找不到資料。')
-        sys.exit(1)
+    holdout_store_names = args.holdout_stores.split(',') if args.holdout_stores else None
 
-    print(f'[資料集] 共 {len(rows[0]["_results"])} 家店，掃描 {len(rows)} 組參數組合')
+    if args.holdout > 0 or holdout_store_names:
+        n_holdout = len(holdout_store_names) if holdout_store_names else args.holdout
+        train_rows, holdout_metrics, train_store_info, holdout_store_info = \
+            run_param_sweep_with_holdout(
+                base, configs, n_holdout, window=args.window,
+                seed=args.holdout_seed, holdout_store_names=holdout_store_names)
 
-    best_row = print_sweep_table(rows)
-    best_config = RuleConfig(**{k: v for k, v in best_row.items() if k in RuleConfig.__dataclass_fields__})
-    best_results = best_row['_results']
+        if not train_rows:
+            print(f'錯誤:在 {base} 找不到資料。')
+            sys.exit(1)
 
-    llm_input = sample_for_llm(best_results, best_config.wash_verdict_threshold)
+        n_train = len(train_store_info)
+        n_holdout_actual = len(holdout_store_info)
+        print(f'[資料集] 共 {n_train + n_holdout_actual} 家店 '
+              f'(train {n_train} / holdout {n_holdout_actual})，'
+              f'掃描 {len(train_rows)} 組參數組合')
 
-    # 輸出(移除 _results，避免把整份規則計算中間結果都塞進 JSON)
-    out_dir = Path('.').resolve()
-    tune_output = [{k: v for k, v in row.items() if k != '_results'} for row in rows]
-    (out_dir / 'tune_results.json').write_text(
-        json.dumps({'best_label': best_config.label, 'sweep': tune_output}, ensure_ascii=False, indent=2),
-        encoding='utf-8')
-    (out_dir / 'llm_input.json').write_text(
-        json.dumps(llm_input, ensure_ascii=False, indent=2), encoding='utf-8')
+        best_row = print_sweep_table(
+            train_rows, title=f'參數組合掃描結果 — Train set（{n_train} 家店）')
+        best_config = RuleConfig(**{k: v for k, v in best_row.items() if k in RuleConfig.__dataclass_fields__})
+        best_results = best_row['_results']
+
+        print_holdout_result(holdout_metrics, train_store_info, holdout_store_info)
+
+        llm_input = sample_for_llm(best_results, best_config.wash_verdict_threshold)
+
+        # Output JSON
+        out_dir = Path('.').resolve()
+        tune_output = [{k: v for k, v in row.items() if k != '_results'} for row in train_rows]
+        output_data = {
+            'best_label': best_config.label,
+            'sweep': tune_output,
+            'holdout': {
+                'seed': args.holdout_seed,
+                'stores': [{'name': n, 'label': l} for n, l in holdout_store_info],
+                **holdout_metrics,
+            },
+        }
+        (out_dir / 'tune_results.json').write_text(
+            json.dumps(output_data, ensure_ascii=False, indent=2), encoding='utf-8')
+        (out_dir / 'llm_input.json').write_text(
+            json.dumps(llm_input, ensure_ascii=False, indent=2), encoding='utf-8')
+    else:
+        rows = run_param_sweep(base, configs, window=args.window)
+        if not rows:
+            print(f'錯誤:在 {base} 找不到資料。')
+            sys.exit(1)
+
+        print(f'[資料集] 共 {len(rows[0]["_results"])} 家店，掃描 {len(rows)} 組參數組合')
+
+        best_row = print_sweep_table(rows)
+        best_config = RuleConfig(**{k: v for k, v in best_row.items() if k in RuleConfig.__dataclass_fields__})
+        best_results = best_row['_results']
+
+        llm_input = sample_for_llm(best_results, best_config.wash_verdict_threshold)
+
+        # Output JSON
+        out_dir = Path('.').resolve()
+        tune_output = [{k: v for k, v in row.items() if k != '_results'} for row in rows]
+        (out_dir / 'tune_results.json').write_text(
+            json.dumps({'best_label': best_config.label, 'sweep': tune_output}, ensure_ascii=False, indent=2),
+            encoding='utf-8')
+        (out_dir / 'llm_input.json').write_text(
+            json.dumps(llm_input, ensure_ascii=False, indent=2), encoding='utf-8')
 
     print('\n' + '=' * 70)
     print('已輸出檔案:')
