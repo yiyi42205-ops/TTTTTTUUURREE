@@ -251,38 +251,7 @@ def detect_spike_months(reviews):
     return [(m in spike) if m else False for m in months], spike
 
 
-def detect_low_info_and_escalated(reviews, bribe_flags, spike_flags, similar_counts, config: RuleConfig = None):
-    """Short generic reviews: neutral unless co-occurring with spike or high similarity."""
-    if config is None:
-        config = RuleConfig()
-    low_info_flags = []
-    escalated_flags = []
-    for r, bribe, spike, sim_count in zip(reviews, bribe_flags, spike_flags, similar_counts):
-        text = r.get('text', '') or ''
-        try:
-            stars = int(r.get('stars') or 0)
-        except ValueError:
-            stars = 0
-
-        if bribe or not is_generic_short_review(text, stars):
-            low_info_flags.append(False)
-            escalated_flags.append(False)
-            continue
-
-        escalated = bool(spike) or sim_count >= config.low_info_escalation_similar_count
-        low_info_flags.append(not escalated)
-        escalated_flags.append(escalated)
-    return low_info_flags, escalated_flags
-
-
 # ─── Per-review audit (mirrors auditEngine.ts auditReview) ───
-
-def has_bribe(text):
-    """Check if text contains any incentive/bribe keywords (keyword-only, no context check)."""
-    if not text:
-        return False
-    return any(kw in text for kw in INCENTIVE_KEYWORDS + NON_SEND_KEYWORDS)
-
 
 def _check_incentive_keywords(text):
     """Check for explicit incentive keywords."""

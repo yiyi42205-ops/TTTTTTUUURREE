@@ -83,6 +83,13 @@ def load_sweep_configs(path: str) -> list:
     return [RuleConfig(**item) for item in raw]
 
 
+def _safe_int_stars(val):
+    try:
+        return int(float(val or 0))
+    except (ValueError, TypeError):
+        return 0
+
+
 def _normalize_csv_row(row):
     """Convert PascalCase CSV row to lowercase keys expected by rule_engine.
 
@@ -94,7 +101,7 @@ def _normalize_csv_row(row):
     """
     return {
         'username': row.get('Username', ''),
-        'stars': int(row.get('Stars', 0) or 0),
+        'stars': _safe_int_stars(row.get('Stars')),
         'time': row.get('Time', ''),
         'text': row.get('Text', '') or '',
         # Preserve original keys for evaluation access
