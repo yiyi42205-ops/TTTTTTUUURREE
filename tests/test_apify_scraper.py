@@ -88,13 +88,14 @@ def make_fake_client_factory(**kwargs):
 def test_scrape_via_apify_normalizes_results(monkeypatch):
     monkeypatch.setenv("APIFY_TOKEN", "fake-token")
     dataset_items = [
-        {"name": "Alice", "stars": 5, "text": "好吃 老闆很親切", "publishedAtDate": "2025-01-01", "reviewImageUrls": ["a.jpg", "b.jpg"]},
-        {"name": "Bob", "stars": 4, "text": None, "textTranslated": "Great food"},
+        {"name": "Alice", "stars": 5, "text": "好吃 老闆很親切", "publishedAtDate": "2025-01-01", "reviewImageUrls": ["a.jpg", "b.jpg"], "placeId": "ChIJ_test123"},
+        {"name": "Bob", "stars": 4, "text": None, "textTranslated": "Great food", "placeId": "ChIJ_test123"},
     ]
     monkeypatch.setattr(apify_scraper, "ApifyClient", make_fake_client_factory(dataset_items=dataset_items))
 
-    results = apify_scraper.scrape_via_apify("https://maps.google.com/?cid=123", max_reviews=10)
+    place_id, results = apify_scraper.scrape_via_apify("https://maps.google.com/?cid=123", max_reviews=10)
 
+    assert place_id == "ChIJ_test123"
     assert len(results) == 2
     assert results[0]["username"] == "Alice"
     assert results[0]["stars"] == 5
@@ -128,14 +129,15 @@ def test_scrape_via_apify_reads_run_via_attributes_not_dict_get(monkeypatch):
     instead of run.status / run.default_dataset_id. FakeRun above has no
     .get() method at all, so this would fail loudly if that regressed."""
     monkeypatch.setenv("APIFY_TOKEN", "fake-token")
-    dataset_items = [{"name": "Alice", "stars": 5, "text": "好吃"}]
+    dataset_items = [{"name": "Alice", "stars": 5, "text": "好吃", "placeId": "ChIJ_999"}]
     monkeypatch.setattr(
         apify_scraper, "ApifyClient",
         make_fake_client_factory(run_result=FakeRun("SUCCEEDED", "fake-dataset"), dataset_items=dataset_items),
     )
 
-    results = apify_scraper.scrape_via_apify("https://maps.google.com/?cid=999", max_reviews=10)
+    place_id, results = apify_scraper.scrape_via_apify("https://maps.google.com/?cid=999", max_reviews=10)
 
+    assert place_id == "ChIJ_999"
     assert len(results) == 1
     assert results[0]["username"] == "Alice"
 
@@ -149,7 +151,7 @@ def fake_playwright_dataframe(records):
 
 def test_scrape_uses_apify_when_it_succeeds(client, monkeypatch):
     def fake_scrape_via_apify(url, max_reviews=50):
-        return [{"username": "u1", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}]
+        return "ChIJ_1", [{"username": "u1", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}]
 
     monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape_via_apify)
 
@@ -227,7 +229,7 @@ def test_scrape_cache_hit_skips_apify(client, monkeypatch):
 
     def counting_apify(url, max_reviews=50):
         call_count["n"] += 1
-        return [{"username": "fresh", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}]
+        return "ChIJ_4", [{"username": "fresh", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}]
 
     monkeypatch.setattr("apify_scraper.scrape_via_apify", counting_apify)
 
@@ -247,7 +249,7 @@ def test_scrape_force_true_bypasses_cache(client, monkeypatch):
 
     def counting_apify(url, max_reviews=50):
         call_count["n"] += 1
-        return [{"username": f"user{call_count['n']}", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}]
+        return "ChIJ_5", [{"username": f"user{call_count['n']}", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}]
 
     monkeypatch.setattr("apify_scraper.scrape_via_apify", counting_apify)
 
@@ -316,7 +318,7 @@ def test_scrape_normalizes_plain_text_query(client, monkeypatch):
     captured_url = []
     def fake_scrape_via_apify(url, max_reviews=50):
         captured_url.append(url)
-        return [{"username": "u1", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}]
+        return "ChIJ_text", [{"username": "u1", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}]
 
     monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape_via_apify)
 
