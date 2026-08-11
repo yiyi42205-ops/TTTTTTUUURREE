@@ -109,8 +109,11 @@ REGIONS = [
 ]
 
 
-def search_places_via_apify(token: str, query: str, max_places: int = 40) -> list:
-    """Use Apify Google Maps Scraper to search for places (no reviews)."""
+def search_places_via_apify(token: str, queries: list, max_places: int = 20) -> list:
+    """Use Apify Google Maps Scraper to search for places (minimal reviews).
+
+    Sends ALL queries in a single actor run to minimize Apify usage.
+    """
     try:
         from apify_client import ApifyClient
     except ImportError:
@@ -118,15 +121,35 @@ def search_places_via_apify(token: str, query: str, max_places: int = 40) -> lis
         sys.exit(1)
 
     client = ApifyClient(token)
+    # Polygon covering NTU + surrounding area (~2km radius)
+    # Roughly: 古亭(北) → 大安(東) → 公館(南) → 景美(西南) → 師大(西) → 回古亭
+    ntu_polygon = {
+        'type': 'Polygon',
+        'coordinates': [[
+            [121.5200, 25.0300],  # 古亭/中正 (北)
+            [121.5500, 25.0300],  # 大安 (東北)
+            [121.5550, 25.0150],  # 科技大樓 (東)
+            [121.5450, 25.0050],  # 公館東側 (東南)
+            [121.5300, 24.9950],  # 景美 (南)
+            [121.5150, 24.9980],  # 萬隆 (西南)
+            [121.5130, 25.0100],  # 師大南側 (西)
+            [121.5150, 25.0250],  # 師大北側 (西北)
+            [121.5200, 25.0300],  # 回古亭 (閉合)
+        ]],
+    }
+
+    print(f'  🚀 啟動 Apify actor（{len(queries)} 個關鍵字，每個最多 {max_places} 家）...')
+    print(f'  📍 限制範圍：台大附近多邊形')
     run = client.actor('compass/Google-Maps-Reviews-Scraper').call(
         run_input={
-            'searchStringsArray': [query],
-            'maxReviews': 0,
+            'searchStringsArray': queries,
+            'maxReviews': 1,
             'maxPlacesPerQuery': max_places,
             'language': 'zh-TW',
             'countryCode': 'tw',
+            'customGeolocation': ntu_polygon,
         },
-        timeout=timedelta(seconds=120),
+        timeout=timedelta(seconds=600),
     )
 
     if not run or run.status != 'SUCCEEDED':
@@ -203,53 +226,54 @@ def main():
                 print(f'   - {r["name"]}')
             sys.exit(1)
 
+    # Collect all queries from selected regions
+    all_queries = [q for r in regions for q in r['queries']]
+    print(f'📋 {len(all_queries)} 個關鍵字，來自 {len(regions)} 個區域')
+    for q in all_queries:
+        print(f'   - {q}')
+
+    # Single Apify actor run with all queries (much cheaper than one run per query)
+    print()
+    try:
+        results = search_places_via_apify(token, all_queries, args.max_per_query)
+    except Exception as e:
+        print(f'❌ Apify 失敗: {e}')
+        sys.exit(1)
+
+    print(f'  → Apify 回傳 {len(results)} 筆結果')
+
     seen_ids = set()
-    all_places = []  # (place_dict, region_name)
+    all_places = []
 
-    all_queries = [(q, r['name']) for r in regions for q in r['queries']]
-    total = len(all_queries)
+    for place in results:
+        place_id = place.get('placeId', '')
+        if place_id in seen_ids:
+            continue
+        seen_ids.add(place_id)
 
-    for i, (query, region_name) in enumerate(all_queries, 1):
-        print(f'[{i}/{total}] [{region_name}] {query}')
-
-        try:
-            results = search_places_via_apify(token, query, args.max_per_query)
-        except Exception as e:
-            print(f'  ❌ 失敗: {e}')
+        review_count = place.get('reviewsCount') or 0
+        if review_count < args.min_reviews:
             continue
 
-        new_count = 0
-        for place in results:
-            place_id = place.get('placeId', '')
-            if place_id in seen_ids:
-                continue
-            seen_ids.add(place_id)
+        name = place.get('title') or place.get('name') or ''
+        url = place.get('url') or ''
+        address = place.get('address', '')
+        if not url:
+            continue
 
-            review_count = place.get('reviewsCount') or 0
-            if review_count < args.min_reviews:
-                continue
+        actual_region = classify_region(address, regions)
 
-            name = place.get('title') or place.get('name') or ''
-            url = place.get('url') or ''
-            address = place.get('address', '')
-            if not url:
-                continue
+        all_places.append({
+            'name': name,
+            'url': url,
+            'address': address,
+            'rating': place.get('totalScore', 0),
+            'review_count': review_count,
+            'place_id': place_id,
+            'region': actual_region,
+        })
 
-            # Classify region by address (may differ from search query region)
-            actual_region = classify_region(address, regions)
-
-            all_places.append({
-                'name': name,
-                'url': url,
-                'address': address,
-                'rating': place.get('totalScore', 0),
-                'review_count': review_count,
-                'place_id': place_id,
-                'region': actual_region,
-            })
-            new_count += 1
-
-        print(f'  → {len(results)} 筆，新增 {new_count}（累計 {len(all_places)}）')
+    print(f'  → 去重 + 過濾後: {len(all_places)} 家')
 
     # ─── 按區域分組報告 ───
     region_groups = {}
