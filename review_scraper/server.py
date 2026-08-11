@@ -143,7 +143,7 @@ def scrape():
     try:
         # Imported lazily: apify_scraper pulls in the Apify HTTP client, which
         # the rest of this app (notably /api/audit and its tests) doesn't need.
-        from apify_scraper import scrape_via_apify
+        from apify_scraper import scrape_via_apify, NotARestaurantError
 
         logger.info(f"Starting Apify scrape for URL: {url_to_scrape} (limit: {max_reviews})")
         apify_place_id, records = scrape_via_apify(url_to_scrape, max_reviews=max_reviews)
@@ -158,6 +158,9 @@ def scrape():
         
         logger.info(f"Apify scrape succeeded: {len(records)} reviews in {time.time() - start_time:.2f}s.")
         return jsonify({"reviews": records, "source": "apify"})
+    except NotARestaurantError as e:
+        logger.info(f"Not a restaurant, rejecting: {url} — {e}")
+        return jsonify({"error": str(e)}), 400
     except Exception as apify_err:
         logger.warning(f"Apify scrape failed for {url_to_scrape}: {apify_err}.")
 
