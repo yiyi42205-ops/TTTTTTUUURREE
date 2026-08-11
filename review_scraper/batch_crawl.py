@@ -177,7 +177,55 @@ def main():
                         help='checkpoint 檔案路徑')
     parser.add_argument('--limit', type=int, default=None,
                         help='只處理前 N 家（測試用）')
+    parser.add_argument('--split', type=int, default=None, metavar='N',
+                        help='把店家清單平均分成 N 份（輸出 stores_1.json ~ stores_N.json）')
+    parser.add_argument('--merge-cache', type=Path, default=None, metavar='DB',
+                        help='把另一台電腦的 cache.db 合併進本地 cache.db')
     args = parser.parse_args()
+
+    # ── Merge cache from another machine ──
+    if args.merge_cache:
+        if not args.merge_cache.exists():
+            print(f'❌ 找不到 cache 檔案: {args.merge_cache}')
+            sys.exit(1)
+        import sqlite3
+        src = sqlite3.connect(str(args.merge_cache))
+        rows = src.execute(
+            'SELECT url, reviews_json, source, fetched_at FROM scrape_cache'
+        ).fetchall()
+        src.close()
+        merged = 0
+        for url, reviews_json, source, fetched_at in rows:
+            # Only import if local cache doesn't have a fresher copy
+            local = get_cached_reviews(url)
+            if local is None:
+                reviews = json.loads(reviews_json)
+                set_cached_reviews(url, reviews, source)
+                merged += 1
+        print(f'✅ 從 {args.merge_cache} 合併了 {merged}/{len(rows)} 筆 cache')
+        return
+
+    # ── Split store list for multiple machines ──
+    if args.split:
+        if not args.stores.exists():
+            print(f'❌ 找不到店家清單: {args.stores}')
+            sys.exit(1)
+        stores = load_stores(args.stores)
+        n = args.split
+        chunk_size = (len(stores) + n - 1) // n
+        for i in range(n):
+            chunk = stores[i * chunk_size:(i + 1) * chunk_size]
+            out_path = args.stores.parent / f'stores_{i + 1}.json'
+            out_path.write_text(
+                json.dumps(chunk, ensure_ascii=False, indent=2) + '\n',
+                encoding='utf-8')
+            print(f'📄 {out_path.name}: {len(chunk)} 家')
+        print(f'\n用法:')
+        print(f'  電腦 A: python review_scraper/batch_crawl.py --stores review_scraper/stores_1.json')
+        print(f'  電腦 B: python review_scraper/batch_crawl.py --stores review_scraper/stores_2.json')
+        print(f'\n爬完後在主機合併:')
+        print(f'  python review_scraper/batch_crawl.py --merge-cache /path/to/other/cache.db')
+        return
 
     # Load stores
     if not args.stores.exists():
