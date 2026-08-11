@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-用 Google Places API (New) 搜尋台大附近的餐飲店家，產出 stores.json。
+用 Apify Google Maps Scraper 搜尋台大附近的餐飲店家，產出 stores.json。
+
+只搜地點清單，不爬評論（maxReviews=0），Apify 用量極小。
 
 用法:
-  # 設定 API key（去 Google Cloud Console 啟用 Places API (New)）
-  export GOOGLE_PLACES_API_KEY=your_key_here
-
-  # 搜尋並產出 stores.json
+  # 用 .env 裡的 APIFY_TOKEN
   python review_scraper/discover_stores.py
 
-  # 自訂搜尋範圍（預設台大 1km）
-  python review_scraper/discover_stores.py --lat 25.0174 --lng 121.5405 --radius 1500
+  # 自訂搜尋關鍵字
+  python review_scraper/discover_stores.py --queries "台大附近餐廳" "公館飲料店" "大安區咖啡廳"
 
-  # 輸出到指定檔案
-  python review_scraper/discover_stores.py -o my_stores.json
+  # 合併到現有 stores.json（保留原本的店）
+  python review_scraper/discover_stores.py --merge
 
-Google Places API (New) 免費額度：每月 $200 credit，Nearby Search 每次 $0.032，
-搜 200 家大約 $1-2，免費額度內綽綽有餘。
+  # 調整最少評論數門檻
+  python review_scraper/discover_stores.py --min-reviews 20
 
 產出格式與 stores.json 相容，可直接用於 batch_crawl.py。
 """
@@ -25,160 +24,129 @@ import argparse
 import json
 import os
 import sys
-import time
-import urllib.request
+from datetime import timedelta
 from pathlib import Path
 
-# NTU main campus center
-DEFAULT_LAT = 25.0174
-DEFAULT_LNG = 121.5405
-DEFAULT_RADIUS = 1000  # meters
+# Load .env from project root
+_env_path = Path(__file__).resolve().parent.parent / '.env'
+if _env_path.exists():
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith('#') and '=' in _line:
+                _key, _, _val = _line.partition('=')
+                os.environ.setdefault(_key.strip(), _val.strip())
 
-# Google Maps place types relevant to restaurants/drinks
-PLACE_TYPES = [
-    'restaurant',
-    'cafe',
-    'bakery',
-    'meal_takeaway',
-    'bar',
+SCRIPT_DIR = Path(__file__).resolve().parent
+
+# Default search queries — multiple angles to maximize coverage
+DEFAULT_QUERIES = [
+    '台大附近餐廳',
+    '公館美食',
+    '公館飲料店',
+    '台大附近咖啡廳',
+    '大安區小吃',
+    '溫州街餐廳',
+    '羅斯福路美食',
+    '新生南路餐廳',
+    '師大夜市美食',
+    '景美美食',
 ]
 
-# Grid offsets (meters) for multi-point search to get better coverage.
-# A single Nearby Search returns max 20 results; by searching from
-# multiple points we cover more ground.
-GRID_OFFSETS_M = [
-    (0, 0),
-    (400, 0), (-400, 0),
-    (0, 400), (0, -400),
-    (400, 400), (-400, -400),
-    (400, -400), (-400, 400),
-]
 
-# Approximate meters per degree at latitude ~25
-METERS_PER_DEG_LAT = 110574
-METERS_PER_DEG_LNG = 101320  # at lat 25
-
-
-def nearby_search(api_key: str, lat: float, lng: float, radius: int,
-                  place_type: str) -> list:
-    """Call Places API (New) Nearby Search and return place results."""
-    url = 'https://places.googleapis.com/v1/places:searchNearby'
-    body = {
-        'includedTypes': [place_type],
-        'maxResultCount': 20,
-        'locationRestriction': {
-            'circle': {
-                'center': {'latitude': lat, 'longitude': lng},
-                'radius': float(radius),
-            }
-        },
-        'languageCode': 'zh-TW',
-    }
-    headers = {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': api_key,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.googleMapsUri,'
-                            'places.formattedAddress,places.types,'
-                            'places.userRatingCount,places.rating',
-    }
-
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(body).encode('utf-8'),
-        headers=headers,
-        method='POST',
-    )
+def search_places_via_apify(token: str, query: str, max_places: int = 40) -> list:
+    """Use Apify Google Maps Scraper to search for places (no reviews)."""
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode('utf-8'))
-            return data.get('places', [])
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode('utf-8', errors='replace')
-        print(f'  ❌ API error {e.code}: {error_body[:200]}')
-        return []
-    except Exception as e:
-        print(f'  ❌ Request failed: {e}')
-        return []
+        from apify_client import ApifyClient
+    except ImportError:
+        print('❌ apify-client 未安裝，請執行: pip install apify-client')
+        sys.exit(1)
 
+    client = ApifyClient(token)
+    run = client.actor('compass/Google-Maps-Reviews-Scraper').call(
+        run_input={
+            'searchStringsArray': [query],
+            'maxReviews': 0,          # only search, don't scrape reviews
+            'maxPlacesPerQuery': max_places,
+            'language': 'zh-TW',
+            'countryCode': 'tw',
+        },
+        timeout=timedelta(seconds=120),
+    )
 
-def offset_coords(lat: float, lng: float, offset_m: tuple) -> tuple:
-    """Offset lat/lng by (north_m, east_m)."""
-    dy, dx = offset_m
-    new_lat = lat + dy / METERS_PER_DEG_LAT
-    new_lng = lng + dx / METERS_PER_DEG_LNG
-    return new_lat, new_lng
+    if not run or run.status != 'SUCCEEDED':
+        raise RuntimeError(f'Apify run failed: {run.status if run else "no response"}')
+
+    dataset_id = run.default_dataset_id
+    if not dataset_id:
+        raise RuntimeError('No dataset ID returned')
+
+    return list(client.dataset(dataset_id).iterate_items())
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='用 Google Places API 搜尋台大附近餐飲店家')
-    parser.add_argument('--lat', type=float, default=DEFAULT_LAT,
-                        help=f'搜尋中心緯度 (預設 {DEFAULT_LAT})')
-    parser.add_argument('--lng', type=float, default=DEFAULT_LNG,
-                        help=f'搜尋中心經度 (預設 {DEFAULT_LNG})')
-    parser.add_argument('--radius', type=int, default=DEFAULT_RADIUS,
-                        help=f'搜尋半徑公尺 (預設 {DEFAULT_RADIUS})')
+        description='用 Apify 搜尋台大附近餐飲店家，產出 stores.json')
+    parser.add_argument('--queries', nargs='+', default=DEFAULT_QUERIES,
+                        help='搜尋關鍵字（可多個）')
+    parser.add_argument('--max-per-query', type=int, default=40,
+                        help='每個關鍵字最多回傳幾家 (預設 40)')
     parser.add_argument('-o', '--output', type=Path,
-                        default=Path(__file__).resolve().parent / 'stores.json',
+                        default=SCRIPT_DIR / 'stores.json',
                         help='輸出檔案路徑 (預設 review_scraper/stores.json)')
     parser.add_argument('--merge', action='store_true',
                         help='合併到現有 stores.json（不覆蓋已有的店）')
     parser.add_argument('--min-reviews', type=int, default=10,
-                        help='最少評論數門檻，過濾太冷門的店 (預設 10)')
+                        help='最少評論數門檻 (預設 10)')
     args = parser.parse_args()
 
-    api_key = os.environ.get('GOOGLE_PLACES_API_KEY')
-    if not api_key:
-        print('❌ 請設定 GOOGLE_PLACES_API_KEY 環境變數')
-        print('   去 Google Cloud Console → APIs & Services → 啟用 Places API (New)')
-        print('   然後建立 API key')
+    token = os.environ.get('APIFY_TOKEN')
+    if not token:
+        print('❌ 請設定 APIFY_TOKEN 環境變數（或在 .env 裡設定）')
         sys.exit(1)
 
-    # Deduplicate by place ID
     seen_ids = set()
     all_places = []
 
-    total_queries = len(GRID_OFFSETS_M) * len(PLACE_TYPES)
-    query_num = 0
+    for i, query in enumerate(args.queries, 1):
+        print(f'[{i}/{len(args.queries)}] 搜尋: {query}')
 
-    for place_type in PLACE_TYPES:
-        for offset in GRID_OFFSETS_M:
-            query_num += 1
-            search_lat, search_lng = offset_coords(args.lat, args.lng, offset)
-            print(f'[{query_num}/{total_queries}] '
-                  f'{place_type} @ ({search_lat:.4f}, {search_lng:.4f})')
+        try:
+            results = search_places_via_apify(token, query, args.max_per_query)
+        except Exception as e:
+            print(f'  ❌ 失敗: {e}')
+            continue
 
-            places = nearby_search(api_key, search_lat, search_lng,
-                                   args.radius, place_type)
+        new_count = 0
+        for place in results:
+            # Deduplicate by place ID or URL
+            place_id = place.get('placeId', '')
+            if place_id in seen_ids:
+                continue
+            seen_ids.add(place_id)
 
-            new_count = 0
-            for p in places:
-                pid = p.get('id', '')
-                if pid in seen_ids:
-                    continue
-                seen_ids.add(pid)
+            review_count = place.get('reviewsCount') or place.get('totalScore') or 0
+            if review_count < args.min_reviews:
+                continue
 
-                rating_count = p.get('userRatingCount', 0)
-                if rating_count < args.min_reviews:
-                    continue
+            name = place.get('title') or place.get('name') or ''
+            url = place.get('url') or place.get('googleMapsUri') or ''
+            if not url:
+                continue
 
-                name = p.get('displayName', {}).get('text', '')
-                maps_url = p.get('googleMapsUri', '')
+            all_places.append({
+                'name': name,
+                'url': url,
+                'address': place.get('address', ''),
+                'rating': place.get('totalScore', 0),
+                'review_count': review_count,
+                'place_id': place_id,
+            })
+            new_count += 1
 
-                all_places.append({
-                    'name': name,
-                    'url': maps_url,
-                    'address': p.get('formattedAddress', ''),
-                    'rating': p.get('rating', 0),
-                    'review_count': rating_count,
-                    'place_id': pid,
-                })
-                new_count += 1
+        print(f'  → {len(results)} 筆，新增 {new_count}（累計 {len(all_places)}）')
 
-            print(f'  → {len(places)} 筆，新增 {new_count}（累計 {len(all_places)}）')
-            time.sleep(0.3)  # rate limit courtesy
-
-    # Sort by review count descending (most popular first)
+    # Sort by review count descending
     all_places.sort(key=lambda x: x['review_count'], reverse=True)
 
     print(f'\n{"=" * 60}')
@@ -189,15 +157,15 @@ def main():
     print(f'\n{"店名":<25} {"評論數":>6} {"評分":>4}  地址')
     print('-' * 80)
     for p in all_places[:20]:
-        print(f'{p["name"]:<25} {p["review_count"]:>6} {p["rating"]:>4.1f}  '
-              f'{p["address"][:30]}')
+        addr = p["address"][:30] if p["address"] else ''
+        print(f'{p["name"]:<25} {p["review_count"]:>6} {p["rating"]:>4.1f}  {addr}')
     if len(all_places) > 20:
         print(f'... 還有 {len(all_places) - 20} 家')
 
-    # Prepare output (stores.json format)
+    # Prepare output (stores.json format — only name + url)
     output_stores = [{'name': p['name'], 'url': p['url']} for p in all_places]
 
-    # Merge with existing if requested
+    # Merge with existing
     if args.merge and args.output.exists():
         existing = json.loads(args.output.read_text(encoding='utf-8'))
         existing_urls = {s['url'] for s in existing}
@@ -206,7 +174,7 @@ def main():
         print(f'\n合併模式：原有 {len(existing)} 家 + 新增 {len(new_stores)} 家 '
               f'= {len(output_stores)} 家')
 
-    # Write output
+    # Write
     args.output.write_text(
         json.dumps(output_stores, ensure_ascii=False, indent=2) + '\n',
         encoding='utf-8')
