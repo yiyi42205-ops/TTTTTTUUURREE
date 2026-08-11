@@ -374,11 +374,38 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
     hot_term_counts, hot_term_max_ratios = detect_hot_term_signals(reviews)
     nearby_long_review_counts = detect_nearby_long_review_counts(reviews)
 
+    # Exact-match counting for generic short reviews.
+    # These are too short for n-gram Jaccard (len <= min_template_chars) so
+    # detect_similarity_signals always returns similarCount=0 for them.
+    # Count how many other reviews share the exact same cleaned text instead.
+    short_exact_counts = [0] * len(reviews)
+    cleaned_texts = []
+    is_generic_short = []
+    for r in reviews:
+        text = r.get('text', '') or ''
+        try:
+            stars = int(r.get('stars') or 0)
+        except (ValueError, TypeError):
+            stars = 0
+        cleaned = STRIP_PUNCT_RE.sub('', text)
+        is_short = is_generic_short_review(text, stars)
+        cleaned_texts.append(cleaned)
+        is_generic_short.append(is_short)
+
+    # Build frequency map of cleaned texts among generic short reviews
+    short_text_freq = defaultdict(int)
+    for i, is_short in enumerate(is_generic_short):
+        if is_short:
+            short_text_freq[cleaned_texts[i]] += 1
+    for i, is_short in enumerate(is_generic_short):
+        if is_short:
+            short_exact_counts[i] = short_text_freq[cleaned_texts[i]] - 1  # exclude self
+
     # Per-review audit
     audited = []
     for i, review in enumerate(reviews):
         is_spike = spike_flags[i]
-        sim_count = similar_counts[i]
+        sim_count = max(similar_counts[i], short_exact_counts[i])
 
         audit = audit_review(review, {
             'isSpikePeriod': is_spike,
@@ -417,7 +444,7 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
         {
             'isDuplicate': template_flags[i],
             'maxSimilarity': round(max_similarity[i], 2),
-            'similarCount': similar_counts[i],
+            'similarCount': max(similar_counts[i], short_exact_counts[i]),
         }
         for i in range(len(reviews))
     ]
