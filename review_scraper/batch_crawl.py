@@ -154,8 +154,8 @@ def main():
         description='本地 Playwright 批次預爬 Google Maps 評論 → SQLite cache')
     parser.add_argument('--stores', type=Path, default=DEFAULT_STORES_FILE,
                         help=f'店家清單 JSON (預設 {DEFAULT_STORES_FILE.name})')
-    parser.add_argument('--max-reviews', type=int, default=200,
-                        help='每家店最多爬幾則 (預設 200)')
+    parser.add_argument('--max-reviews', type=int, default=500,
+                        help='每家店最多爬幾則 (預設 500)')
     parser.add_argument('--delay-min', type=float, default=15,
                         help='店與店之間最短間隔秒數 (預設 15)')
     parser.add_argument('--delay-max', type=float, default=45,
