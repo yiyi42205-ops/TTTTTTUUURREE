@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 SQLite-backed cache for /api/scrape results, keyed by place_id.
 Implements a dual-layer lookup: search queries / URLs map to place_id,

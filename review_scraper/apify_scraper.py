@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Primary scraping path: the Apify "compass/Google-Maps-Reviews-Scraper" actor.
 

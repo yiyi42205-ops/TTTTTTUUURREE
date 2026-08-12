@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -95,7 +97,11 @@ def scrape():
         return jsonify({"error": "Missing or invalid field: url (must be a non-empty string)"}), 400
     
     url = url.strip()
-    original_query = url.strip()
+    if len(url) > 2048:
+        logger.error(f"Scrape request from {ip} failed validation: URL length exceeds limit ({len(url)} > 2048)")
+        return jsonify({"error": "URL length exceeds limit (max 2048 characters)"}), 400
+
+    original_query = url
     is_url = original_query.startswith("http://") or original_query.startswith("https://")
     
     # 1. Fast path: check search_query_map first for O(1) lookup on EXACT match
