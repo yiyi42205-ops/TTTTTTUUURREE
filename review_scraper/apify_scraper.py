@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Primary scraping path: the Apify "compass/Google-Maps-Reviews-Scraper" actor.
 
@@ -21,7 +23,7 @@ ACTOR_ID = "compass/Google-Maps-Reviews-Scraper"
 RUN_WAIT_SECONDS = 180
 
 
-def scrape_via_apify(url: str, max_reviews: int = 50) -> list:
+def scrape_via_apify(url: str, max_reviews: int = 50) -> tuple[str | None, list]:
     token = os.getenv("APIFY_TOKEN")
     if not token:
         raise RuntimeError("缺少 APIFY_TOKEN 環境變數，無法呼叫 Apify 爬蟲服務。")
@@ -52,4 +54,10 @@ def scrape_via_apify(url: str, max_reviews: int = 50) -> list:
         raise RuntimeError("Apify 執行未回傳有效的 dataset ID。")
 
     items = client.dataset(dataset_id).list_items().items
-    return [normalize_review(item) for item in items if isinstance(item, dict)]
+    
+    place_id = None
+    if items and isinstance(items[0], dict):
+        place_id = items[0].get("placeId")
+        
+    reviews = [normalize_review(item) for item in items if isinstance(item, dict)]
+    return place_id, reviews

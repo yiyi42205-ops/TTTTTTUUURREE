@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -12,8 +14,9 @@ from urllib.parse import urlparse
 
 from normalize import normalize_review
 from gemini_client import make_batches, call_gemini_batch, MAX_CONCURRENT_BATCHES
-from cache_store import get_cached_reviews, set_cached_reviews
+from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping
 from rule_engine import run_stage1_audit
+import re
 
 # Configure logging format and level
 logging.basicConfig(
@@ -62,6 +65,25 @@ def resolve_google_share_url(url: str) -> str:
         logger.warning(f"Failed to resolve share.google URL {url}: {e}")
     return url
 
+def extract_place_id(url: str) -> str | None:
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"},
+            method="GET"
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            html = response.read().decode('utf-8', errors='ignore')
+            match = re.search(r'(ChIJ[\w-]+)', html)
+            if match:
+                place_id = match.group(1)
+                logger.info(f"extract_place_id successfully found place_id '{place_id}' for URL: {url}")
+                return place_id
+            logger.info(f"extract_place_id found no place_id match for URL: {url}")
+    except Exception as e:
+        logger.warning(f"extract_place_id failed for URL {url}: {e}")
+    return None
+
 @app.route("/api/scrape", methods=["POST"])
 def scrape():
     start_time = time.time()
@@ -76,14 +98,32 @@ def scrape():
     
     url = url.strip()
     if len(url) > 2048:
-        logger.error(f"Scrape request from {ip} failed validation: URL length exceeds limit")
-        return jsonify({"error": "URL length exceeds limit of 2048 characters"}), 400
-    if not (url.startswith("http://") or url.startswith("https://")):
-        from urllib.parse import quote
-        url = f"https://www.google.com/maps/search/{quote(url)}"
-        logger.info(f"Converted text query to Google Maps search URL: {url}")
+        logger.error(f"Scrape request from {ip} failed validation: URL length exceeds limit ({len(url)} > 2048)")
+        return jsonify({"error": "URL length exceeds limit (max 2048 characters)"}), 400
+
+    original_query = url
+    is_url = original_query.startswith("http://") or original_query.startswith("https://")
+    
+    # 1. Fast path: check search_query_map first for O(1) lookup on EXACT match
+    target_place_id = get_place_id_for_query(original_query)
+    url_to_scrape = original_query
+
+    # 2. If not found in mapping, try to extract or construct it
+    if not target_place_id:
+        if is_url:
+            # First time seeing this URL. Resolve it and try to extract place_id via Regex
+            url_to_scrape = resolve_google_share_url(original_query)
+            target_place_id = extract_place_id(url_to_scrape)
+        else:
+            # Text query: No network extraction attempted. Apify will handle it.
+            from urllib.parse import quote
+            url_to_scrape = f"https://www.google.com/maps/search/{quote(original_query)}"
+            logger.info(f"Converted text query to Google Maps search URL: {url_to_scrape}")
     else:
-        url = resolve_google_share_url(url)
+        # We know the place_id! For text queries, Apify still expects a search URL if cache expires.
+        if not is_url:
+            from urllib.parse import quote
+            url_to_scrape = f"https://www.google.com/maps/search/{quote(original_query)}"
     
     max_reviews = data.get("maxReviews") or 50
     try:
@@ -94,10 +134,10 @@ def scrape():
 
     force = request.args.get("force", "false").lower() == "true"
 
-    if not force:
-        cached = get_cached_reviews(url)
+    if not force and target_place_id:
+        cached = get_cached_reviews(target_place_id)
         if cached is not None:
-            logger.info(f"Cache hit for URL: {url} ({len(cached)} reviews)")
+            logger.info(f"Cache hit for place_id: {target_place_id} ({len(cached)} reviews)")
             return jsonify({"reviews": cached, "source": "cache"})
 
     try:
@@ -105,20 +145,28 @@ def scrape():
         # the rest of this app (notably /api/audit and its tests) doesn't need.
         from apify_scraper import scrape_via_apify
 
-        logger.info(f"Starting Apify scrape for URL: {url} (limit: {max_reviews})")
-        records = scrape_via_apify(url, max_reviews=max_reviews)
-        set_cached_reviews(url, records, source="apify")
+        logger.info(f"Starting Apify scrape for URL: {url_to_scrape} (limit: {max_reviews})")
+        apify_place_id, records = scrape_via_apify(url_to_scrape, max_reviews=max_reviews)
+        
+        final_place_id = apify_place_id or target_place_id
+        if final_place_id:
+            set_cached_reviews(final_place_id, records, source="apify")
+            # Always save mapping if it was a query or if we resolved a place_id
+            set_query_place_id_mapping(original_query, final_place_id)
+            if is_url and url_to_scrape != original_query:
+                set_query_place_id_mapping(url_to_scrape, final_place_id)
+        
         logger.info(f"Apify scrape succeeded: {len(records)} reviews in {time.time() - start_time:.2f}s.")
         return jsonify({"reviews": records, "source": "apify"})
     except Exception as apify_err:
-        logger.warning(f"Apify scrape failed for {url}: {apify_err}.")
+        logger.warning(f"Apify scrape failed for {url_to_scrape}: {apify_err}.")
 
         # Playwright fallback is opt-in: read at request time (not bound to a
         # module-level constant) so it can be toggled via env var / tests
         # without needing to reimport this module.
         fallback_enabled = os.getenv("ENABLE_PLAYWRIGHT_FALLBACK", "false").lower() == "true"
         if not fallback_enabled:
-            logger.error(f"Playwright fallback disabled (set ENABLE_PLAYWRIGHT_FALLBACK=true to enable); returning Apify failure for {url}.")
+            logger.error(f"Playwright fallback disabled (set ENABLE_PLAYWRIGHT_FALLBACK=true to enable); returning Apify failure for {url_to_scrape}.")
             return jsonify({"error": str(apify_err)}), 500
 
         logger.warning("Falling back to Playwright.")
@@ -127,9 +175,13 @@ def scrape():
             # which the rest of this app (notably /api/audit and its tests) doesn't need.
             from scraper import scrape_google_maps_reviews
 
-            df = scrape_google_maps_reviews(url, max_reviews=max_reviews)
+            df = scrape_google_maps_reviews(url_to_scrape, max_reviews=max_reviews)
             records = [] if df.empty else [normalize_review(r) for r in df.to_dict(orient="records")]
-            set_cached_reviews(url, records, source="playwright_fallback")
+            if target_place_id:
+                set_cached_reviews(target_place_id, records, source="playwright_fallback")
+                set_query_place_id_mapping(original_query, target_place_id)
+                if is_url and url_to_scrape != original_query:
+                    set_query_place_id_mapping(url_to_scrape, target_place_id)
             logger.info(f"Playwright fallback succeeded: {len(records)} reviews in {time.time() - start_time:.2f}s.")
             return jsonify({"reviews": records, "source": "playwright_fallback"})
         except Exception as playwright_err:
