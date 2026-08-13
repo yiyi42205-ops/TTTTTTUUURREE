@@ -355,6 +355,12 @@ def extract_place_name_from_url(url: str) -> str:
         decoded = unquote(raw).replace('+', ' ').strip()
         if decoded:
             return decoded
+    # Handle /maps/search/?api=1&query=... format (from discover_stores)
+    from urllib.parse import urlparse, parse_qs
+    parsed = urlparse(url)
+    query_param = parse_qs(parsed.query).get('query', [None])[0]
+    if query_param:
+        return unquote(query_param).strip()
     return ""
 
 
@@ -504,20 +510,29 @@ def navigate_to_place_reviews(page, url: str) -> bool:
     except Exception:
         pass
 
-    print("[Python Scraper] Searching via search box...")
-    try:
-        page.fill('input#searchboxinput, input[name="q"]', search_query)
-        time.sleep(1)
-        page.keyboard.press("Enter")
+    # If URL contains query_place_id, navigate directly — it pins to the exact branch
+    from urllib.parse import urlparse as _urlparse, parse_qs as _parse_qs
+    _parsed = _urlparse(url)
+    _has_place_id = 'query_place_id' in _parse_qs(_parsed.query)
+    if _has_place_id:
+        print(f"[Python Scraper] URL has query_place_id, navigating directly...")
+        page.goto(url, wait_until="domcontentloaded", timeout=30000)
         time.sleep(8)
-    except Exception as e:
-        print(f"[Python Scraper] Failed to search via search box: {e}.")
-        if url.startswith("http://") or url.startswith("https://"):
-            print("[Python Scraper] Falling back to direct URL navigation.")
-            page.goto(url, wait_until="domcontentloaded", timeout=30000)
-            time.sleep(6)
-        else:
-            return False
+    else:
+        print("[Python Scraper] Searching via search box...")
+        try:
+            page.fill('input#searchboxinput, input[name="q"]', search_query)
+            time.sleep(1)
+            page.keyboard.press("Enter")
+            time.sleep(8)
+        except Exception as e:
+            print(f"[Python Scraper] Failed to search via search box: {e}.")
+            if url.startswith("http://") or url.startswith("https://"):
+                print("[Python Scraper] Falling back to direct URL navigation.")
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                time.sleep(6)
+            else:
+                return False
 
     # Check if the search landed directly on a place page (single result)
     if _check_place_loaded(page):
