@@ -43,3 +43,17 @@ def build_prompt(store_name: str, reviews: list) -> str:
         .replace('{review_count}', str(len(payload)))
         .replace('{reviews_json}', json.dumps(payload, ensure_ascii=False, indent=2))
     )
+
+_SUMMARIZE_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'summarize_prompt.txt')
+
+def load_summarize_template() -> str:
+    with open(_SUMMARIZE_TEMPLATE_PATH, 'r', encoding='utf-8') as f:
+        return f.read()
+
+def build_summarize_prompt(store_name: str, reviews_json: str) -> str:
+    template = load_summarize_template()
+    return (
+        template
+        .replace('{store_name}', store_name or '待總結店家')
+        .replace('{reviews_json}', reviews_json)
+    )

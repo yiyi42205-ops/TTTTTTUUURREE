@@ -7,7 +7,7 @@ import json
 import math
 import re
 
-from prompt_builder import build_prompt
+from prompt_builder import build_prompt, build_summarize_prompt
 
 MODEL_NAME = 'gemini-2.5-flash'
 
@@ -94,3 +94,47 @@ def call_gemini_batch(client, store_name: str, batch: list) -> list:
         config={'response_mime_type': 'application/json'},
     )
     return parse_gemini_json(getattr(response, 'text', None))
+
+def parse_gemini_summary_json(raw_text: str) -> dict:
+    """Parses Gemini's text response into the summarize dict (warnings & recommendations).
+    Raises ValueError if the content isn't recoverable as a JSON dict."""
+    cleaned = _extract_json_block(_strip_markdown_fences(raw_text or ''))
+    try:
+        parsed = json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        raise ValueError(f'Gemini 回傳內容非合法 JSON：{e}') from e
+
+    if isinstance(parsed, dict):
+        if 'warnings' not in parsed:
+            parsed['warnings'] = []
+        if 'recommendations' not in parsed:
+            parsed['recommendations'] = []
+        return parsed
+
+    raise ValueError('Gemini 回傳的內容不是有效的總結 JSON 物件')
+
+def call_gemini_summarize(client, store_name: str, reviews: list) -> dict:
+    """Filters genuine reviews and sends them to Gemini for single-mode summarization."""
+    # 1. Strict filter for genuine reviews
+    genuine_reviews = [r for r in reviews if r.get('isWashed') is False]
+    
+    # 2. Trim fields to save token space
+    summarize_material = [
+        {'id': r.get('id'), 'username': r.get('username'), 'stars': r.get('stars'), 'text': r.get('text')}
+        for r in genuine_reviews
+    ]
+    
+    if not summarize_material:
+        return {'warnings': [], 'recommendations': []}
+
+    prompt_text = build_summarize_prompt(
+        store_name=store_name,
+        reviews_json=json.dumps(summarize_material, ensure_ascii=False)
+    )
+
+    response = client.models.generate_content(
+        model=MODEL_NAME,
+        contents=prompt_text,
+        config={'response_mime_type': 'application/json'},
+    )
+    return parse_gemini_summary_json(getattr(response, 'text', None))

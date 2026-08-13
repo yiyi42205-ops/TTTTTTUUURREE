@@ -11,7 +11,7 @@ import urllib.request
 from urllib.parse import urlparse
 
 from normalize import normalize_review
-from gemini_client import make_batches, call_gemini_batch, MAX_CONCURRENT_BATCHES
+from gemini_client import make_batches, call_gemini_batch, MAX_CONCURRENT_BATCHES, call_gemini_summarize
 from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping
 from rule_engine import run_stage1_audit
 import re
@@ -282,6 +282,39 @@ def audit():
     if errors:
         response_body["errors"] = errors
     return jsonify(response_body)
+
+
+@app.route("/api/summarize", methods=["POST"])
+def summarize():
+    start_time = time.time()
+    ip = request.remote_addr
+    logger.info(f"POST /api/summarize request from IP: {ip}")
+
+    data = request.get_json() or {}
+    
+    # 1. Validate payload
+    mode = data.get("mode")
+    if mode != "single":
+        logger.error(f"summarize request from {ip} failed validation: mode '{mode}' not supported")
+        return jsonify({"error": "Only mode='single' is supported"}), 400
+
+    store_name = data.get("storeName", "未知店家")
+    reviews = data.get("reviews")
+    
+    if not reviews or not isinstance(reviews, list):
+        logger.error(f"summarize request from {ip} failed validation: Missing or invalid field 'reviews'")
+        return jsonify({"error": "Missing or invalid required field: reviews"}), 400
+
+    logger.info(f"Starting Gemini summarization for {store_name} ({len(reviews)} total reviews provided)")
+    
+    try:
+        summary_result = call_gemini_summarize(genai_client, store_name, reviews)
+        logger.info(f"Gemini summarization succeeded in {time.time() - start_time:.2f}s.")
+        return jsonify(summary_result)
+    except Exception as e:
+        logger.error(f"Gemini summarization failed for {store_name}: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     logger.info("Initializing Flask server configurations...")
