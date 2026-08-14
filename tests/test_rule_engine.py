@@ -266,3 +266,71 @@ class TestLanguageRatio:
         ]
         result = run_stage1_audit(reviews)
         assert 'foreignLanguageRatio' in result['signals']
+
+# ─── Regression: Stage 1 verdicts must not be sent to Stage 2 ──
+
+class TestStage1VerdictLock:
+    """Issue #2: Stage 1 non-null issueType reviews must be excluded from
+    the Stage 2 pool.  The frontend filters on ``issueType === null`` before
+    sending to Gemini.  These tests verify that the rule engine's contract
+    (non-null issueType ↔ Stage-1-final) holds for every category, so the
+    frontend filter is safe to rely on."""
+
+    MIXED_REVIEWS = [
+        # incentive — Stage 1 final
+        {'username': 'promo', 'stars': 5, 'time': '2025-01-01',
+         'text': '打卡送小菜，好開心'},
+        # no_text — Stage 1 final
+        {'username': 'silent', 'stars': 5, 'time': '2025-01-01',
+         'text': ''},
+        # low_info — Stage 1 final (not escalated here, no spike/similarity)
+        {'username': 'short', 'stars': 5, 'time': '2025-06-01',
+         'text': '好吃'},
+        # duplicate pair — Stage 1 final (template)
+        {'username': 'dup_a', 'stars': 5, 'time': '2025-03-01',
+         'text': '這家的招牌牛肉麵湯頭超濃郁，麵條Q彈有勁，牛肉大塊又軟嫩，CP值超高推薦。'},
+        {'username': 'dup_b', 'stars': 5, 'time': '2025-03-02',
+         'text': '這家的招牌牛肉麵湯頭超濃郁，麵條Q彈有勁，牛肉大塊又軟嫩，CP值超高推薦。'},
+        # ambiguous — should be the ONLY one sent to Stage 2
+        {'username': 'genuine', 'stars': 5, 'time': '2025-02-01',
+         'text': '今天和朋友來慶生，點了松露燉飯和香煎鱸魚，燉飯味道濃郁但不膩，魚皮煎得很脆，整體體驗很棒。'},
+    ]
+
+    def test_stage1_final_reviews_have_non_null_issue_type(self):
+        """Every Stage-1-decided review must have issueType != None."""
+        result = run_stage1_audit(self.MIXED_REVIEWS)
+        audited = result['auditedReviews']
+
+        stage1_final = [r for r in audited if r['audit']['issueType'] is not None]
+        # promo + silent + short + dup_a + dup_b = 5
+        assert len(stage1_final) == 5
+
+        expected = {
+            'promo': 'incentive',
+            'silent': 'no_text',
+            'short': 'low_info',
+            'dup_a': 'template',
+            'dup_b': 'template',
+        }
+        for r in stage1_final:
+            assert r['audit']['issueType'] == expected[r['username']], \
+                f"{r['username']} expected {expected[r['username']]}, got {r['audit']['issueType']}"
+
+    def test_only_ambiguous_reviews_eligible_for_stage2(self):
+        """Only issueType=None reviews should enter the Stage 2 pool."""
+        result = run_stage1_audit(self.MIXED_REVIEWS)
+        audited = result['auditedReviews']
+
+        stage2_pool = [r for r in audited if r['audit']['issueType'] is None]
+        assert len(stage2_pool) == 1
+        assert stage2_pool[0]['username'] == 'genuine'
+
+    def test_stage1_verdict_is_deterministic(self):
+        """Running the same reviews twice must produce identical verdicts."""
+        result1 = run_stage1_audit(self.MIXED_REVIEWS)
+        result2 = run_stage1_audit(self.MIXED_REVIEWS)
+
+        for r1, r2 in zip(result1['auditedReviews'], result2['auditedReviews']):
+            assert r1['audit'] == r2['audit'], \
+                f"Non-deterministic verdict for {r1['username']}: {r1['audit']} vs {r2['audit']}"
+>>>>>>> 65a9170 (test: add regression tests for Stage 1 verdict lock (Issue #2))
