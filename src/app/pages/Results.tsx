@@ -11,6 +11,7 @@ import { parseReviews, Review } from '../utils/csvParser';
 import { aggregateAuditedReviews, mergeStage2Results, computeStage2Confidence, ShopStats, AuditResult, SimilaritySignal, HotTermSignal } from '../utils/auditEngine';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
 import { useIsPWA } from '../hooks/useIsPWA';
+import { SummaryBanner, SummaryData } from '../components/SummaryBanner';
 
 function cleanStoreName(name: string): string {
   if (!name) return '';
@@ -117,6 +118,10 @@ export function Results() {
     stage2Passed: number;  // Gemini passed
   }
   const [pipelineLogs, setPipelineLogs] = useState<PipelineLog[]>([]);
+
+  // Single-Store Summaries State
+  const [shopSummaries, setShopSummaries] = useState<{ [storeId: string]: SummaryData }>({});
+  const [isSummarizing, setIsSummarizing] = useState<{ [storeId: string]: boolean }>({});
 
   // 1. Initial Parse → call backend /api/audit-rules for Stage 1 heuristics
   useEffect(() => {
@@ -409,6 +414,35 @@ export function Results() {
       updatedResults.forEach(shop => {
         historyStore.saveHistory(shop);
       });
+      
+      // Auto-fetch summaries for all active shops
+      activeShopResults.forEach(async (shop, idx) => {
+        const matchingId = storeIds[idx] || `custom_${idx}`;
+        const finalShopState = updatedResults[idx];
+        
+        setIsSummarizing(prev => ({ ...prev, [matchingId]: true }));
+        try {
+          const sumResponse = await fetch('/api/summarize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mode: 'single',
+              storeName: finalShopState.storeName,
+              placeId: matchingId,
+              reviews: finalShopState.auditedReviews.map((r, i) => ({ ...r, id: `review-${matchingId}-${i}` }))
+            })
+          });
+          
+          if (sumResponse.ok) {
+            const sumData = await sumResponse.json();
+            setShopSummaries(prev => ({ ...prev, [matchingId]: sumData }));
+          }
+        } catch (err) {
+          console.error(`Summary failed for ${matchingId}:`, err);
+        } finally {
+          setIsSummarizing(prev => ({ ...prev, [matchingId]: false }));
+        }
+      });
     } catch (e: any) {
       console.error(e);
       setApiError(e.message || '連線 API 時發生未知錯誤');
@@ -437,6 +471,17 @@ export function Results() {
       ...prev,
       [key]: !prev[key]
     }));
+  };
+
+  const scrollToReview = (reviewId: string) => {
+    const el = document.getElementById(reviewId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-4', 'ring-emerald-400', 'bg-emerald-50');
+      setTimeout(() => {
+        el.classList.remove('ring-4', 'ring-emerald-400', 'bg-emerald-50');
+      }, 2000);
+    }
   };
 
   // Early return while loading to prevent partial flashing
@@ -1459,9 +1504,25 @@ export function Results() {
                 if (filter === 'clean') return !rev.audit.isWashed;
                 return true;
               });
+              
+              const activeStoreId = storeIds[selectedInspectorTab] || `custom_${selectedInspectorTab}`;
+              const activeSummary = shopSummaries[activeStoreId];
+              const isSummarizingActive = isSummarizing[activeStoreId];
 
               return (
                 <div className="divide-y divide-[#f5f1e8] max-h-96 overflow-y-auto bg-white p-2">
+                  {isSummarizingActive && (
+                    <div className="flex items-center justify-center py-4 bg-gray-900 rounded-xl mb-4 text-blue-400">
+                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      <span className="text-sm font-medium">AI 正在為您產生單店總結...</span>
+                    </div>
+                  )}
+                  {activeSummary && (
+                    <SummaryBanner 
+                      summary={activeSummary} 
+                      onSourceClick={scrollToReview} 
+                    />
+                  )}
                   {filteredReviews.length === 0 ? (
                     <div className="text-center py-12 text-xs text-[#6b8e7f] font-bold">
                       無符合篩選或關鍵字搜尋條件的評價內容。
@@ -1476,9 +1537,12 @@ export function Results() {
                       const isLowConfidenceWashed = isWashed && review.audit.confidenceScore < 50;
                       const hasCoT = !!review.audit.reasoningPath;
                       const cotExpanded = expandedCoT[`${selectedInspectorTab}-${rIdx}`];
+                      // Use original array index to match the ID sent to backend
+                      const originalIdx = shopResults[selectedInspectorTab].auditedReviews.indexOf(review);
+                      const reviewDomId = `review-${activeStoreId}-${originalIdx}`;
 
                       return (
-                        <div key={rIdx} className="p-3 text-[11px] flex flex-col gap-2 hover:bg-[#f5f1e8]/30 rounded-xl transition-colors">
+                        <div id={reviewDomId} key={rIdx} className="p-3 text-[11px] flex flex-col gap-2 hover:bg-[#f5f1e8]/30 rounded-xl transition-all duration-500">
                           <div className="flex items-center justify-between">
                             <span className="font-extrabold text-[#4a5d52]">{review.username}</span>
                             <div className="flex items-center gap-2">

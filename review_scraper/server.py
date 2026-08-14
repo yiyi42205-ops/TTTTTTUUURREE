@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 
 from normalize import normalize_review
 from gemini_client import make_batches, call_gemini_batch, MAX_CONCURRENT_BATCHES, call_gemini_summarize
-from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping
+from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping, get_cached_summary, set_cached_summary
 from rule_engine import run_stage1_audit
 import re
 
@@ -300,16 +300,27 @@ def summarize():
 
     store_name = data.get("storeName", "未知店家")
     reviews = data.get("reviews")
+    place_id = data.get("placeId")
     
     if not reviews or not isinstance(reviews, list):
         logger.error(f"summarize request from {ip} failed validation: Missing or invalid field 'reviews'")
         return jsonify({"error": "Missing or invalid required field: reviews"}), 400
+
+    if place_id:
+        cached = get_cached_summary(place_id)
+        if cached:
+            logger.info(f"Cache hit for summary of place_id: {place_id}")
+            return jsonify(cached)
 
     logger.info(f"Starting Gemini summarization for {store_name} ({len(reviews)} total reviews provided)")
     
     try:
         summary_result = call_gemini_summarize(genai_client, store_name, reviews)
         logger.info(f"Gemini summarization succeeded in {time.time() - start_time:.2f}s.")
+        
+        if place_id:
+            set_cached_summary(place_id, summary_result)
+            
         return jsonify(summary_result)
     except Exception as e:
         logger.error(f"Gemini summarization failed for {store_name}: {e}")

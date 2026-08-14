@@ -42,6 +42,15 @@ def _connect(db_path: str) -> sqlite3.Connection:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS summary_cache (
+            place_id TEXT PRIMARY KEY,
+            summary_json TEXT NOT NULL,
+            fetched_at REAL NOT NULL
+        )
+        """
+    )
     return conn
 
 
@@ -108,6 +117,44 @@ def set_cached_reviews(place_id: str, reviews: list, source: str, db_path: str =
                 fetched_at = excluded.fetched_at
             """,
             (place_id, json.dumps(reviews, ensure_ascii=False), source, time.time()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_cached_summary(place_id: str, db_path: str = None, ttl_seconds: int = CACHE_TTL_SECONDS):
+    """Returns the cached summary dict if a fresh entry exists, else None."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        row = conn.execute(
+            "SELECT summary_json, fetched_at FROM summary_cache WHERE place_id = ?", (place_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if row is None:
+        return None
+
+    summary_json, fetched_at = row
+    if time.time() - fetched_at > ttl_seconds:
+        return None
+
+    return json.loads(summary_json)
+
+
+def set_cached_summary(place_id: str, summary: dict, db_path: str = None) -> None:
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute(
+            """
+            INSERT INTO summary_cache (place_id, summary_json, fetched_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(place_id) DO UPDATE SET
+                summary_json = excluded.summary_json,
+                fetched_at = excluded.fetched_at
+            """,
+            (place_id, json.dumps(summary, ensure_ascii=False), time.time()),
         )
         conn.commit()
     finally:
