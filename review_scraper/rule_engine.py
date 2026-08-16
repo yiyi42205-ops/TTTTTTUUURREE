@@ -10,7 +10,6 @@ Previously, this logic lived in two mirrored implementations:
   - evaluate_v2.py (offline evaluator)
 Now it lives here only.
 """
-import hashlib
 import math
 import re
 from collections import defaultdict
@@ -119,40 +118,37 @@ def is_generic_short_review(text, stars):
 def _simhash(ngrams, hashbits=64):
     """Compute a SimHash fingerprint from a set of n-gram strings.
 
-    Each n-gram is hashed to a 64-bit value via MD5 (truncated).  A weighted
-    bit-vector is accumulated (+1 for each 1-bit, -1 for each 0-bit across
-    all hashes), then thresholded to produce the final fingerprint.
+    Hashes each n-gram, then accumulates weighted bit counts.  For each bit
+    position, if more n-grams have that bit set than not, the output bit is 1.
+    Uses bytearray for fast per-bit accumulation.
     """
-    v = [0] * hashbits
-    for gram in ngrams:
-        h = int(hashlib.md5(gram.encode('utf-8')).hexdigest(), 16) & ((1 << hashbits) - 1)
+    mask = (1 << hashbits) - 1
+    hashes = [hash(gram) & mask for gram in ngrams]
+    if not hashes:
+        return 0
+    counts = [0] * hashbits
+    for h in hashes:
         for i in range(hashbits):
             if h & (1 << i):
-                v[i] += 1
-            else:
-                v[i] -= 1
+                counts[i] += 1
+    half = len(hashes) // 2
     fingerprint = 0
     for i in range(hashbits):
-        if v[i] > 0:
+        if counts[i] > half:
             fingerprint |= (1 << i)
     return fingerprint
 
 
 def _hamming_distance(a, b):
     """Count differing bits between two integers."""
-    x = a ^ b
-    count = 0
-    while x:
-        count += 1
-        x &= x - 1
-    return count
+    return bin(a ^ b).count('1')
 
 
 # Number of bit-blocks for multi-probe bucketing (4 blocks of 16 bits each
 # for 64-bit hashes).  Reviews sharing at least one identical block are
 # candidate pairs; this gives O(N) expected time for Hamming threshold ≤ 3.
 _SIMHASH_BLOCKS = 4
-_SIMHASH_BITS_PER_BLOCK = 16
+_SIMHASH_BLOCK_MASK = (1 << 16) - 1
 
 
 def detect_templates(reviews, config: RuleConfig = None):
@@ -162,19 +158,17 @@ def detect_templates(reviews, config: RuleConfig = None):
     fingerprint, then clusters reviews whose Hamming distance is ≤ 3 bits.
     Uses multi-probe (block-based) bucketing so the expected runtime is O(N)
     rather than the previous O(N²) pairwise Jaccard approach.
-
-    The ``jaccard_threshold`` field in *config* is no longer used by this
-    function (kept for backward compatibility with serialised configs).
     """
     if config is None:
         config = RuleConfig()
+    min_chars = config.min_template_chars
 
     # Step 1: compute fingerprints
-    fingerprints = []  # None for reviews too short to fingerprint
+    fingerprints = []
     for r in reviews:
         text = r.get('text', '') or ''
         cleaned = re.sub(r'\s+', '', text)
-        if len(cleaned) > config.min_template_chars:
+        if len(cleaned) > min_chars:
             grams = get_ngram(text, 2)
             fingerprints.append(_simhash(grams) if grams else None)
         else:
@@ -182,16 +176,15 @@ def detect_templates(reviews, config: RuleConfig = None):
 
     # Step 2: bucket by sub-hash blocks for O(N) candidate generation
     flags = [False] * len(reviews)
-    buckets = defaultdict(list)  # (block_index, block_value) → [review_index]
+    buckets = defaultdict(list)
     for i, fp in enumerate(fingerprints):
         if fp is None:
             continue
         for b in range(_SIMHASH_BLOCKS):
-            block_val = (fp >> (b * _SIMHASH_BITS_PER_BLOCK)) & ((1 << _SIMHASH_BITS_PER_BLOCK) - 1)
+            block_val = (fp >> (b << 4)) & _SIMHASH_BLOCK_MASK
             key = (b, block_val)
-            # Check all existing entries in this bucket
             for j in buckets[key]:
-                if _hamming_distance(fingerprints[i], fingerprints[j]) <= 3:
+                if _hamming_distance(fp, fingerprints[j]) <= 3:
                     flags[i] = flags[j] = True
             buckets[key].append(i)
 
