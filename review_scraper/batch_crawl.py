@@ -191,16 +191,16 @@ def main():
         import sqlite3
         src = sqlite3.connect(str(args.merge_cache))
         rows = src.execute(
-            'SELECT url, reviews_json, source, fetched_at FROM scrape_cache'
+            'SELECT place_id, reviews_json, source, fetched_at FROM scrape_cache'
         ).fetchall()
         src.close()
         merged = 0
-        for url, reviews_json, source, fetched_at in rows:
+        for place_id, reviews_json, source, fetched_at in rows:
             # Only import if local cache doesn't have a fresher copy
-            local = get_cached_reviews(url)
+            local = get_cached_reviews(place_id)
             if local is None:
                 reviews = json.loads(reviews_json)
-                set_cached_reviews(url, reviews, source)
+                set_cached_reviews(place_id, reviews, source)
                 merged += 1
         print(f'✅ 從 {args.merge_cache} 合併了 {merged}/{len(rows)} 筆 cache')
         return
