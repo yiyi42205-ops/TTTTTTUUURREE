@@ -261,7 +261,7 @@ def detect_language_ratio(reviews: list[dict]) -> float:
         eligible += 1
         try:
             lang = detect(text)
-            if lang not in ('zh-cn', 'zh-tw', 'ko', 'ja'):
+            if lang not in ('zh-cn', 'zh-tw'):
                 non_zh_count += 1
         except LangDetectException:
             pass
