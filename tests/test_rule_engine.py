@@ -7,6 +7,8 @@ from rule_engine import (
     RuleConfig,
     audit_review,
     run_stage1_audit,
+    detect_no_text_ratio,
+    detect_language_ratio,
 )
 
 
@@ -191,3 +193,76 @@ class TestAuditRulesEndpoint:
         for r in data['auditedReviews']:
             assert r['audit']['isWashed'] is True
             assert r['audit']['issueType'] == 'template'
+
+
+# ─── No-text ratio signal (Issue #9) ──────────────────────────
+
+class TestNoTextRatio:
+    def test_all_have_text(self):
+        reviews = [
+            {'text': '好吃', 'stars': 5},
+            {'text': '不錯', 'stars': 4},
+        ]
+        assert detect_no_text_ratio(reviews) == 0.0
+
+    def test_mixed(self):
+        reviews = [
+            {'text': '好吃', 'stars': 5},
+            {'text': '', 'stars': 5},
+            {'text': '  ', 'stars': 5},
+            {'text': '推薦', 'stars': 5},
+        ]
+        assert detect_no_text_ratio(reviews) == 0.5
+
+    def test_all_empty(self):
+        reviews = [{'text': '', 'stars': 5}, {'text': '', 'stars': 5}]
+        assert detect_no_text_ratio(reviews) == 1.0
+
+    def test_empty_list(self):
+        assert detect_no_text_ratio([]) == 0.0
+
+    def test_in_signals_output(self):
+        reviews = [
+            {'username': 'a', 'stars': 5, 'time': '2025-01-01', 'text': '好吃'},
+            {'username': 'b', 'stars': 5, 'time': '2025-01-01', 'text': ''},
+        ]
+        result = run_stage1_audit(reviews)
+        assert result['signals']['noTextRatio'] == 0.5
+
+
+# ─── Language ratio signal (Issue #10) ─────────────────────────
+
+class TestLanguageRatio:
+    def test_all_chinese(self):
+        reviews = [
+            {'text': '今天來吃了拉麵，味道不錯', 'stars': 5},
+            {'text': '環境很好，服務親切', 'stars': 5},
+        ]
+        assert detect_language_ratio(reviews) == 0.0
+
+    def test_mixed_languages(self):
+        reviews = [
+            {'text': '好吃推薦大家來', 'stars': 5},
+            {'text': 'Great food, highly recommended!', 'stars': 5},
+        ]
+        ratio = detect_language_ratio(reviews)
+        assert ratio == 0.5
+
+    def test_empty_reviews_excluded(self):
+        reviews = [
+            {'text': '', 'stars': 5},
+            {'text': 'Delicious food', 'stars': 5},
+        ]
+        ratio = detect_language_ratio(reviews)
+        # Only 1 text review, and it's English
+        assert ratio == 1.0
+
+    def test_empty_list(self):
+        assert detect_language_ratio([]) == 0.0
+
+    def test_in_signals_output(self):
+        reviews = [
+            {'username': 'a', 'stars': 5, 'time': '2025-01-01', 'text': '好吃'},
+        ]
+        result = run_stage1_audit(reviews)
+        assert 'foreignLanguageRatio' in result['signals']

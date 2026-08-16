@@ -231,6 +231,40 @@ def detect_nearby_long_review_counts(reviews):
     return counts
 
 
+def detect_no_text_ratio(reviews):
+    """Computes the ratio of no-text (empty) reviews among all reviews."""
+    if not reviews:
+        return 0.0
+    no_text_count = sum(1 for r in reviews if not (r.get('text', '') or '').strip())
+    return round(no_text_count / len(reviews), 4)
+
+
+def detect_language_ratio(reviews):
+    """Computes the ratio of non-Chinese reviews among text-bearing reviews.
+
+    Uses langdetect to identify language. Reviews without text are excluded.
+    Returns 0.0 if langdetect is not installed or no text reviews exist.
+    """
+    try:
+        from langdetect import detect, LangDetectException
+    except ImportError:
+        return 0.0
+
+    text_reviews = [r for r in reviews if (r.get('text', '') or '').strip()]
+    if not text_reviews:
+        return 0.0
+
+    non_zh_count = 0
+    for r in text_reviews:
+        try:
+            lang = detect(r['text'])
+            if lang not in ('zh-cn', 'zh-tw', 'ko', 'ja'):
+                non_zh_count += 1
+        except LangDetectException:
+            pass
+    return round(non_zh_count / len(text_reviews), 4)
+
+
 def detect_spike_months(reviews):
     """Flags months with review volume > 2x average and >= 10 reviews."""
     counts = defaultdict(int)
@@ -364,6 +398,8 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
                 'hotTerm': [],
                 'nearbyLongReviewCounts': [],
                 'spikeMonths': [],
+                'noTextRatio': 0.0,
+                'foreignLanguageRatio': 0.0,
             },
         }
 
@@ -373,6 +409,8 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
     spike_flags, spike_months = detect_spike_months(reviews)
     hot_term_counts, hot_term_max_ratios = detect_hot_term_signals(reviews)
     nearby_long_review_counts = detect_nearby_long_review_counts(reviews)
+    no_text_ratio = detect_no_text_ratio(reviews)
+    foreign_language_ratio = detect_language_ratio(reviews)
 
     # Per-review audit
     audited = []
@@ -436,5 +474,7 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
             'hotTerm': hot_term_signals,
             'nearbyLongReviewCounts': nearby_long_review_counts,
             'spikeMonths': sorted(spike_months),
+            'noTextRatio': no_text_ratio,
+            'foreignLanguageRatio': foreign_language_ratio,
         },
     }
