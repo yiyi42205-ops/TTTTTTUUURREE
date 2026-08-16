@@ -15,8 +15,9 @@ TrueRating QA 進階評估腳本 v2 — 支援參數掃描
      產生真實 API 費用與配額消耗，預設不會執行，需明確加上 --llm-sample。
 
 用法:
-  python3 eval/evaluate_v2.py restaurant_data [--window N]
+  python3 eval/evaluate_v2.py restaurant_data [--window N] [--offset M]
   --window N  只取每家店最新 N 則評論(預設 100),避免評估吃到未標註的舊評論
+  --offset M  跳過最新 M 則評論再取 window（滑動窗口到歷史區間）
 
   # 用自訂的參數組合清單（JSON 陣列，每個物件是 RuleConfig 的部分欄位）覆寫預設清單
   python3 evaluate_v2.py restaurant_data --sweep-config my_configs.json
@@ -133,7 +134,7 @@ def _sort_reviews_newest_first(reviews):
 DEFAULT_EVAL_WINDOW = 100
 
 
-def analyze_restaurant(csv_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW):
+def analyze_restaurant(csv_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW, offset=0):
     raw_rows = []
     with open(csv_path, encoding='utf-8-sig') as f:
         for row in csv.DictReader(f):
@@ -144,8 +145,13 @@ def analyze_restaurant(csv_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW)
     # Convert PascalCase CSV rows to lowercase keys for rule_engine
     reviews = [_normalize_csv_row(row) for row in raw_rows]
     reviews = _sort_reviews_newest_first(reviews)
+    # offset: skip the newest M reviews before taking the window
+    if offset and offset > 0:
+        reviews = reviews[offset:]
     if window and window > 0:
         reviews = reviews[:window]
+    if not reviews:
+        return None
 
     # Delegate all Stage 1 logic to run_stage1_audit — the same function
     # that powers POST /api/audit-rules.  No more manual orchestration.
@@ -170,7 +176,7 @@ def analyze_restaurant(csv_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW)
     }
 
 
-def evaluate_dataset(base_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW):
+def evaluate_dataset(base_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW, offset=0):
     base = Path(base_path)
     out = []
     for subdir in sorted(base.iterdir()):
@@ -178,7 +184,7 @@ def evaluate_dataset(base_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW):
             continue
         category, label = subdir.name.split('__', 1)
         for csv_file in sorted(subdir.glob('*.csv')):
-            a = analyze_restaurant(csv_file, config, window=window)
+            a = analyze_restaurant(csv_file, config, window=window, offset=offset)
             if a:
                 out.append({
                     'restaurant': csv_file.stem,
@@ -253,12 +259,12 @@ def stratified_holdout_split(results, n_holdout, seed=42, store_names=None):
 
 # ─── 參數組合掃描 ───────────────────────────────────────────
 
-def run_param_sweep(base_path, configs, window=DEFAULT_EVAL_WINDOW):
+def run_param_sweep(base_path, configs, window=DEFAULT_EVAL_WINDOW, offset=0):
     """對每組 RuleConfig 重新跑一次規則引擎，並以該組指定的
     wash_verdict_threshold 計算混淆矩陣。純本地運算，不呼叫 Gemini。"""
     rows = []
     for config in configs:
-        results = evaluate_dataset(base_path, config, window=window)
+        results = evaluate_dataset(base_path, config, window=window, offset=offset)
         if not results:
             continue
         metrics = confusion_matrix(results, config.wash_verdict_threshold)
@@ -273,11 +279,11 @@ def run_param_sweep(base_path, configs, window=DEFAULT_EVAL_WINDOW):
 
 
 def run_param_sweep_with_holdout(base_path, configs, n_holdout, window=DEFAULT_EVAL_WINDOW,
-                                  seed=42, holdout_store_names=None):
+                                  seed=42, holdout_store_names=None, offset=0):
     """Run sweep on train split, then evaluate best config on holdout split.
     Returns (train_rows, holdout_metrics, train_stores, holdout_stores)."""
     # Use first config to get full results for splitting
-    all_results = evaluate_dataset(base_path, configs[0], window=window)
+    all_results = evaluate_dataset(base_path, configs[0], window=window, offset=offset)
     if not all_results:
         return [], None, [], []
 
@@ -290,7 +296,7 @@ def run_param_sweep_with_holdout(base_path, configs, n_holdout, window=DEFAULT_E
     # Sweep on train set only
     train_rows = []
     for config in configs:
-        results = evaluate_dataset(base_path, config, window=window)
+        results = evaluate_dataset(base_path, config, window=window, offset=offset)
         if not results:
             continue
         train_only = [r for r in results if r['restaurant'] in train_names]
@@ -311,7 +317,7 @@ def run_param_sweep_with_holdout(base_path, configs, n_holdout, window=DEFAULT_E
     best_config = RuleConfig(**{k: v for k, v in best_train.items() if k in RuleConfig.__dataclass_fields__})
 
     # Evaluate best config on holdout
-    holdout_eval = evaluate_dataset(base_path, best_config, window=window)
+    holdout_eval = evaluate_dataset(base_path, best_config, window=window, offset=offset)
     holdout_only = [r for r in holdout_eval if r['restaurant'] in holdout_names]
     holdout_metrics = confusion_matrix(holdout_only, best_config.wash_verdict_threshold)
     holdout_avg_low_info = sum(r['low_info_ratio'] for r in holdout_only) / len(holdout_only) if holdout_only else 0
@@ -548,6 +554,8 @@ def parse_args():
     parser.add_argument('data_path', help='restaurant_data 路徑')
     parser.add_argument('--window', type=int, default=DEFAULT_EVAL_WINDOW,
                         help=f'每家店只取最新 N 則評論 (預設 {DEFAULT_EVAL_WINDOW})')
+    parser.add_argument('--offset', type=int, default=0,
+                        help='跳過最新 M 則評論再取 window（用於滑動窗口到歷史區間）')
     parser.add_argument('--sweep-config', help='自訂參數組合清單的 JSON 檔案路徑（覆寫內建 DEFAULT_SWEEP）')
     parser.add_argument('--holdout', type=int, default=0, metavar='N',
                         help='切 N 家店為 holdout，sweep 只在 train 上跑，best config 再到 holdout 上驗證')
@@ -573,7 +581,8 @@ def main():
         train_rows, holdout_metrics, train_store_info, holdout_store_info = \
             run_param_sweep_with_holdout(
                 base, configs, n_holdout, window=args.window,
-                seed=args.holdout_seed, holdout_store_names=holdout_store_names)
+                seed=args.holdout_seed, holdout_store_names=holdout_store_names,
+                offset=args.offset)
 
         if not train_rows:
             print(f'錯誤:在 {base} 找不到資料。')
@@ -611,7 +620,7 @@ def main():
         (out_dir / 'llm_input.json').write_text(
             json.dumps(llm_input, ensure_ascii=False, indent=2), encoding='utf-8')
     else:
-        rows = run_param_sweep(base, configs, window=args.window)
+        rows = run_param_sweep(base, configs, window=args.window, offset=args.offset)
         if not rows:
             print(f'錯誤:在 {base} 找不到資料。')
             sys.exit(1)
