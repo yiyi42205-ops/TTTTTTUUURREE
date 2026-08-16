@@ -155,6 +155,34 @@ def iter_all_scrape_cache(db_path: str = None):
         conn.close()
 
 
+def invalidate_cached_audit(place_id: str, db_path: str = None) -> None:
+    """Delete the audit_cache entry for a place_id so stale results aren't served."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute("DELETE FROM audit_cache WHERE place_id = ?", (place_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_pending_audit_entries(db_path: str = None):
+    """Yields (place_id, reviews_list) for scrape_cache entries that have no audit_cache yet."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        cursor = conn.execute(
+            """
+            SELECT s.place_id, s.reviews_json
+            FROM scrape_cache s
+            LEFT JOIN audit_cache a ON s.place_id = a.place_id
+            WHERE a.place_id IS NULL
+            """
+        )
+        for place_id, reviews_json in cursor:
+            yield place_id, json.loads(reviews_json)
+    finally:
+        conn.close()
+
+
 def set_cached_reviews(place_id: str, reviews: list, source: str, db_path: str = None) -> None:
     conn = _connect(db_path or DB_PATH)
     try:
@@ -169,6 +197,8 @@ def set_cached_reviews(place_id: str, reviews: list, source: str, db_path: str =
             """,
             (place_id, json.dumps(reviews, ensure_ascii=False), source, time.time()),
         )
+        # Invalidate stale audit cache when reviews are refreshed
+        conn.execute("DELETE FROM audit_cache WHERE place_id = ?", (place_id,))
         conn.commit()
     finally:
         conn.close()

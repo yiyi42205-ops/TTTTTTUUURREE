@@ -19,11 +19,12 @@
 import argparse
 import sys
 import time
+import traceback
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from cache_store import iter_all_scrape_cache, get_cached_audit, set_cached_audit
+from cache_store import iter_all_scrape_cache, get_pending_audit_entries, set_cached_audit
 from rule_engine import run_stage1_audit
 
 
@@ -34,21 +35,24 @@ def main():
                         help='只統計，不實際審計')
     parser.add_argument('--force', action='store_true',
                         help='忽略已有的審計 cache，全部重跑')
+    parser.add_argument('--verbose', action='store_true',
+                        help='顯示詳細錯誤 traceback')
     args = parser.parse_args()
 
-    entries = list(iter_all_scrape_cache())
-    print(f'📋 scrape_cache 共 {len(entries)} 筆')
+    if args.force:
+        # --force: re-audit everything
+        to_audit = list(iter_all_scrape_cache())
+        total = len(to_audit)
+        skipped = 0
+    else:
+        # Normal mode: only audit entries without existing audit cache (SQL-level filtering)
+        to_audit = list(get_pending_audit_entries())
+        # Count total for reporting
+        total_entries = sum(1 for _ in iter_all_scrape_cache())
+        skipped = total_entries - len(to_audit)
+        total = total_entries
 
-    to_audit = []
-    skipped = 0
-    for place_id, reviews in entries:
-        if not args.force:
-            cached = get_cached_audit(place_id)
-            if cached is not None:
-                skipped += 1
-                continue
-        to_audit.append((place_id, reviews))
-
+    print(f'📋 scrape_cache 共 {total} 筆')
     print(f'🎯 需要審計: {len(to_audit)} 筆（跳過 {skipped} 筆已有 cache）')
 
     if args.dry_run:
@@ -64,12 +68,14 @@ def main():
             result = run_stage1_audit(reviews)
             set_cached_audit(place_id, result)
             washed = sum(1 for r in result['auditedReviews'] if r['audit']['isWashed'])
-            total = len(result['auditedReviews'])
+            audit_total = len(result['auditedReviews'])
             if i % 100 == 0 or i == len(to_audit):
-                print(f'  [{i}/{len(to_audit)}] {place_id[:60]}... → {washed}/{total} washed')
+                print(f'  [{i}/{len(to_audit)}] {place_id[:60]}... → {washed}/{audit_total} washed')
             success += 1
         except Exception as e:
             print(f'  ❌ [{i}/{len(to_audit)}] {place_id[:60]}... → {e}')
+            if args.verbose:
+                traceback.print_exc()
             failed += 1
 
     elapsed = time.time() - start
@@ -79,7 +85,7 @@ def main():
     print(f'  成功: {success}')
     print(f'  失敗: {failed}')
     print(f'  跳過: {skipped}')
-    print(f'  總計: {len(entries)}')
+    print(f'  總計: {total}')
 
 
 if __name__ == '__main__':
