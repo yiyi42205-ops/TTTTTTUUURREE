@@ -44,7 +44,7 @@ Standard PR flow:
 
 ### (1) Scraper: Apify primary, Playwright fallback, SQLite cache
 `POST /api/scrape` in `review_scraper/server.py`:
-1. Checks the SQLite cache first (`review_scraper/cache_store.py`, `cache.db` at repo root, gitignored) — keyed by URL, 7-day TTL (`CACHE_TTL_SECONDS`). A hit returns immediately with `source: "cache"`. `?force=true` bypasses the lookup (but still refreshes the cache afterward).
+1. Checks the SQLite cache first (`review_scraper/cache_store.py`, `cache.db` at repo root, gitignored) — keyed by `place_id`, 7-day TTL (`CACHE_TTL_SECONDS`). A hit returns immediately with `source: "cache"`. `?force=true` bypasses the lookup (but still refreshes the cache afterward).
 2. On a miss, tries `apify_scraper.scrape_via_apify()` (actor `compass/Google-Maps-Reviews-Scraper`, `reviewsSort: "newest"`, `language: "zh-TW"`) — this is the primary path. Returns `source: "apify"`.
 3. Only if that raises, and **only if `ENABLE_PLAYWRIGHT_FALLBACK=true`** (default is disabled — an Apify failure returns its error as a 500 by default, Playwright is never silently invoked), falls back to `scraper.py`'s Playwright scraper. Returns `source: "playwright_fallback"`.
 4. Both scraper paths normalize their raw output through `normalize.py`'s `normalize_review()` before returning, so the frontend always gets the same shape (`username/stars/time/text/images/hasText/imageCount`) regardless of source.
@@ -94,11 +94,13 @@ A flat 3-page React app (not a component-library-driven one, despite ~20 `@radix
 - `rule_engine.py` — the canonical Stage 1 rule engine. See (4) and (5) above.
 - `apify_scraper.py` — primary scraper, calls the Apify actor.
 - `scraper.py` — Playwright + BeautifulSoup4 + `playwright-stealth` fallback. Hardcoded Google Maps CSS selectors (`div.jftiEf`, `span.kvMYJc`, `span.rsqaWe`, `span.wiI7pd`), fragile to DOM changes. `parse_relative_time()` converts relative dates to absolute.
-- `cache_store.py` — SQLite scrape cache, see (1).
+- `cache_store.py` — SQLite cache layer (`cache.db`, gitignored). Three tables: `scrape_cache` (scraped reviews keyed by place_id), `search_query_map` (URL/query → place_id mapping), `audit_cache` (Stage 1 audit results keyed by place_id, 7-day TTL). See (1).
+- `batch_crawl.py` — local Playwright batch pre-crawl script (Issue #15). Supports `--resume`, `--split N`, `--merge-cache`, checkpoint-based progress. 1695 stores crawled.
+- `batch_audit.py` — batch Stage 1 audit script (Issue #16). Reads all entries from `scrape_cache`, runs `run_stage1_audit()`, writes results to `audit_cache`. Supports `--dry-run` and `--force`.
 - `normalize.py` — `normalize_review()`, unifies Playwright's PascalCase fields and the (future/current) Apify actor's lowercase `text`/`textTranslated` fields into one shape.
 - `prompt_builder.py` — builds the Stage 2 prompt from `audit_prompt.txt` + the review/signal payload.
 - `gemini_client.py` — batching (time-sorted) + Gemini response JSON parsing/repair.
-- `audit_prompt.txt` — the Stage 2 prompt template. See (2)/(3) above for the `verdictBasis` output field and the time-independent structural-template rule.
+- `audit_prompt.txt` — the Stage 2 prompt template. Includes a security directive and wraps review data in `<review_data>` XML tags to defend against prompt injection (Issue #22). See (2)/(3) above for the `verdictBasis` output field and the time-independent structural-template rule.
 
 ### Data (`restaurant_data/`, `gemini_prompts/`)
 - `restaurant_data/` holds hand-labeled CSVs organized as `<類別>__<有洗|沒洗>/` (category, e.g. 餐廳/飲料店/觀光店/連鎖店, crossed with washed/clean). These back both the frontend demo dataset and the offline `eval/*.py` scripts.
