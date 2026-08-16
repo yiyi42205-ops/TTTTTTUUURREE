@@ -10,6 +10,7 @@ Previously, this logic lived in two mirrored implementations:
   - evaluate_v2.py (offline evaluator)
 Now it lives here only.
 """
+import hashlib
 import math
 import re
 from collections import defaultdict
@@ -115,24 +116,85 @@ def is_generic_short_review(text, stars):
 
 # ─── Signal detection functions ──────────────────────────────
 
+def _simhash(ngrams, hashbits=64):
+    """Compute a SimHash fingerprint from a set of n-gram strings.
+
+    Each n-gram is hashed to a 64-bit value via MD5 (truncated).  A weighted
+    bit-vector is accumulated (+1 for each 1-bit, -1 for each 0-bit across
+    all hashes), then thresholded to produce the final fingerprint.
+    """
+    v = [0] * hashbits
+    for gram in ngrams:
+        h = int(hashlib.md5(gram.encode('utf-8')).hexdigest(), 16) & ((1 << hashbits) - 1)
+        for i in range(hashbits):
+            if h & (1 << i):
+                v[i] += 1
+            else:
+                v[i] -= 1
+    fingerprint = 0
+    for i in range(hashbits):
+        if v[i] > 0:
+            fingerprint |= (1 << i)
+    return fingerprint
+
+
+def _hamming_distance(a, b):
+    """Count differing bits between two integers."""
+    x = a ^ b
+    count = 0
+    while x:
+        count += 1
+        x &= x - 1
+    return count
+
+
+# Number of bit-blocks for multi-probe bucketing (4 blocks of 16 bits each
+# for 64-bit hashes).  Reviews sharing at least one identical block are
+# candidate pairs; this gives O(N) expected time for Hamming threshold ≤ 3.
+_SIMHASH_BLOCKS = 4
+_SIMHASH_BITS_PER_BLOCK = 16
+
+
 def detect_templates(reviews, config: RuleConfig = None):
-    """Hard duplicate detection via 2-gram Jaccard."""
+    """Hard duplicate detection via SimHash near-duplicate fingerprinting.
+
+    Tokenises each review into character 2-grams, computes a 64-bit SimHash
+    fingerprint, then clusters reviews whose Hamming distance is ≤ 3 bits.
+    Uses multi-probe (block-based) bucketing so the expected runtime is O(N)
+    rather than the previous O(N²) pairwise Jaccard approach.
+
+    The ``jaccard_threshold`` field in *config* is no longer used by this
+    function (kept for backward compatibility with serialised configs).
+    """
     if config is None:
         config = RuleConfig()
-    grams = []
+
+    # Step 1: compute fingerprints
+    fingerprints = []  # None for reviews too short to fingerprint
     for r in reviews:
         text = r.get('text', '') or ''
         cleaned = re.sub(r'\s+', '', text)
-        grams.append(get_ngram(text, 2) if len(cleaned) > config.min_template_chars else None)
+        if len(cleaned) > config.min_template_chars:
+            grams = get_ngram(text, 2)
+            fingerprints.append(_simhash(grams) if grams else None)
+        else:
+            fingerprints.append(None)
+
+    # Step 2: bucket by sub-hash blocks for O(N) candidate generation
     flags = [False] * len(reviews)
-    for i in range(len(reviews)):
-        if grams[i] is None:
+    buckets = defaultdict(list)  # (block_index, block_value) → [review_index]
+    for i, fp in enumerate(fingerprints):
+        if fp is None:
             continue
-        for j in range(i + 1, len(reviews)):
-            if grams[j] is None:
-                continue
-            if jaccard(grams[i], grams[j]) > config.jaccard_threshold:
-                flags[i] = flags[j] = True
+        for b in range(_SIMHASH_BLOCKS):
+            block_val = (fp >> (b * _SIMHASH_BITS_PER_BLOCK)) & ((1 << _SIMHASH_BITS_PER_BLOCK) - 1)
+            key = (b, block_val)
+            # Check all existing entries in this bucket
+            for j in buckets[key]:
+                if _hamming_distance(fingerprints[i], fingerprints[j]) <= 3:
+                    flags[i] = flags[j] = True
+            buckets[key].append(i)
+
     return flags
 
 
