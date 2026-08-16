@@ -134,7 +134,7 @@ def _sort_reviews_newest_first(reviews):
 DEFAULT_EVAL_WINDOW = 100
 
 
-def analyze_restaurant(csv_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW, offset=0):
+def analyze_restaurant(csv_path, config: RuleConfig, window: int = DEFAULT_EVAL_WINDOW, offset: int = 0):
     raw_rows = []
     with open(csv_path, encoding='utf-8-sig') as f:
         for row in csv.DictReader(f):
@@ -176,7 +176,7 @@ def analyze_restaurant(csv_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW,
     }
 
 
-def evaluate_dataset(base_path, config: RuleConfig, window=DEFAULT_EVAL_WINDOW, offset=0):
+def evaluate_dataset(base_path, config: RuleConfig, window: int = DEFAULT_EVAL_WINDOW, offset: int = 0):
     base = Path(base_path)
     out = []
     for subdir in sorted(base.iterdir()):
@@ -259,7 +259,7 @@ def stratified_holdout_split(results, n_holdout, seed=42, store_names=None):
 
 # ─── 參數組合掃描 ───────────────────────────────────────────
 
-def run_param_sweep(base_path, configs, window=DEFAULT_EVAL_WINDOW, offset=0):
+def run_param_sweep(base_path, configs, window: int = DEFAULT_EVAL_WINDOW, offset: int = 0):
     """對每組 RuleConfig 重新跑一次規則引擎，並以該組指定的
     wash_verdict_threshold 計算混淆矩陣。純本地運算，不呼叫 Gemini。"""
     rows = []
@@ -278,8 +278,8 @@ def run_param_sweep(base_path, configs, window=DEFAULT_EVAL_WINDOW, offset=0):
     return rows
 
 
-def run_param_sweep_with_holdout(base_path, configs, n_holdout, window=DEFAULT_EVAL_WINDOW,
-                                  seed=42, holdout_store_names=None, offset=0):
+def run_param_sweep_with_holdout(base_path, configs, n_holdout, window: int = DEFAULT_EVAL_WINDOW,
+                                  seed=42, holdout_store_names=None, offset: int = 0):
     """Run sweep on train split, then evaluate best config on holdout split.
     Returns (train_rows, holdout_metrics, train_stores, holdout_stores)."""
     # Use first config to get full results for splitting
@@ -570,6 +570,7 @@ def parse_args():
 
 def main():
     args = parse_args()
+    print(f"\n[INFO] Evaluating with window={args.window}, offset={args.offset}\n")
     base = args.data_path
 
     configs = load_sweep_configs(args.sweep_config) if args.sweep_config else DEFAULT_SWEEP
