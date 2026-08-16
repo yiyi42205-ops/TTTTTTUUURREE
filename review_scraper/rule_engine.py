@@ -13,6 +13,8 @@ Now it lives here only.
 import math
 import re
 from collections import defaultdict
+
+from langdetect import detect, LangDetectException
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -231,6 +233,43 @@ def detect_nearby_long_review_counts(reviews):
     return counts
 
 
+def detect_no_text_ratio(reviews: list[dict]) -> float:
+    """Computes the ratio of no-text (empty) reviews among all reviews."""
+    if not reviews:
+        return 0.0
+    no_text_count = sum(1 for r in reviews if not (r.get('text', '') or '').strip())
+    return round(no_text_count / len(reviews), 4)
+
+
+def detect_language_ratio(reviews: list[dict]) -> float:
+    """Computes the ratio of non-Chinese reviews among text-bearing reviews.
+
+    Uses langdetect to identify language. Reviews without text are excluded.
+    Skips very short texts (< 5 chars) where langdetect is unreliable.
+    Returns 0.0 if no eligible text reviews exist.
+    """
+    text_reviews = [r for r in reviews if (r.get('text', '') or '').strip()]
+    if not text_reviews:
+        return 0.0
+
+    non_zh_count = 0
+    eligible = 0
+    for r in text_reviews:
+        text = r['text'].strip()
+        if len(text) < 5:
+            continue  # Skip very short texts where detection is unreliable
+        eligible += 1
+        try:
+            lang = detect(text)
+            if lang not in ('zh-cn', 'zh-tw'):
+                non_zh_count += 1
+        except LangDetectException:
+            pass
+    if eligible == 0:
+        return 0.0
+    return round(non_zh_count / eligible, 4)
+
+
 def detect_spike_months(reviews):
     """Flags months with review volume > 2x average and >= 10 reviews."""
     counts = defaultdict(int)
@@ -364,6 +403,8 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
                 'hotTerm': [],
                 'nearbyLongReviewCounts': [],
                 'spikeMonths': [],
+                'noTextRatio': 0.0,
+                'foreignLanguageRatio': 0.0,
             },
         }
 
@@ -373,6 +414,8 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
     spike_flags, spike_months = detect_spike_months(reviews)
     hot_term_counts, hot_term_max_ratios = detect_hot_term_signals(reviews)
     nearby_long_review_counts = detect_nearby_long_review_counts(reviews)
+    no_text_ratio = detect_no_text_ratio(reviews)
+    foreign_language_ratio = detect_language_ratio(reviews)
 
     # Exact-match counting for generic short reviews.
     # These are too short for n-gram Jaccard (len <= min_template_chars) so
@@ -463,5 +506,7 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
             'hotTerm': hot_term_signals,
             'nearbyLongReviewCounts': nearby_long_review_counts,
             'spikeMonths': sorted(spike_months),
+            'noTextRatio': no_text_ratio,
+            'foreignLanguageRatio': foreign_language_ratio,
         },
     }
