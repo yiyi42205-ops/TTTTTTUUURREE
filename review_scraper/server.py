@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 
 from normalize import normalize_review
 from gemini_client import make_batches, call_gemini_batch, MAX_CONCURRENT_BATCHES
-from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping
+from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping, get_cached_audit, set_cached_audit
 from rule_engine import run_stage1_audit
 import re
 
@@ -199,9 +199,17 @@ def audit_rules():
 
     data = request.get_json() or {}
     raw_reviews = data.get("reviews")
+    place_id = data.get("placeId")
     if not raw_reviews or not isinstance(raw_reviews, list):
         logger.error(f"audit-rules request from {ip} failed validation: Missing or invalid field 'reviews'")
         return jsonify({"error": "Missing or invalid required field: reviews"}), 400
+
+    # Check audit cache
+    if place_id:
+        cached = get_cached_audit(place_id)
+        if cached:
+            logger.info(f"audit-rules cache hit for place_id: {place_id}")
+            return jsonify(cached)
 
     normalized = []
     for r in raw_reviews:
@@ -214,6 +222,11 @@ def audit_rules():
 
     result = run_stage1_audit(normalized)
     logger.info(f"audit-rules completed: {len(result['auditedReviews'])} reviews in {time.time() - start_time:.2f}s.")
+
+    # Cache the result
+    if place_id:
+        set_cached_audit(place_id, result)
+
     return jsonify(result)
 
 

@@ -44,6 +44,15 @@ def _connect(db_path: str) -> sqlite3.Connection:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS audit_cache (
+            place_id TEXT PRIMARY KEY,
+            audit_json TEXT NOT NULL,
+            audited_at REAL NOT NULL
+        )
+        """
+    )
     return conn
 
 
@@ -95,6 +104,55 @@ def get_cached_reviews(place_id: str, db_path: str = None, ttl_seconds: int = CA
         return None
 
     return json.loads(reviews_json)
+
+
+def get_cached_audit(place_id: str, db_path: str = None, ttl_seconds: int = CACHE_TTL_SECONDS):
+    """Returns the cached audit result dict if a fresh entry exists, else None."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        row = conn.execute(
+            "SELECT audit_json, audited_at FROM audit_cache WHERE place_id = ?", (place_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if row is None:
+        return None
+
+    audit_json, audited_at = row
+    if time.time() - audited_at > ttl_seconds:
+        return None
+
+    return json.loads(audit_json)
+
+
+def set_cached_audit(place_id: str, audit_result: dict, db_path: str = None) -> None:
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute(
+            """
+            INSERT INTO audit_cache (place_id, audit_json, audited_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(place_id) DO UPDATE SET
+                audit_json = excluded.audit_json,
+                audited_at = excluded.audited_at
+            """,
+            (place_id, json.dumps(audit_result, ensure_ascii=False), time.time()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def iter_all_scrape_cache(db_path: str = None):
+    """Yields (place_id, reviews_list) for every entry in scrape_cache."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        cursor = conn.execute("SELECT place_id, reviews_json FROM scrape_cache")
+        for place_id, reviews_json in cursor:
+            yield place_id, json.loads(reviews_json)
+    finally:
+        conn.close()
 
 
 def set_cached_reviews(place_id: str, reviews: list, source: str, db_path: str = None) -> None:
