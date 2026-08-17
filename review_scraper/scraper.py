@@ -8,6 +8,7 @@ from playwright_stealth import Stealth
 from bs4 import BeautifulSoup
 import sys
 import builtins
+import urllib.parse
 from urllib.parse import unquote
 
 # ---------------------------------------------------------------------------
@@ -344,6 +345,7 @@ def extract_place_name_from_url(url: str) -> str:
     """
     Extracts the human-readable place name from a Google Maps URL.
     e.g. https://www.google.com/maps/place/%E5%B0%8F%E9%AB%98%E6%8B%89%E9%BA%B5/... -> '小高拉麵'
+    Also handles /maps/search/?api=1&query=...&query_place_id=... format.
     Returns the decoded place name, or the original string if it is already a place name (not a URL).
     """
     if not url.startswith("http://") and not url.startswith("https://"):
@@ -355,6 +357,12 @@ def extract_place_name_from_url(url: str) -> str:
         decoded = unquote(raw).replace('+', ' ').strip()
         if decoded:
             return decoded
+    # Handle /maps/search/?api=1&query=<name>&query_place_id=... format
+    parsed = urllib.parse.urlparse(url)
+    params = urllib.parse.parse_qs(parsed.query)
+    query_val = params.get('query', [''])[0]
+    if query_val:
+        return query_val
     return ""
 
 
@@ -477,14 +485,37 @@ def _click_reviews_tab(page) -> bool:
     return success
 
 
+def _has_query_place_id(url: str) -> bool:
+    """Check if URL contains query_place_id parameter (precise place identifier)."""
+    return 'query_place_id=' in url
+
+
 def navigate_to_place_reviews(page, url: str) -> bool:
     """
     Navigates to the Google Maps place page and activates the Reviews tab.
 
     Strategy:
-      Navigate to maps.google.com first, then use the search box to search for the place name or URL.
-      This bypasses the bot detection which normally hides the reviews tab.
+      - For URLs with query_place_id: navigate directly via page.goto() first
+        (these URLs contain a precise place identifier so Google Maps resolves
+        them to the exact place page). Fall back to search box if that fails.
+      - For other URLs/names: navigate to maps.google.com first, then use the
+        search box to search for the place name. This bypasses bot detection
+        which normally hides the reviews tab.
     """
+    # URLs with query_place_id can be navigated directly — they resolve to the
+    # exact place page without needing the search box.
+    if _has_query_place_id(url):
+        print(f"[Python Scraper] URL has query_place_id, navigating directly...")
+        try:
+            page.goto(url + "&hl=zh-TW", wait_until="domcontentloaded", timeout=30000)
+            time.sleep(6)
+            if _check_place_loaded(page):
+                print("[Python Scraper] ✓ Direct navigation landed on place page.")
+                return _click_reviews_tab(page)
+            print("[Python Scraper] Direct navigation didn't land on place page, falling back to search box...")
+        except Exception as e:
+            print(f"[Python Scraper] Direct navigation failed: {e}, falling back to search box...")
+
     place_name = extract_place_name_from_url(url)
     search_query = place_name if place_name else url
     print(f"[Python Scraper] Search query: '{search_query}'")
