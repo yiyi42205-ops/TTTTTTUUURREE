@@ -331,6 +331,9 @@ def audit():
         client_to_use = deepseek_client
         if user_api_key:
             user_api_key = user_api_key.strip()
+            if not user_api_key.startswith("sk-"):
+                logger.warning(f"Invalid X-DeepSeek-API-Key format from IP: {ip}")
+                return jsonify({"error": "無效的用戶 DeepSeek API Key 格式 (必須以 sk- 開頭)"}), 400
             try:
                 client_to_use = openai.OpenAI(api_key=user_api_key, base_url="https://api.deepseek.com")
             except Exception as e:

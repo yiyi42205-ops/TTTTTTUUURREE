@@ -103,7 +103,7 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list) -> list:
         response = client.chat.completions.create(
             model=MODEL_NAME_DEEPSEEK,
             messages=[
-                {"role": "system", "content": "You are a data analysis assistant. You must output JSON."},
+                {"role": "system", "content": "You are a data analysis assistant. You must output a JSON object containing a 'results' array."},
                 {"role": "user", "content": prompt}
             ],
             response_format={'type': 'json_object'}

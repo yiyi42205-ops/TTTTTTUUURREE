@@ -529,7 +529,7 @@ def run_llm_sample_mode(base_path, config: RuleConfig, num_stores=3, store_names
         try:
             items = call_llm_batch('gemini', client, store['restaurant'], ambiguous)
         except Exception as e:
-            print(f"  ✗ {store['restaurant']:<20} Gemini 呼叫失敗：{e}")
+            print(f"  ✗ {store['restaurant']:<20} LLM 呼叫失敗：{e}")
             continue
 
         washed_from_llm = sum(1 for item in items if item.get('isWashed'))
