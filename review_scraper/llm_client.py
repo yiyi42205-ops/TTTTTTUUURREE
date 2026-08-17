@@ -1,5 +1,5 @@
 """
-Stage 2 Gemini audit: batching + response parsing, split out from server.py so
+Stage 2 LLM audit: batching + response parsing, split out from server.py so
 it can be unit tested without spinning up Flask or hitting the real API.
 """
 
@@ -9,7 +9,8 @@ import re
 
 from prompt_builder import build_prompt
 
-MODEL_NAME = 'gemini-2.5-flash'
+MODEL_NAME_GEMINI = 'gemini-2.5-flash'
+MODEL_NAME_DEEPSEEK = 'deepseek-chat'
 
 # Target ~40 reviews per batch (within the 30-50 range asked for); batches are
 # split as evenly as possible so the last batch isn't a small remainder.
@@ -62,14 +63,14 @@ def _extract_json_block(text: str) -> str:
     return text
 
 
-def parse_gemini_json(raw_text: str) -> list:
-    """Parses Gemini's text response into a list of per-review audit dicts.
+def parse_llm_json(raw_text: str) -> list:
+    """Parses LLM's text response into a list of per-review audit dicts.
     Raises ValueError if the content isn't recoverable as a JSON list."""
     cleaned = _extract_json_block(_strip_markdown_fences(raw_text or ''))
     try:
         parsed = json.loads(cleaned)
     except json.JSONDecodeError as e:
-        raise ValueError(f'Gemini 回傳內容非合法 JSON：{e}') from e
+        raise ValueError(f'LLM 回傳內容非合法 JSON：{e}') from e
 
     if isinstance(parsed, list):
         return parsed
@@ -80,20 +81,35 @@ def parse_gemini_json(raw_text: str) -> list:
         for value in parsed.values():
             if isinstance(value, list):
                 return value
-    raise ValueError('Gemini 回傳的內容不是有效的評論審查 JSON 陣列')
+    raise ValueError('LLM 回傳的內容不是有效的評論審查 JSON 陣列')
 
 
-def call_gemini_batch(client, store_name: str, batch: list) -> list:
-    """Sends one batch of normalized reviews to Gemini and returns the parsed
+def call_llm_batch(provider: str, client, store_name: str, batch: list) -> list:
+    """Sends one batch of normalized reviews to the LLM and returns the parsed
     per-review audit results. Raises ValueError/RuntimeError on failure —
     caller decides how to handle a failed batch."""
     prompt = build_prompt(store_name, batch)
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=prompt,
-        config={
-            'response_mime_type': 'application/json',
-            'http_options': {'timeout': 60_000},  # 60s per batch, well under gunicorn's 120s
-        },
-    )
-    return parse_gemini_json(getattr(response, 'text', None))
+    if provider == 'gemini':
+        response = client.models.generate_content(
+            model=MODEL_NAME_GEMINI,
+            contents=prompt,
+            config={
+                'response_mime_type': 'application/json',
+                'http_options': {'timeout': 60_000},  # 60s per batch, well under gunicorn's 120s
+            },
+        )
+        raw_text = getattr(response, 'text', None)
+    elif provider == 'deepseek':
+        response = client.chat.completions.create(
+            model=MODEL_NAME_DEEPSEEK,
+            messages=[
+                {"role": "system", "content": "You are a data analysis assistant. You must output JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={'type': 'json_object'}
+        )
+        raw_text = response.choices[0].message.content
+    else:
+        raise ValueError(f"Unknown LLM provider: {provider}")
+        
+    return parse_llm_json(raw_text)

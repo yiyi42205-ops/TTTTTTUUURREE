@@ -473,7 +473,7 @@ def run_llm_sample_mode(base_path, config: RuleConfig, num_stores=3, store_names
         )
 
     from google import genai
-    from gemini_client import call_gemini_batch
+    from llm_client import call_llm_batch
 
     results = evaluate_dataset(base_path, config)
     if store_names:
@@ -527,7 +527,7 @@ def run_llm_sample_mode(base_path, config: RuleConfig, num_stores=3, store_names
             continue
 
         try:
-            items = call_gemini_batch(client, store['restaurant'], ambiguous)
+            items = call_llm_batch('gemini', client, store['restaurant'], ambiguous)
         except Exception as e:
             print(f"  ✗ {store['restaurant']:<20} Gemini 呼叫失敗：{e}")
             continue

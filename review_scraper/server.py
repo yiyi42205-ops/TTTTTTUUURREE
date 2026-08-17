@@ -5,6 +5,7 @@ from flask_cors import CORS
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 from google import genai
+import openai
 import logging
 import os
 import time
@@ -13,7 +14,7 @@ import urllib.request
 from urllib.parse import urlparse
 
 from normalize import normalize_review
-from gemini_client import make_batches, call_gemini_batch, MAX_CONCURRENT_BATCHES
+from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES
 from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata
 from rule_engine import run_stage1_audit
 import re
@@ -35,8 +36,11 @@ if not GEMINI_API_KEY:
     )
 
 genai_client = genai.Client(api_key=GEMINI_API_KEY)
-
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+deepseek_client = None
+if DEEPSEEK_API_KEY:
+    deepseek_client = openai.OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 CORS(app)
 
@@ -303,23 +307,40 @@ def audit():
     ip = request.remote_addr
     logger.info(f"POST /api/audit request from IP: {ip}")
 
-    # Extract user-provided API key from headers if available
-    user_api_key = request.headers.get("X-Gemini-API-Key")
-    client_to_use = genai_client
-    if user_api_key:
-        user_api_key = user_api_key.strip()
-        if not user_api_key.startswith("AIzaSy") or len(user_api_key) < 35:
-            logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
-            return jsonify({"error": "無效的用戶 API Key 格式 (請確認長度與開頭)"}), 400
-
-        try:
-            client_to_use = genai.Client(api_key=user_api_key)
-            logger.info("Using user-provided Gemini API Key for audit request.")
-        except Exception as e:
-            logger.error(f"Failed to initialize Gemini client with user API key: {e}")
-            return jsonify({"error": "無效的用戶 API Key 格式"}), 400
-
     data = request.get_json() or {}
+    provider = data.get("provider", "gemini")
+
+    if provider == "gemini":
+        user_api_key = request.headers.get("X-Gemini-API-Key")
+        client_to_use = genai_client
+        if user_api_key:
+            user_api_key = user_api_key.strip()
+            if not user_api_key.startswith("AIzaSy") or len(user_api_key) < 35:
+                logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
+                return jsonify({"error": "無效的用戶 Gemini API Key 格式"}), 400
+            try:
+                client_to_use = genai.Client(api_key=user_api_key)
+            except Exception as e:
+                logger.error(f"Failed to init Gemini client: {e}")
+                return jsonify({"error": "無效的用戶 Gemini API Key 格式"}), 400
+        if not client_to_use:
+            return jsonify({"error": "Server is missing GEMINI_API_KEY"}), 500
+
+    elif provider == "deepseek":
+        user_api_key = request.headers.get("X-DeepSeek-API-Key")
+        client_to_use = deepseek_client
+        if user_api_key:
+            user_api_key = user_api_key.strip()
+            try:
+                client_to_use = openai.OpenAI(api_key=user_api_key, base_url="https://api.deepseek.com")
+            except Exception as e:
+                logger.error(f"Failed to init DeepSeek client: {e}")
+                return jsonify({"error": "無效的用戶 DeepSeek API Key 格式"}), 400
+        if not client_to_use:
+            return jsonify({"error": "Server is missing DEEPSEEK_API_KEY"}), 500
+    else:
+        return jsonify({"error": f"Unknown provider: {provider}"}), 400
+
     store_name = data.get("storeName") or "待審查店家"
     raw_reviews = data.get("reviews")
     if not raw_reviews or not isinstance(raw_reviews, list):
@@ -349,12 +370,12 @@ def audit():
     results = []
     errors = []
     with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_BATCHES) as executor:
-        futures = {executor.submit(call_gemini_batch, client_to_use, store_name, batch): batch for batch in batches}
+        futures = {executor.submit(call_llm_batch, provider, client_to_use, store_name, batch): batch for batch in batches}
         for future in as_completed(futures):
             try:
                 results.extend(future.result())
             except Exception as e:
-                logger.error(f"Gemini batch audit failed: {e}")
+                logger.error(f"LLM ({provider}) batch audit failed: {e}")
                 logger.error(traceback.format_exc())
                 errors.append(str(e))
 
