@@ -6,6 +6,7 @@ it can be unit tested without spinning up Flask or hitting the real API.
 import json
 import math
 import re
+import time
 
 from prompt_builder import build_prompt
 
@@ -84,33 +85,45 @@ def parse_llm_json(raw_text: str) -> list:
     raise ValueError('LLM 回傳的內容不是有效的評論審查 JSON 陣列')
 
 
-def call_llm_batch(provider: str, client, store_name: str, batch: list) -> list:
+def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retries: int = 2) -> list:
     """Sends one batch of normalized reviews to the LLM and returns the parsed
-    per-review audit results. Raises ValueError/RuntimeError on failure —
-    caller decides how to handle a failed batch."""
+    per-review audit results. Automatically retries on transient errors/JSON decode failures.
+    Raises ValueError/RuntimeError on failure after exhausting retries."""
     prompt = build_prompt(store_name, batch)
-    if provider == 'gemini':
-        response = client.models.generate_content(
-            model=MODEL_NAME_GEMINI,
-            contents=prompt,
-            config={
-                'response_mime_type': 'application/json',
-                'http_options': {'timeout': 60_000},  # 60s per batch, well under gunicorn's 120s
-            },
-        )
-        raw_text = getattr(response, 'text', None)
-    elif provider == 'deepseek':
-        response = client.chat.completions.create(
-            model=MODEL_NAME_DEEPSEEK,
-            messages=[
-                {"role": "system", "content": "You are a data analysis assistant. You must output a JSON object containing a 'results' array."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={'type': 'json_object'},
-            timeout=60.0
-        )
-        raw_text = response.choices[0].message.content
-    else:
-        raise ValueError(f"Unknown LLM provider: {provider}")
-        
-    return parse_llm_json(raw_text)
+    last_exception = None
+    for attempt in range(max_retries + 1):
+        try:
+            if provider == 'gemini':
+                response = client.models.generate_content(
+                    model=MODEL_NAME_GEMINI,
+                    contents=prompt,
+                    config={
+                        'response_mime_type': 'application/json',
+                        'http_options': {'timeout': 60_000},  # 60s per batch, well under gunicorn's 120s
+                    },
+                )
+                raw_text = getattr(response, 'text', None)
+            elif provider == 'deepseek':
+                response = client.chat.completions.create(
+                    model=MODEL_NAME_DEEPSEEK,
+                    messages=[
+                        {"role": "system", "content": "You are a data analysis assistant. You must output a JSON object containing a 'results' array."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    response_format={'type': 'json_object'},
+                    timeout=60.0
+                )
+                raw_text = response.choices[0].message.content
+            else:
+                raise ValueError(f"Unknown LLM provider: {provider}")
+                
+            return parse_llm_json(raw_text)
+            
+        except Exception as e:
+            last_exception = e
+            if attempt < max_retries:
+                time.sleep(2 ** attempt)  # Exponential backoff (1s, 2s, 4s...)
+            else:
+                break
+                
+    raise last_exception
