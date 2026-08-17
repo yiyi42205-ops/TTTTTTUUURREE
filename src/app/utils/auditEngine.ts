@@ -29,6 +29,7 @@ export interface ShopStats {
   filteredRating: number;
   trustScore: number;
   totalReviews: number;
+  googleReviewsCount?: number;
   suspiciousReviews: number;
   issues: {
     timeAnomaly: number;

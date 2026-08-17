@@ -23,7 +23,7 @@ ACTOR_ID = "compass/Google-Maps-Reviews-Scraper"
 RUN_WAIT_SECONDS = 180
 
 
-def scrape_via_apify(url: str, max_reviews: int = 50) -> tuple[str | None, list]:
+def scrape_via_apify(url: str, max_reviews: int = 50) -> tuple[str | None, list, dict]:
     token = os.getenv("APIFY_TOKEN")
     if not token:
         raise RuntimeError("缺少 APIFY_TOKEN 環境變數，無法呼叫 Apify 爬蟲服務。")
@@ -56,8 +56,14 @@ def scrape_via_apify(url: str, max_reviews: int = 50) -> tuple[str | None, list]
     items = client.dataset(dataset_id).list_items().items
     
     place_id = None
+    metadata = {}
     if items and isinstance(items[0], dict):
-        place_id = items[0].get("placeId")
-        
+        first = items[0]
+        place_id = first.get("placeId")
+        if first.get("totalScore") is not None:
+            metadata["totalScore"] = first["totalScore"]
+        if first.get("reviewsCount") is not None:
+            metadata["reviewsCount"] = first["reviewsCount"]
+
     reviews = [normalize_review(item) for item in items if isinstance(item, dict)]
-    return place_id, reviews
+    return place_id, reviews, metadata

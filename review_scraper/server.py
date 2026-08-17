@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 
 from normalize import normalize_review
 from gemini_client import make_batches, call_gemini_batch, MAX_CONCURRENT_BATCHES
-from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping, get_cached_audit, set_cached_audit
+from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata
 from rule_engine import run_stage1_audit
 import re
 
@@ -152,8 +152,12 @@ def scrape():
     if not force and target_place_id:
         cached = get_cached_reviews(target_place_id)
         if cached is not None:
+            cached_meta = get_cached_metadata(target_place_id)
             logger.info(f"Cache hit for place_id: {target_place_id} ({len(cached)} reviews)")
-            return jsonify({"reviews": cached, "source": "cache"})
+            response = {"reviews": cached, "source": "cache"}
+            if cached_meta:
+                response["metadata"] = cached_meta
+            return jsonify(response)
 
     try:
         # Imported lazily: apify_scraper pulls in the Apify HTTP client, which
@@ -161,18 +165,21 @@ def scrape():
         from apify_scraper import scrape_via_apify
 
         logger.info(f"Starting Apify scrape for URL: {url_to_scrape} (limit: {max_reviews})")
-        apify_place_id, records = scrape_via_apify(url_to_scrape, max_reviews=max_reviews)
-        
+        apify_place_id, records, metadata = scrape_via_apify(url_to_scrape, max_reviews=max_reviews)
+
         final_place_id = apify_place_id or target_place_id
         if final_place_id:
-            set_cached_reviews(final_place_id, records, source="apify")
+            set_cached_reviews(final_place_id, records, source="apify", metadata=metadata)
             # Always save mapping if it was a query or if we resolved a place_id
             set_query_place_id_mapping(original_query, final_place_id)
             if is_url and url_to_scrape != original_query:
                 set_query_place_id_mapping(url_to_scrape, final_place_id)
-        
+
         logger.info(f"Apify scrape succeeded: {len(records)} reviews in {time.time() - start_time:.2f}s.")
-        return jsonify({"reviews": records, "source": "apify"})
+        response = {"reviews": records, "source": "apify"}
+        if metadata:
+            response["metadata"] = metadata
+        return jsonify(response)
     except Exception as apify_err:
         logger.warning(f"Apify scrape failed for {url_to_scrape}: {apify_err}.")
 

@@ -32,10 +32,18 @@ def _connect(db_path: str) -> sqlite3.Connection:
             place_id TEXT PRIMARY KEY,
             reviews_json TEXT NOT NULL,
             source TEXT NOT NULL,
-            fetched_at REAL NOT NULL
+            fetched_at REAL NOT NULL,
+            metadata_json TEXT
         )
         """
     )
+    # Auto-migration: add metadata_json column if missing (existing DBs)
+    cursor.execute("PRAGMA table_info(scrape_cache)")
+    sc_columns = [col[1] for col in cursor.fetchall()]
+    if "metadata_json" not in sc_columns:
+        conn.execute("ALTER TABLE scrape_cache ADD COLUMN metadata_json TEXT")
+        conn.commit()
+
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS search_query_map (
@@ -104,6 +112,21 @@ def get_cached_reviews(place_id: str, db_path: str = None, ttl_seconds: int = CA
         return None
 
     return json.loads(reviews_json)
+
+
+def get_cached_metadata(place_id: str, db_path: str = None) -> dict | None:
+    """Returns the cached metadata dict (totalScore, reviewsCount) if available."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        row = conn.execute(
+            "SELECT metadata_json FROM scrape_cache WHERE place_id = ?", (place_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if row and row[0]:
+        return json.loads(row[0])
+    return None
 
 
 def get_cached_audit(place_id: str, db_path: str = None, ttl_seconds: int = CACHE_TTL_SECONDS):
@@ -183,19 +206,21 @@ def get_pending_audit_entries(db_path: str = None):
         conn.close()
 
 
-def set_cached_reviews(place_id: str, reviews: list, source: str, db_path: str = None) -> None:
+def set_cached_reviews(place_id: str, reviews: list, source: str, db_path: str = None, metadata: dict = None) -> None:
     conn = _connect(db_path or DB_PATH)
     try:
+        meta_json = json.dumps(metadata, ensure_ascii=False) if metadata else None
         conn.execute(
             """
-            INSERT INTO scrape_cache (place_id, reviews_json, source, fetched_at)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO scrape_cache (place_id, reviews_json, source, fetched_at, metadata_json)
+            VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(place_id) DO UPDATE SET
                 reviews_json = excluded.reviews_json,
                 source = excluded.source,
-                fetched_at = excluded.fetched_at
+                fetched_at = excluded.fetched_at,
+                metadata_json = excluded.metadata_json
             """,
-            (place_id, json.dumps(reviews, ensure_ascii=False), source, time.time()),
+            (place_id, json.dumps(reviews, ensure_ascii=False), source, time.time(), meta_json),
         )
         # Invalidate stale audit cache when reviews are refreshed
         conn.execute("DELETE FROM audit_cache WHERE place_id = ?", (place_id,))
