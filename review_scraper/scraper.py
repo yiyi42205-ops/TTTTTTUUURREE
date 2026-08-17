@@ -511,8 +511,11 @@ def navigate_to_place_reviews(page, url: str) -> bool:
             time.sleep(6)
             if _check_place_loaded(page):
                 print("[Python Scraper] ✓ Direct navigation landed on place page.")
-                return _click_reviews_tab(page)
-            print("[Python Scraper] Direct navigation didn't land on place page, falling back to search box...")
+                if _click_reviews_tab(page):
+                    return True
+                print("[Python Scraper] Reviews tab hidden (bot detection), falling back to search box...")
+            else:
+                print("[Python Scraper] Direct navigation didn't land on place page, falling back to search box...")
         except Exception as e:
             print(f"[Python Scraper] Direct navigation failed: {e}, falling back to search box...")
 
