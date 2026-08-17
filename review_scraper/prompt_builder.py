@@ -5,6 +5,7 @@ frontend so the Gemini API key never has to reach the browser.
 
 import json
 import os
+import secrets
 
 _TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'audit_prompt.txt')
 
@@ -37,8 +38,12 @@ def build_review_payload(reviews: list) -> list:
 def build_prompt(store_name: str, reviews: list) -> str:
     template = load_template()
     payload = build_review_payload(reviews)
+    random_tag = f"review_data_{secrets.token_hex(4)}"
+
     return (
         template
+        .replace('<review_data>', f'<{random_tag}>')
+        .replace('</review_data>', f'</{random_tag}>')
         .replace('{store_name}', store_name or '待審查店家')
         .replace('{review_count}', str(len(payload)))
         .replace('{reviews_json}', json.dumps(payload, ensure_ascii=False, indent=2))
