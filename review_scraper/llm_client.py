@@ -106,7 +106,8 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list) -> list:
                 {"role": "system", "content": "You are a data analysis assistant. You must output a JSON object containing a 'results' array."},
                 {"role": "user", "content": prompt}
             ],
-            response_format={'type': 'json_object'}
+            response_format={'type': 'json_object'},
+            timeout=60.0
         )
         raw_text = response.choices[0].message.content
     else:

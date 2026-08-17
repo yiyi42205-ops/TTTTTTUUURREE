@@ -5,7 +5,6 @@ from flask_cors import CORS
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 from google import genai
-import openai
 import logging
 import os
 import time
@@ -37,12 +36,64 @@ if not GEMINI_API_KEY:
 
 genai_client = genai.Client(api_key=GEMINI_API_KEY)
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist")
+
+# Global DeepSeek Client
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 deepseek_client = None
 if DEEPSEEK_API_KEY:
-    deepseek_client = openai.OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+    try:
+        import openai
+        deepseek_client = openai.OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+    except ImportError:
+        logger.warning("openai package not installed. DeepSeek backend will be unavailable.")
+
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 CORS(app)
+
+def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tuple[dict, int] | None]:
+    """
+    Factory helper to resolve the appropriate LLM client instance based on provider and headers.
+    Returns: (client_instance, error_tuple_if_any)
+    """
+    if provider == "gemini":
+        user_api_key = headers.get("X-Gemini-API-Key")
+        if user_api_key:
+            user_api_key = user_api_key.strip()
+            if not user_api_key.startswith("AIzaSy") or len(user_api_key) < 35:
+                logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
+                return None, ({"error": "無效的用戶 Gemini API Key 格式"}, 400)
+            try:
+                return genai.Client(api_key=user_api_key), None
+            except Exception as e:
+                logger.error(f"Failed to init Gemini client: {e}")
+                return None, ({"error": "無法初始化 Gemini Client"}, 400)
+        if not genai_client:
+            return None, ({"error": "Server is missing GEMINI_API_KEY"}, 500)
+        return genai_client, None
+
+    elif provider == "deepseek":
+        try:
+            import openai
+        except ImportError:
+            return None, ({"error": "Server is missing openai package"}, 500)
+            
+        user_api_key = headers.get("X-DeepSeek-API-Key")
+        if user_api_key:
+            user_api_key = user_api_key.strip()
+            if not user_api_key.startswith("sk-"):
+                logger.warning(f"Invalid X-DeepSeek-API-Key format from IP: {ip}")
+                return None, ({"error": "無效的用戶 DeepSeek API Key 格式 (必須以 sk- 開頭)"}, 400)
+            try:
+                return openai.OpenAI(api_key=user_api_key, base_url="https://api.deepseek.com"), None
+            except Exception as e:
+                logger.error(f"Failed to init DeepSeek client: {e}")
+                return None, ({"error": "無法初始化 DeepSeek Client"}, 400)
+        if not deepseek_client:
+            return None, ({"error": "Server is missing DEEPSEEK_API_KEY"}, 500)
+        return deepseek_client, None
+
+    return None, ({"error": f"Unknown provider: {provider}"}, 400)
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -310,39 +361,9 @@ def audit():
     data = request.get_json() or {}
     provider = data.get("provider", "gemini")
 
-    if provider == "gemini":
-        user_api_key = request.headers.get("X-Gemini-API-Key")
-        client_to_use = genai_client
-        if user_api_key:
-            user_api_key = user_api_key.strip()
-            if not user_api_key.startswith("AIzaSy") or len(user_api_key) < 35:
-                logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
-                return jsonify({"error": "無效的用戶 Gemini API Key 格式"}), 400
-            try:
-                client_to_use = genai.Client(api_key=user_api_key)
-            except Exception as e:
-                logger.error(f"Failed to init Gemini client: {e}")
-                return jsonify({"error": "無效的用戶 Gemini API Key 格式"}), 400
-        if not client_to_use:
-            return jsonify({"error": "Server is missing GEMINI_API_KEY"}), 500
-
-    elif provider == "deepseek":
-        user_api_key = request.headers.get("X-DeepSeek-API-Key")
-        client_to_use = deepseek_client
-        if user_api_key:
-            user_api_key = user_api_key.strip()
-            if not user_api_key.startswith("sk-"):
-                logger.warning(f"Invalid X-DeepSeek-API-Key format from IP: {ip}")
-                return jsonify({"error": "無效的用戶 DeepSeek API Key 格式 (必須以 sk- 開頭)"}), 400
-            try:
-                client_to_use = openai.OpenAI(api_key=user_api_key, base_url="https://api.deepseek.com")
-            except Exception as e:
-                logger.error(f"Failed to init DeepSeek client: {e}")
-                return jsonify({"error": "無效的用戶 DeepSeek API Key 格式"}), 400
-        if not client_to_use:
-            return jsonify({"error": "Server is missing DEEPSEEK_API_KEY"}), 500
-    else:
-        return jsonify({"error": f"Unknown provider: {provider}"}), 400
+    client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
+    if err_resp:
+        return jsonify(err_resp[0]), err_resp[1]
 
     store_name = data.get("storeName") or "待審查店家"
     raw_reviews = data.get("reviews")
