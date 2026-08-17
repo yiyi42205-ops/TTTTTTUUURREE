@@ -36,16 +36,31 @@ if not GEMINI_API_KEY:
 
 genai_client = genai.Client(api_key=GEMINI_API_KEY)
 
-app = Flask(__name__)
+STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist")
+app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 CORS(app)
 
 @app.route("/", methods=["GET"])
 def index():
-    logger.info(f"Root path '/' accessed by IP: {request.remote_addr}")
+    # Serve the SPA frontend if dist/ exists, otherwise return API status
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_path):
+        return app.send_static_file("index.html")
     return jsonify({
         "status": "ok",
         "message": "Google Maps Scraper Service is running"
     })
+
+@app.route("/<path:path>")
+def catch_all(path):
+    """Serve static files or fall back to index.html for SPA client-side routing."""
+    static_file = os.path.join(STATIC_DIR, path)
+    if os.path.exists(static_file) and not os.path.isdir(static_file):
+        return app.send_static_file(path)
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_path):
+        return app.send_static_file("index.html")
+    return jsonify({"error": "Not found"}), 404
 
 def resolve_google_share_url(url: str) -> str:
     try:
@@ -303,6 +318,7 @@ def audit():
     return jsonify(response_body)
 
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", 5001))
     logger.info("Initializing Flask server configurations...")
-    logger.info("Starting Flask server on host 0.0.0.0, port 5001...")
-    app.run(host="0.0.0.0", port=5001)
+    logger.info(f"Starting Flask server on host 0.0.0.0, port {port}...")
+    app.run(host="0.0.0.0", port=port)

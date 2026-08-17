@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: truerating
+    runtime: python
+    buildCommand: |
+      pip install -r review_scraper/requirements.txt &&
+      npm install &&
+      npm run build
+    startCommand: cd review_scraper && gunicorn server:app --bind 0.0.0.0:$PORT --timeout 120 --workers 2
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: APIFY_TOKEN
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: NODE_VERSION
+        value: "20"

@@ -11,3 +11,4 @@ google-genai>=0.3.0
 apify-client>=1.7.0
 langdetect>=1.0.9
 pytest>=8.0.0
+gunicorn>=21.2.0
