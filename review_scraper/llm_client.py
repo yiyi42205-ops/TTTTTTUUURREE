@@ -9,7 +9,7 @@ import re
 import time
 import random
 
-from prompt_builder import build_prompt
+from prompt_builder import build_prompt, build_qa_prompt
 
 MODEL_NAME_GEMINI = 'gemini-2.5-flash'
 MODEL_NAME_DEEPSEEK = 'deepseek-chat'
@@ -137,6 +137,65 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
             last_exception = e
             if attempt < max_retries:
                 time.sleep((2 ** attempt) + random.uniform(0, 0.5))  # Exponential backoff (1s, 2s) + jitter
+            else:
+                break
+                
+    raise last_exception
+
+
+def parse_qa_llm_json(raw_text: str) -> dict:
+    cleaned = _extract_json_block(_strip_markdown_fences(raw_text or ''))
+    try:
+        parsed = json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        raise ValueError(f'LLM 回傳內容非合法 JSON：{e}') from e
+
+    if not isinstance(parsed, dict) or 'answer' not in parsed:
+        raise ValueError('LLM 回傳的內容不是有效的 QA JSON 格式')
+        
+    # Schema normalization to prevent frontend crashes
+    parsed['items'] = parsed.get('items', [])
+    if not isinstance(parsed['items'], list):
+        parsed['items'] = []
+    parsed['sufficient'] = bool(parsed.get('sufficient', True))
+    
+    return parsed
+
+
+def call_llm_qa(provider: str, client, store_name: str, reviews: list, question: str, max_retries: int = 2) -> dict:
+    prompt = build_qa_prompt(store_name, reviews, question)
+    
+    if provider not in ('gemini', 'deepseek'):
+        raise ValueError(f"Unknown LLM provider: {provider}")
+
+    last_exception = None
+    for attempt in range(max_retries + 1):
+        try:
+            if provider == 'gemini':
+                response = client.models.generate_content(
+                    model=MODEL_NAME_GEMINI,
+                    contents=prompt,
+                    config={'response_mime_type': 'application/json'},
+                )
+                raw_text = getattr(response, 'text', None)
+            elif provider == 'deepseek':
+                response = client.chat.completions.create(
+                    model=MODEL_NAME_DEEPSEEK,
+                    messages=[
+                        {"role": "system", "content": "You are a data analysis assistant. You must output a JSON object."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    response_format={'type': 'json_object'},
+                    timeout=60.0
+                )
+                raw_text = response.choices[0].message.content
+                
+            return parse_qa_llm_json(raw_text)
+            
+        except Exception as e:
+            last_exception = e
+            if attempt < max_retries:
+                time.sleep((2 ** attempt) + random.uniform(0, 0.5))
             else:
                 break
                 

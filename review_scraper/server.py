@@ -13,8 +13,12 @@ import urllib.request
 from urllib.parse import urlparse
 
 from normalize import normalize_review
-from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES
-from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata
+from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES, call_llm_qa
+from cache_store import (
+    get_cached_reviews, set_cached_reviews, get_place_id_for_query, 
+    set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata,
+    check_and_increment_qa_limit, get_cached_qa, set_cached_qa
+)
 from rule_engine import run_stage1_audit
 import re
 
@@ -413,6 +417,98 @@ def audit():
     if errors:
         response_body["errors"] = errors
     return jsonify(response_body)
+
+@app.route("/api/summarize", methods=["POST"])
+def summarize():
+    start_time = time.time()
+    
+    # Extract real client IP in case server is behind a proxy (like Nginx)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    ip = forwarded_for.split(",")[0].strip() if forwarded_for else request.remote_addr
+    
+    logger.info(f"POST /api/summarize request from IP: {ip}")
+
+    data = request.get_json() or {}
+    
+    place_id = data.get("placeId")
+    if not place_id:
+        return jsonify({"error": "Missing placeId"}), 400
+        
+    question = data.get("question")
+    if not isinstance(question, str) or not question.strip():
+        return jsonify({"error": "Missing or invalid question"}), 400
+        
+    # Cap question length to prevent prompt injection / resource exhaustion
+    if len(question) > 500:
+        return jsonify({"error": "問題字數超過上限 (最大 500 字)"}), 400
+
+    raw_reviews = data.get("reviews")
+    if not raw_reviews or not isinstance(raw_reviews, list):
+        return jsonify({"error": "Missing or invalid required field: reviews"}), 400
+
+    store_name = data.get("storeName", "待審查店家")
+    provider = data.get("provider", "gemini")
+
+    # Semantic QA Caching (Skip LLM execution if this question was already asked for this place)
+    cached_qa = get_cached_qa(place_id, question)
+    if cached_qa:
+        logger.info(f"QA Cache hit for place '{place_id}', question: '{question[:20]}...'")
+        return jsonify(cached_qa)
+
+    # Rate limiting
+    if not check_and_increment_qa_limit(ip, place_id):
+        return jsonify({"error": "每家店每個 IP 最多只能提問 3 次"}), 429
+
+    # Filter real reviews (isWashed = False)
+    valid_reviews = []
+    for r in raw_reviews:
+        if not isinstance(r, dict):
+            continue
+        
+        # Safely check if audit.isWashed is True
+        audit = r.get("audit") or {}
+        if isinstance(audit, dict) and audit.get("isWashed"):
+            continue
+            
+        text = str(r.get("text") or "").strip()
+        if not text:
+            continue
+            
+        # Give an ID if not exists
+        if "id" not in r:
+            r["id"] = f"r{len(valid_reviews)}"
+            
+        valid_reviews.append(r)
+
+    # Sort reviews by text length (descending) to prioritize the most informative ones,
+    # then protect against excessive token usage by capping at 150 reviews
+    valid_reviews.sort(key=lambda x: len(x.get("text", "")), reverse=True)
+    valid_reviews = valid_reviews[:150]
+
+    if not valid_reviews:
+        return jsonify({
+            "answer": "評論中沒有相關資訊（未找到真實有效評論）",
+            "items": [],
+            "sufficient": False
+        })
+
+    client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
+    if err_resp:
+        return jsonify(err_resp[0]), err_resp[1]
+
+    try:
+        logger.info(f"Summarizing for '{store_name}' with {len(valid_reviews)} reviews...")
+        result = call_llm_qa(provider, client_to_use, store_name, valid_reviews, question)
+        logger.info(f"Summarize completed in {time.time() - start_time:.2f}s.")
+        
+        # Save exact-match result to cache
+        set_cached_qa(place_id, question, result)
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"LLM QA ({provider}) failed: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({"error": "分析回答失敗", "details": str(e)}), 502
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5001))

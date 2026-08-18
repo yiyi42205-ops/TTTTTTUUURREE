@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router';
 import { 
   ArrowLeft, Trophy, AlertTriangle, ExternalLink, Search, 
   Sparkles, Check, Loader2, ShieldCheck, HelpCircle, FileText, Activity,
-  ChevronDown, ChevronUp, Star, Shield, X, Database
+  ChevronDown, ChevronUp, Star, Shield, X, Database, MessageSquare, Send
 } from 'lucide-react';
 import { RESTAURANTS_DATA } from '../data/restaurantsData';
 import { parseReviews, Review } from '../utils/csvParser';
@@ -117,6 +117,12 @@ export function Results() {
     stage2Passed: number;  // Gemini passed
   }
   const [pipelineLogs, setPipelineLogs] = useState<PipelineLog[]>([]);
+
+  // AI QA States
+  const [qaInput, setQaInput] = useState<{ [storeIdx: number]: string }>({});
+  const [isQaLoading, setIsQaLoading] = useState<{ [storeIdx: number]: boolean }>({});
+  const [qaResults, setQaResults] = useState<{ [storeIdx: number]: any }>({});
+  const [qaErrors, setQaErrors] = useState<{ [storeIdx: number]: string }>({});
 
   // 1. Initial Parse → call backend /api/audit-rules for Stage 1 heuristics
   useEffect(() => {
@@ -421,6 +427,54 @@ export function Results() {
       setApiError(e.message || '連線 API 時發生未知錯誤');
     } finally {
       setIsAiAuditing(false);
+    }
+  };
+
+  const handleQaSubmit = async (storeIdx: number) => {
+    const question = qaInput[storeIdx]?.trim();
+    if (!question) return;
+
+    const shop = shopResults[storeIdx];
+    if (!shop) return;
+
+    // Use only valid (non-washed) reviews that have valid text
+    const validReviews = shop.auditedReviews
+      .filter(r => !r.audit.isWashed && r.text && r.text.trim())
+      .map(r => ({
+        id: r.username,
+        text: r.text,
+        stars: r.stars,
+        time: r.time
+      }));
+
+    setIsQaLoading(prev => ({ ...prev, [storeIdx]: true }));
+    setQaErrors(prev => ({ ...prev, [storeIdx]: '' }));
+
+    try {
+      const response = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          placeId: storeIds[storeIdx] || shop.storeName,
+          storeName: shop.storeName,
+          reviews: validReviews,
+          question: question
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'QA 請求失敗');
+      }
+
+      setQaResults(prev => ({ ...prev, [storeIdx]: data }));
+    } catch (e: any) {
+      console.error('QA Error:', e);
+      setQaErrors(prev => ({ ...prev, [storeIdx]: e.message || '連線錯誤' }));
+    } finally {
+      setIsQaLoading(prev => ({ ...prev, [storeIdx]: false }));
     }
   };
 
@@ -1655,6 +1709,100 @@ export function Results() {
                 </div>
               );
             })()}
+
+            {/* AI QA Section */}
+            <div className="bg-white border-t-3 border-[#4a5d52] p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquare className="w-5 h-5 text-[#6b8e7f]" />
+                <h3 className="font-display font-black text-sm text-[#4a5d52]">
+                  向 AI 詢問關於 {cleanStoreName(shopResults[selectedInspectorTab].storeName)} 的細節
+                </h3>
+              </div>
+              
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={qaInput[selectedInspectorTab] || ''}
+                  onChange={(e) => setQaInput(prev => ({ ...prev, [selectedInspectorTab]: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleQaSubmit(selectedInspectorTab);
+                  }}
+                  placeholder="例如：這家店推薦點什麼菜？服務態度好嗎？"
+                  disabled={isQaLoading[selectedInspectorTab]}
+                  className="flex-1 px-4 py-2 bg-[#f5f1e8] rounded-xl border-2 border-[#d4c5b0] text-sm text-[#4a5d52] focus:outline-none focus:border-[#6b8e7f] font-bold disabled:opacity-50"
+                />
+                <button
+                  onClick={() => handleQaSubmit(selectedInspectorTab)}
+                  disabled={isQaLoading[selectedInspectorTab] || !qaInput[selectedInspectorTab]?.trim()}
+                  className="bg-[#6b8e7f] hover:bg-[#5b7d6e] disabled:bg-[#a0b3a0] text-white px-4 py-2 rounded-xl font-black shadow-[2px_2px_0px_0px_#4a5d52] border-2 border-[#4a5d52] transition-all cursor-pointer disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {isQaLoading[selectedInspectorTab] ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+
+              {qaErrors[selectedInspectorTab] && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-bold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  {qaErrors[selectedInspectorTab]}
+                </div>
+              )}
+
+              {qaResults[selectedInspectorTab] && (
+                <div className="mt-4 p-4 bg-[#f5f1e8]/50 border-2 border-[#6b8e7f]/30 rounded-2xl shadow-sm">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="w-5 h-5 text-[#6b8e7f] shrink-0 mt-0.5" />
+                    <div className="flex-1 space-y-3">
+                      <div className="text-sm font-bold text-[#4a5d52] leading-relaxed whitespace-pre-wrap">
+                        {qaResults[selectedInspectorTab].answer}
+                      </div>
+                      
+                      {!qaResults[selectedInspectorTab].sufficient && (
+                        <div className="bg-amber-50 border border-amber-200 text-amber-700 text-xs p-2 rounded-lg font-bold inline-block">
+                          提示：評論中可能沒有足夠的資訊回答此問題
+                        </div>
+                      )}
+
+                      {qaResults[selectedInspectorTab].items?.length > 0 && (
+                        <div className="pt-3 border-t border-[#d4c5b0]/40 space-y-2 mt-2">
+                          <span className="text-[10px] font-black text-[#6b8e7f] uppercase tracking-wider">
+                            引用來源 (真實評論)
+                          </span>
+                          <div className="flex flex-col gap-2">
+                            {qaResults[selectedInspectorTab].items.map((item: any, i: number) => {
+                              const sourceReview = shopResults[selectedInspectorTab].auditedReviews.find(
+                                r => r.username === item.id
+                              );
+                              return (
+                                <div key={i} className="bg-white p-2.5 rounded-xl border border-[#d4c5b0] text-xs shadow-xs">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="font-extrabold text-[#4a5d52]">{item.id}</span>
+                                    {sourceReview && (
+                                      <span className="font-bold text-[#e8c547] bg-[#e8c547]/10 px-1.5 py-0.5 rounded-full border border-[#e8c547]/30 text-[9px]">
+                                        ★ {sourceReview.stars}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[#6b8e7f] font-bold mb-1.5">{item.reason}</p>
+                                  {sourceReview && (
+                                    <div className="bg-[#f5f1e8] p-2 rounded-lg text-[10px] text-[#4a5d52]/80 italic border border-[#d4c5b0]/50 max-h-16 overflow-y-auto">
+                                      "{sourceReview.text}"
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
 
