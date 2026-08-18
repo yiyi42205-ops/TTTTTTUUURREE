@@ -4,6 +4,8 @@ services:
     runtime: python
     buildCommand: |
       pip install -r review_scraper/requirements.txt &&
+      pip install gdown &&
+      gdown 1Q_noGYRAtQt_Zqeg6UU_9ssrMDdlou1l -O cache.db &&
       npm install &&
       npm run build
     startCommand: cd review_scraper && gunicorn server:app --bind 0.0.0.0:$PORT --timeout 120 --workers 2
