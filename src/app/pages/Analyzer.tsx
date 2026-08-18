@@ -282,7 +282,8 @@ export function Analyzer() {
           return {
             id: `custom_scraped_shop_${i}`,
             name: storeName,
-            reviews: mappedReviews
+            reviews: mappedReviews,
+            metadata: data.metadata || {}
           };
         } catch (e: any) {
           throw new Error(`[${storeName}] 爬取失敗: ${e.message || '請確認本地後端服務已開啟'}`);

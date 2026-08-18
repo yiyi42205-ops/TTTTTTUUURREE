@@ -137,9 +137,9 @@ export function Results() {
     }
 
     const runStage1 = async () => {
-      const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[] }>) || [];
+      const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number } }>) || [];
 
-      let shopsToProcess: { id: string; name: string; reviews: Review[] }[];
+      let shopsToProcess: { id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number } }[];
       if (customShops.length > 0) {
         shopsToProcess = customShops;
       } else {
@@ -177,7 +177,14 @@ export function Results() {
             audit: r.audit as AuditResult,
           }));
 
-          computed.push(aggregateAuditedReviews(shop.name, auditedReviews));
+          const stats = aggregateAuditedReviews(shop.name, auditedReviews);
+          if (shop.metadata?.totalScore != null) {
+            stats.originalRating = shop.metadata.totalScore;
+          }
+          if (shop.metadata?.reviewsCount != null) {
+            stats.googleReviewsCount = shop.metadata.reviewsCount;
+          }
+          computed.push(stats);
           newSignals[shop.id] = data.signals;
         } catch (e: any) {
           console.error(`Stage 1 failed for ${shop.name}:`, e);
@@ -530,7 +537,11 @@ export function Results() {
                               <span className="inline-block w-2.5 h-2.5 rounded-md bg-[#6b8e7f]"></span>
                               {cleanStoreName(shop.storeName)}
                             </h4>
-                            <p className="text-[10px] text-[#6b8e7f] mt-0.5 font-bold">總評論數量：{shop.totalReviews} 則</p>
+                            <p className="text-[10px] text-[#6b8e7f] mt-0.5 font-bold">
+                              {shop.googleReviewsCount
+                                ? `Google 評論：${shop.googleReviewsCount} 則（已抽樣 ${shop.totalReviews} 則）`
+                                : `總評論數量：${shop.totalReviews} 則`}
+                            </p>
                           </div>
                           
                           <div className="flex items-center gap-3 bg-white/40 px-3 py-1.5 rounded-xl border border-[#d4c5b0]/20 self-start sm:self-auto">
