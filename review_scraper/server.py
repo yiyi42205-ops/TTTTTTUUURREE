@@ -128,13 +128,7 @@ def scrape():
         if is_url:
             # First time seeing this URL. Resolve it and try to extract place_id via Regex
             url_to_scrape = resolve_google_share_url(original_query)
-            extracted_chij = extract_place_id(url_to_scrape)
-            if extracted_chij:
-                # Check if this ChIJ maps to a known cache key (Playwright-era URLs)
-                mapped = get_place_id_for_query(extracted_chij)
-                target_place_id = mapped or extracted_chij
-            else:
-                target_place_id = None
+            target_place_id = extract_place_id(url_to_scrape)
         else:
             # Text query: No network extraction attempted. Apify will handle it.
             from urllib.parse import quote
