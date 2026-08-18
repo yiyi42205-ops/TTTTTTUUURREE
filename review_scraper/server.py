@@ -81,6 +81,14 @@ def resolve_google_share_url(url: str) -> str:
     return url
 
 def extract_place_id(url: str) -> str | None:
+    # Fast path: check URL string itself for ChIJ (e.g. query_place_id=ChIJxxx, or /place/...ChIJ)
+    url_match = re.search(r'(ChIJ[\w-]+)', url)
+    if url_match:
+        place_id = url_match.group(1)
+        logger.info(f"extract_place_id found place_id '{place_id}' in URL string: {url}")
+        return place_id
+
+    # Slow path: fetch the page HTML and search for ChIJ
     try:
         req = urllib.request.Request(
             url,
@@ -92,7 +100,7 @@ def extract_place_id(url: str) -> str | None:
             match = re.search(r'(ChIJ[\w-]+)', html)
             if match:
                 place_id = match.group(1)
-                logger.info(f"extract_place_id successfully found place_id '{place_id}' for URL: {url}")
+                logger.info(f"extract_place_id found place_id '{place_id}' in HTML for URL: {url}")
                 return place_id
             logger.info(f"extract_place_id found no place_id match for URL: {url}")
     except Exception as e:
@@ -149,6 +157,12 @@ def scrape():
 
     force = request.args.get("force", "false").lower() == "true"
 
+    # Helper: save all known query/URL → place_id mappings
+    def _save_mappings(place_id):
+        set_query_place_id_mapping(original_query, place_id)
+        if is_url and url_to_scrape != original_query:
+            set_query_place_id_mapping(url_to_scrape, place_id)
+
     if not force and target_place_id:
         cached = get_cached_reviews(target_place_id)
         if cached is not None:
@@ -160,37 +174,54 @@ def scrape():
             return jsonify(response)
 
     try:
-        # Imported lazily: apify_scraper pulls in the Apify HTTP client, which
-        # the rest of this app (notably /api/audit and its tests) doesn't need.
         from apify_scraper import scrape_via_apify
+
+        # If we don't have a place_id yet, do a 1-review probe just to discover
+        # it. Cost: ~$0.001. If the place_id matches a pre-crawled cache entry,
+        # we skip the full scrape entirely.
+        if not target_place_id and not force:
+            logger.info(f"No place_id found, probing Apify with 1 review for: {url_to_scrape}")
+            probe_place_id, _, probe_metadata = scrape_via_apify(url_to_scrape, max_reviews=1)
+            if probe_place_id:
+                _save_mappings(probe_place_id)
+                target_place_id = probe_place_id
+                cached = get_cached_reviews(probe_place_id)
+                if cached is not None:
+                    if probe_metadata:
+                        set_cached_reviews(probe_place_id, cached, source="cache", metadata=probe_metadata)
+                    cached_meta = get_cached_metadata(probe_place_id)
+                    logger.info(f"Probe found place_id {probe_place_id}, cache hit ({len(cached)} reviews)")
+                    response = {"reviews": cached, "source": "cache"}
+                    if cached_meta:
+                        response["metadata"] = cached_meta
+                    return jsonify(response)
 
         logger.info(f"Starting Apify scrape for URL: {url_to_scrape} (limit: {max_reviews})")
         apify_place_id, records, metadata = scrape_via_apify(url_to_scrape, max_reviews=max_reviews)
 
         final_place_id = apify_place_id or target_place_id
         if final_place_id:
-            # Always save URL/query → place_id mapping for future cache hits
-            set_query_place_id_mapping(original_query, final_place_id)
-            if is_url and url_to_scrape != original_query:
-                set_query_place_id_mapping(url_to_scrape, final_place_id)
+            _save_mappings(final_place_id)
 
-            # Only overwrite cache if the new scrape has more reviews
+            # Merge with existing cache: deduplicate by username, prefer Apify's
+            # newer version for existing users, add new users from both sides.
             existing = get_cached_reviews(final_place_id)
-            if existing is not None and len(existing) > len(records):
-                logger.info(f"Cache has {len(existing)} reviews > Apify's {len(records)} for {final_place_id}, returning cached data")
-                # Update metadata even when keeping old reviews
-                if metadata:
-                    set_cached_reviews(final_place_id, existing, source="cache", metadata=metadata)
-                cached_meta = get_cached_metadata(final_place_id)
-                response = {"reviews": existing, "source": "cache"}
-                if cached_meta:
-                    response["metadata"] = cached_meta
-                return jsonify(response)
+            if existing:
+                by_username = {r["username"]: r for r in existing}
+                for r in records:
+                    by_username[r["username"]] = r  # Apify (newer) wins on conflict
+                merged = list(by_username.values())
+                new_count = len(merged) - len(existing)
+                logger.info(f"Merged reviews for {final_place_id}: {len(existing)} cached + {len(records)} Apify → {len(merged)} total ({new_count} new)")
+                set_cached_reviews(final_place_id, merged, source="merged", metadata=metadata)
+                response = {"reviews": merged, "source": "merged"}
+            else:
+                set_cached_reviews(final_place_id, records, source="apify", metadata=metadata)
+                response = {"reviews": records, "source": "apify"}
+        else:
+            response = {"reviews": records, "source": "apify"}
 
-            set_cached_reviews(final_place_id, records, source="apify", metadata=metadata)
-
-        logger.info(f"Apify scrape succeeded: {len(records)} reviews in {time.time() - start_time:.2f}s.")
-        response = {"reviews": records, "source": "apify"}
+        logger.info(f"Apify scrape succeeded: {len(response['reviews'])} reviews in {time.time() - start_time:.2f}s.")
         if metadata:
             response["metadata"] = metadata
         return jsonify(response)

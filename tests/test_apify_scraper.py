@@ -248,12 +248,13 @@ def test_scrape_cache_hit_skips_apify(client, monkeypatch):
     url = "https://maps.google.com/?cid=4"
     first = client.post("/api/scrape", json={"url": url})
     assert first.get_json()["source"] == "apify"
-    assert call_count["n"] == 1
+    # First request: probe (1 review, cache miss) + full scrape = 2 calls
+    assert call_count["n"] == 2
 
     second = client.post("/api/scrape", json={"url": url})
     assert second.get_json()["source"] == "cache"
     assert second.get_json()["reviews"][0]["username"] == "fresh"
-    assert call_count["n"] == 1  # Apify was not called again
+    assert call_count["n"] == 2  # Apify was not called again
 
 
 def test_scrape_force_true_bypasses_cache(client, monkeypatch):
@@ -267,48 +268,84 @@ def test_scrape_force_true_bypasses_cache(client, monkeypatch):
 
     url = "https://maps.google.com/?cid=5"
     client.post("/api/scrape", json={"url": url})
-    assert call_count["n"] == 1
-
-    resp = client.post("/api/scrape?force=true", json={"url": url})
-    assert resp.get_json()["source"] == "apify"
+    # First request: probe + full scrape = 2 calls
     assert call_count["n"] == 2
 
+    # force=true skips cache check and probe, does full scrape then merges
+    resp = client.post("/api/scrape?force=true", json={"url": url})
+    assert resp.get_json()["source"] == "merged"
+    assert call_count["n"] == 3
 
-def test_scrape_does_not_overwrite_larger_cache(client, monkeypatch):
-    """When Apify returns fewer reviews than already cached, keep the cached
-    reviews but still update metadata (totalScore/reviewsCount)."""
-    big_reviews = [
+
+def test_scrape_merges_new_reviews_into_cache(client, monkeypatch):
+    """Apify returns some overlapping + some new reviews. The merge should
+    keep all cached reviews, update overlapping ones, and add new ones."""
+    cached_reviews = [
         {"username": f"u{i}", "stars": 5, "time": "2025-01-01", "text": "好吃", "images": [], "hasText": True, "imageCount": 0}
         for i in range(100)
     ]
-    small_reviews = [
-        {"username": "new1", "stars": 4, "time": "2025-06-01", "text": "還行", "images": [], "hasText": True, "imageCount": 0}
+    # Apify returns 3 reviews: u0 (overlap, updated text), u1 (overlap), new_user (new)
+    apify_reviews = [
+        {"username": "u0", "stars": 4, "time": "2025-06-01", "text": "改評價了", "images": [], "hasText": True, "imageCount": 0},
+        {"username": "u1", "stars": 5, "time": "2025-01-01", "text": "好吃", "images": [], "hasText": True, "imageCount": 0},
+        {"username": "new_user", "stars": 3, "time": "2025-06-15", "text": "普通", "images": [], "hasText": True, "imageCount": 0},
     ]
 
     call_count = {"n": 0}
 
-    def apify_first_big(url, max_reviews=50):
+    def apify_varying(url, max_reviews=50):
         call_count["n"] += 1
-        if call_count["n"] == 1:
-            return "ChIJ_big", big_reviews, {"totalScore": 3.9, "reviewsCount": 500}
-        return "ChIJ_big", small_reviews, {"totalScore": 4.0, "reviewsCount": 510}
+        if call_count["n"] <= 2:
+            return "ChIJ_merge", cached_reviews, {"totalScore": 3.9, "reviewsCount": 500}
+        return "ChIJ_merge", apify_reviews, {"totalScore": 4.0, "reviewsCount": 510}
 
-    monkeypatch.setattr("apify_scraper.scrape_via_apify", apify_first_big)
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", apify_varying)
 
-    url = "https://maps.google.com/?cid=big"
+    url = "https://maps.google.com/?cid=merge"
 
     # First call: seeds cache with 100 reviews
     first = client.post("/api/scrape", json={"url": url})
-    assert first.get_json()["source"] == "apify"
     assert len(first.get_json()["reviews"]) == 100
 
-    # Second call with force=true: Apify returns only 1 review, cache should win
+    # Second call with force=true: Apify returns 3 (2 overlap + 1 new) → merge
     second = client.post("/api/scrape?force=true", json={"url": url})
     data = second.get_json()
-    assert data["source"] == "cache"
-    assert len(data["reviews"]) == 100  # kept the larger cache
-    # Metadata should be updated to the newer values
+    assert data["source"] == "merged"
+    assert len(data["reviews"]) == 101  # 100 + 1 new
+    # u0 should be updated to Apify's version
+    u0 = next(r for r in data["reviews"] if r["username"] == "u0")
+    assert u0["text"] == "改評價了"
+    assert u0["stars"] == 4
+    # new_user should be present
+    assert any(r["username"] == "new_user" for r in data["reviews"])
     assert data["metadata"]["totalScore"] == 4.0
+
+
+def test_scrape_probe_hits_cache_avoids_full_scrape(client, monkeypatch):
+    """When a user pastes a URL without ChIJ, the probe discovers the place_id
+    and finds pre-crawled data in cache — no full scrape needed."""
+    import cache_store
+
+    # Pre-seed cache with 500 reviews (simulating pre-crawled data)
+    pre_crawled = [
+        {"username": f"u{i}", "stars": 5, "time": "2025-01-01", "text": "好吃", "images": [], "hasText": True, "imageCount": 0}
+        for i in range(500)
+    ]
+    cache_store.set_cached_reviews("ChIJ_precrawled", pre_crawled, source="playwright_batch")
+
+    call_count = {"n": 0}
+
+    def probe_only_apify(url, max_reviews=50):
+        call_count["n"] += 1
+        return "ChIJ_precrawled", [{"username": "probe", "stars": 3, "time": "2025-06-01", "text": "x", "images": [], "hasText": True, "imageCount": 0}], {"totalScore": 4.2}
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", probe_only_apify)
+
+    resp = client.post("/api/scrape", json={"url": "https://maps.app.goo.gl/someShortLink"})
+    data = resp.get_json()
+    assert data["source"] == "cache"
+    assert len(data["reviews"]) == 500
+    assert call_count["n"] == 1  # Only the probe, no full scrape
 
 
 # ---- URL Normalization, Redirection & SSRF mitigation tests ----
@@ -374,9 +411,10 @@ def test_scrape_normalizes_plain_text_query(client, monkeypatch):
     # Send plain text query that doesn't start with http/https
     resp = client.post("/api/scrape", json={"url": "蘇草salvia", "maxReviews": 10})
     assert resp.status_code == 200
-    assert len(captured_url) == 1
-    # Check that query is normalized to Google Maps Search URL and properly encoded
+    # probe + full scrape = 2 calls, both to the same normalized URL
+    assert len(captured_url) == 2
     assert captured_url[0] == "https://www.google.com/maps/search/%E8%98%87%E8%8D%89salvia"
+    assert captured_url[1] == captured_url[0]
 
 
 def test_scrape_rejects_non_string_url(client):
