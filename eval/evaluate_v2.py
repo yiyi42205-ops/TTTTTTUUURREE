@@ -467,7 +467,6 @@ def run_llm_sample_mode(base_path: str, config: RuleConfig, num_stores: int = 5,
 
     from google import genai
     from llm_client import call_llm_batch
-    import openai
 
     if provider == 'gemini':
         api_key = os.getenv('GEMINI_API_KEY')
@@ -475,6 +474,7 @@ def run_llm_sample_mode(base_path: str, config: RuleConfig, num_stores: int = 5,
             raise RuntimeError('缺少 GEMINI_API_KEY 環境變數。請在專案根目錄的 .env 檔案中設定。')
         client = genai.Client(api_key=api_key)
     elif provider == 'deepseek':
+        import openai
         api_key = os.getenv('DEEPSEEK_API_KEY')
         if not api_key:
             raise RuntimeError('缺少 DEEPSEEK_API_KEY 環境變數。請在專案根目錄的 .env 檔案中設定。')

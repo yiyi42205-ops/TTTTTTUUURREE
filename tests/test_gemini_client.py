@@ -1,4 +1,4 @@
-from gemini_client import make_batches
+from llm_client import make_batches
 
 
 def test_make_batches_sorts_by_days_elapsed_before_splitting():

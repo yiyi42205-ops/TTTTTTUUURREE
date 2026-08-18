@@ -406,7 +406,7 @@ def audit():
     # Batches are independent LLM calls — one failing shouldn't discard results
     # from the batches that succeeded. Only fail the whole request if nothing came back.
     if errors and not results:
-        return jsonify({"error": "Gemini 語意審計全部批次皆失敗", "details": errors}), 502
+        return jsonify({"error": f"LLM ({provider}) 語意審計全部批次皆失敗", "details": errors}), 502
 
     logger.info(f"Audit completed: {len(results)} reviews classified, {len(errors)} batch failure(s), in {time.time() - start_time:.2f}s.")
     response_body = {"results": results}

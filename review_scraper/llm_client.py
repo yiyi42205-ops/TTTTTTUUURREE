@@ -7,6 +7,7 @@ import json
 import math
 import re
 import time
+import random
 
 from prompt_builder import build_prompt
 
@@ -90,6 +91,8 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
     per-review audit results. Automatically retries on transient errors/JSON decode failures.
     Raises ValueError/RuntimeError on failure after exhausting retries."""
     prompt = build_prompt(store_name, batch)
+    if provider not in ('gemini', 'deepseek'):
+        raise ValueError(f"Unknown LLM provider: {provider}")
     last_exception = None
     for attempt in range(max_retries + 1):
         try:
@@ -114,15 +117,13 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
                     timeout=60.0
                 )
                 raw_text = response.choices[0].message.content
-            else:
-                raise ValueError(f"Unknown LLM provider: {provider}")
                 
             return parse_llm_json(raw_text)
             
         except Exception as e:
             last_exception = e
             if attempt < max_retries:
-                time.sleep(2 ** attempt)  # Exponential backoff (1s, 2s, 4s...)
+                time.sleep((2 ** attempt) + random.uniform(0, 0.5))  # Exponential backoff (1s, 2s) + jitter
             else:
                 break
                 
