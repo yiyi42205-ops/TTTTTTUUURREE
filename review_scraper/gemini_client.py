@@ -91,6 +91,9 @@ def call_gemini_batch(client, store_name: str, batch: list) -> list:
     response = client.models.generate_content(
         model=MODEL_NAME,
         contents=prompt,
-        config={'response_mime_type': 'application/json'},
+        config={
+            'response_mime_type': 'application/json',
+            'http_options': {'timeout': 60_000},  # 60s per batch, well under gunicorn's 120s
+        },
     )
     return parse_gemini_json(getattr(response, 'text', None))
