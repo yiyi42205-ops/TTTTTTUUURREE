@@ -496,10 +496,30 @@ def summarize():
     if err_resp:
         return jsonify(err_resp[0]), err_resp[1]
 
+    # Privacy & Cost optimization: Anonymize usernames into integer indices
+    # This prevents PII leakage to the LLM and saves hundreds of tokens per request
+    user_map = {}
+    anonymized_reviews = []
+    for i, r in enumerate(valid_reviews):
+        user_map[str(i)] = r.get("id") or r.get("username")
+        anonymized_reviews.append({
+            "id": str(i),
+            "text": r.get("text", ""),
+            "stars": r.get("stars", 5)
+        })
+
+    # Execute LLM QA
     try:
-        logger.info(f"Summarizing for '{store_name}' with {len(valid_reviews)} reviews...")
-        result = call_llm_qa(provider, client_to_use, store_name, valid_reviews, question)
+        logger.info(f"Summarizing for '{store_name}' with {len(valid_reviews)} anonymized reviews...")
+        result = call_llm_qa(provider, client_to_use, store_name, anonymized_reviews, question)
         logger.info(f"Summarize completed in {time.time() - start_time:.2f}s.")
+        
+        # Restore original usernames from the anonymized indices
+        if result.get("items"):
+            for item in result["items"]:
+                mapped_id = user_map.get(str(item.get("id")))
+                if mapped_id:
+                    item["id"] = mapped_id
         
         # Save exact-match result to cache
         set_cached_qa(place_id, question, result)
