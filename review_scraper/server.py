@@ -169,11 +169,25 @@ def scrape():
 
         final_place_id = apify_place_id or target_place_id
         if final_place_id:
-            set_cached_reviews(final_place_id, records, source="apify", metadata=metadata)
-            # Always save mapping if it was a query or if we resolved a place_id
+            # Always save URL/query → place_id mapping for future cache hits
             set_query_place_id_mapping(original_query, final_place_id)
             if is_url and url_to_scrape != original_query:
                 set_query_place_id_mapping(url_to_scrape, final_place_id)
+
+            # Only overwrite cache if the new scrape has more reviews
+            existing = get_cached_reviews(final_place_id)
+            if existing is not None and len(existing) > len(records):
+                logger.info(f"Cache has {len(existing)} reviews > Apify's {len(records)} for {final_place_id}, returning cached data")
+                # Update metadata even when keeping old reviews
+                if metadata:
+                    set_cached_reviews(final_place_id, existing, source="cache", metadata=metadata)
+                cached_meta = get_cached_metadata(final_place_id)
+                response = {"reviews": existing, "source": "cache"}
+                if cached_meta:
+                    response["metadata"] = cached_meta
+                return jsonify(response)
+
+            set_cached_reviews(final_place_id, records, source="apify", metadata=metadata)
 
         logger.info(f"Apify scrape succeeded: {len(records)} reviews in {time.time() - start_time:.2f}s.")
         response = {"reviews": records, "source": "apify"}

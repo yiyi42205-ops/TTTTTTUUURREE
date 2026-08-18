@@ -274,6 +274,43 @@ def test_scrape_force_true_bypasses_cache(client, monkeypatch):
     assert call_count["n"] == 2
 
 
+def test_scrape_does_not_overwrite_larger_cache(client, monkeypatch):
+    """When Apify returns fewer reviews than already cached, keep the cached
+    reviews but still update metadata (totalScore/reviewsCount)."""
+    big_reviews = [
+        {"username": f"u{i}", "stars": 5, "time": "2025-01-01", "text": "好吃", "images": [], "hasText": True, "imageCount": 0}
+        for i in range(100)
+    ]
+    small_reviews = [
+        {"username": "new1", "stars": 4, "time": "2025-06-01", "text": "還行", "images": [], "hasText": True, "imageCount": 0}
+    ]
+
+    call_count = {"n": 0}
+
+    def apify_first_big(url, max_reviews=50):
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            return "ChIJ_big", big_reviews, {"totalScore": 3.9, "reviewsCount": 500}
+        return "ChIJ_big", small_reviews, {"totalScore": 4.0, "reviewsCount": 510}
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", apify_first_big)
+
+    url = "https://maps.google.com/?cid=big"
+
+    # First call: seeds cache with 100 reviews
+    first = client.post("/api/scrape", json={"url": url})
+    assert first.get_json()["source"] == "apify"
+    assert len(first.get_json()["reviews"]) == 100
+
+    # Second call with force=true: Apify returns only 1 review, cache should win
+    second = client.post("/api/scrape?force=true", json={"url": url})
+    data = second.get_json()
+    assert data["source"] == "cache"
+    assert len(data["reviews"]) == 100  # kept the larger cache
+    # Metadata should be updated to the newer values
+    assert data["metadata"]["totalScore"] == 4.0
+
+
 # ---- URL Normalization, Redirection & SSRF mitigation tests ----
 
 def test_resolve_google_share_url_valid_redirect(monkeypatch):
