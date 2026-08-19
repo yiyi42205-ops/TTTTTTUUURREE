@@ -123,6 +123,17 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
         except (ValueError, KeyError, TypeError) as e:
             raise  # Do not retry parsing, validation, or prompt errors
         except Exception as e:
+            # 只重試網路或暫時性錯誤 (Timeout, Connection, 5xx RateLimit)
+            err_name = type(e).__name__
+            transient_errors = (
+                'ConnectionError', 'TimeoutError', 'Timeout',
+                'APIError', 'APIConnectionError', 'APITimeoutError',
+                'RateLimitError', 'InternalServerError', 'ServiceUnavailableError',
+                'HTTPError', 'HTTPStatusError', 'RequestException',
+            )
+            if err_name not in transient_errors:
+                raise
+                
             last_exception = e
             if attempt < max_retries:
                 time.sleep((2 ** attempt) + random.uniform(0, 0.5))  # Exponential backoff (1s, 2s) + jitter
