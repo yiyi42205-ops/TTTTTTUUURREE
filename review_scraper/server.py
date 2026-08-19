@@ -431,8 +431,8 @@ def summarize():
     data = request.get_json() or {}
     
     place_id = data.get("placeId")
-    if not place_id:
-        return jsonify({"error": "Missing placeId"}), 400
+    if not place_id or not isinstance(place_id, str) or not place_id.strip():
+        return jsonify({"error": "Missing or invalid placeId"}), 400
         
     question = data.get("question")
     if not isinstance(question, str) or not question.strip():
@@ -449,15 +449,18 @@ def summarize():
     store_name = data.get("storeName", "待審查店家")
     provider = data.get("provider", "gemini")
 
+    # Normalize question for cache key to avoid cache misses from punctuation or spacing differences
+    cache_key_question = re.sub(r'[^\w\s]', '', question).strip()
+
     # Semantic QA Caching (Skip LLM execution if this question was already asked for this place)
-    cached_qa = get_cached_qa(place_id, question)
+    cached_qa = get_cached_qa(place_id, cache_key_question)
     if cached_qa:
-        logger.info(f"QA Cache hit for place '{place_id}', question: '{question[:20]}...'")
+        logger.info(f"QA Cache hit for place '{place_id}', question: '{cache_key_question[:20]}...'")
         return jsonify(cached_qa)
 
     # Rate limiting
     if not check_and_increment_qa_limit(ip, place_id):
-        return jsonify({"error": "每家店每個 IP 最多只能提問 3 次"}), 429
+        return jsonify({"error": "每家店每個 IP 提問次數已達上限"}), 429
 
     # Filter real reviews (isWashed = False)
     valid_reviews = []
@@ -520,9 +523,11 @@ def summarize():
                 mapped_id = user_map.get(str(item.get("id")))
                 if mapped_id:
                     item["id"] = mapped_id
+                else:
+                    item["id"] = str(item.get("id"))
         
         # Save exact-match result to cache
-        set_cached_qa(place_id, question, result)
+        set_cached_qa(place_id, cache_key_question, result)
         
         return jsonify(result)
     except Exception as e:

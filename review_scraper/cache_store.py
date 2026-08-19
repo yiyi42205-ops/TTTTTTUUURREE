@@ -249,7 +249,7 @@ def set_cached_reviews(place_id: str, reviews: list, source: str, db_path: str =
         conn.close()
 
 
-def check_and_increment_qa_limit(ip: str, place_id: str, limit: int = 3, db_path: str = None) -> bool:
+def check_and_increment_qa_limit(ip: str, place_id: str, limit: int = 20, db_path: str = None) -> bool:
     """Returns True if the limit is not exceeded (and increments it), False if exceeded."""
     conn = _connect(db_path or DB_PATH)
     session_key = f"{ip}_{place_id}"
