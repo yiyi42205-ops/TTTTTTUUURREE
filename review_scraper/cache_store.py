@@ -167,6 +167,16 @@ def set_cached_audit(place_id: str, audit_result: dict, db_path: str = None) -> 
         conn.close()
 
 
+def invalidate_cached_audit(place_id: str, db_path: str = None) -> None:
+    """Delete the audit_cache entry for a place_id so stale results aren't served."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute("DELETE FROM audit_cache WHERE place_id = ?", (place_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def iter_all_scrape_cache(db_path: str = None):
     """Yields (place_id, reviews_list) for every entry in scrape_cache."""
     conn = _connect(db_path or DB_PATH)

@@ -110,7 +110,7 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
                 response = client.chat.completions.create(
                     model=MODEL_NAME_DEEPSEEK,
                     messages=[
-                        {"role": "system", "content": "You are a data analysis assistant. You must output a JSON object containing a 'results' array."},
+                        {"role": "system", "content": "你是一個數據分析助手。你必須輸出包含 'results' 陣列的 JSON 物件。"},
                         {"role": "user", "content": prompt}
                     ],
                     response_format={'type': 'json_object'},
@@ -120,6 +120,8 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
                 
             return parse_llm_json(raw_text)
             
+        except (ValueError, KeyError, TypeError) as e:
+            raise  # Do not retry parsing, validation, or prompt errors
         except Exception as e:
             last_exception = e
             if attempt < max_retries:

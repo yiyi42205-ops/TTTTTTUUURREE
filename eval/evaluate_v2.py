@@ -465,10 +465,10 @@ def run_llm_sample_mode(base_path: str, config: RuleConfig, num_stores: int = 5,
     except ImportError:
         pass
 
-    from google import genai
     from llm_client import call_llm_batch
 
     if provider == 'gemini':
+        from google import genai
         api_key = os.getenv('GEMINI_API_KEY')
         if not api_key:
             raise RuntimeError('缺少 GEMINI_API_KEY 環境變數。請在專案根目錄的 .env 檔案中設定。')
