@@ -1,0 +1,515 @@
+[
+  {
+    "name": "RUFOUS COFFEE ROASTERS",
+    "url": "https://www.google.com/maps/search/?api=1&query=RUFOUS%20COFFEE%20ROASTERS&query_place_id=ChIJW03Z2y6qQjQRkIeeuqF3-mU",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "大院子",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E9%99%A2%E5%AD%90&query_place_id=ChIJE3nu7rWpQjQRaQOvDIWq5FM",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "Starbucks星巴克 和平門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=Starbucks%E6%98%9F%E5%B7%B4%E5%85%8B%20%E5%92%8C%E5%B9%B3%E9%96%80%E5%B8%82&query_place_id=ChIJY1uqz8irQjQRnetWuLM8xzQ",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "七里亭",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E4%B8%83%E9%87%8C%E4%BA%AD&query_place_id=ChIJuajw54upQjQRooAYaIEzAIs",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "壹之穴沾麵專門店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A3%B9%E4%B9%8B%E7%A9%B4%E6%B2%BE%E9%BA%B5%E5%B0%88%E9%96%80%E5%BA%97&query_place_id=ChIJkQLSxLKrQjQRI71MyxhXe-k",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "台南鱔魚意麵",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%B0%E5%8D%97%E9%B1%94%E9%AD%9A%E6%84%8F%E9%BA%B5&query_place_id=ChIJCTUHgYWpQjQR5X5UbUoqK0s",
+    "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "摩斯漢堡 和平東路店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%91%A9%E6%96%AF%E6%BC%A2%E5%A0%A1%20%E5%92%8C%E5%B9%B3%E6%9D%B1%E8%B7%AF%E5%BA%97&query_place_id=ChIJR4y1_YapQjQRA86AW8DROcA",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "燈籠滷味(創始店)",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%87%88%E7%B1%A0%E6%BB%B7%E5%91%B3(%E5%89%B5%E5%A7%8B%E5%BA%97)&query_place_id=ChIJRYP8j4WpQjQRozbIqbGeY4Y",
+    "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "Rebirth",
+    "url": "https://www.google.com/maps/search/?api=1&query=Rebirth&query_place_id=ChIJffQZ6YipQjQRAdV3sCg2bcM",
+    "region": "③ 溫州街/新生南路（東）"
+  },
+  {
+    "name": "小辣椒魷魚羹",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E8%BE%A3%E6%A4%92%E9%AD%B7%E9%AD%9A%E7%BE%B9&query_place_id=ChIJB0R4vS6qQjQR849Fg86FsKk",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "雲南小鎮餐坊",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%9B%B2%E5%8D%97%E5%B0%8F%E9%8E%AE%E9%A4%90%E5%9D%8A&query_place_id=ChIJo17Bi4WpQjQRSDqFI0_x-wE",
+    "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "綠蓋茶‧館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%B6%A0%E8%93%8B%E8%8C%B6%E2%80%A7%E9%A4%A8&query_place_id=ChIJTdQY24upQjQRomufg8IuySo",
+    "region": "③ 溫州街/新生南路（東）"
+  },
+  {
+    "name": "阿鸞手工法國麵包",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%98%BF%E9%B8%9E%E6%89%8B%E5%B7%A5%E6%B3%95%E5%9C%8B%E9%BA%B5%E5%8C%85&query_place_id=ChIJeUZj5oqpQjQR1NXebUrz78A",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "麥當勞-台北台大餐廳",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%BA%A5%E7%95%B6%E5%8B%9E-%E5%8F%B0%E5%8C%97%E5%8F%B0%E5%A4%A7%E9%A4%90%E5%BB%B3&query_place_id=ChIJm4r2zYupQjQRldQ-jLPXeIA",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "這味泰泰 Mrs. Thai Thai- 復南門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%80%99%E5%91%B3%E6%B3%B0%E6%B3%B0%20Mrs.%20Thai%20Thai-%20%E5%BE%A9%E5%8D%97%E9%96%80%E5%B8%82&query_place_id=ChIJ_4-BWiOrQjQRot_gxRvtLPk",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "烘豆河狸｜無鹹食唷",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%83%98%E8%B1%86%E6%B2%B3%E7%8B%B8%EF%BD%9C%E7%84%A1%E9%B9%B9%E9%A3%9F%E5%94%B7&query_place_id=ChIJrTtbH0ipQjQRu7foCtuZmmM",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "小林麵館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E6%9E%97%E9%BA%B5%E9%A4%A8&query_place_id=ChIJZQCmSpCpQjQRDZEb_tXf6MU",
+    "region": "① 古亭/中正（北）"
+  },
+  {
+    "name": "新馬辣經典麻辣鍋-公館店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%96%B0%E9%A6%AC%E8%BE%A3%E7%B6%93%E5%85%B8%E9%BA%BB%E8%BE%A3%E9%8D%8B-%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJp4DmtIqpQjQRMc1gEd_aAS4"
+  },
+  {
+    "name": "馬辣頂級麻辣鍋 台北公館店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%A6%AC%E8%BE%A3%E9%A0%82%E7%B4%9A%E9%BA%BB%E8%BE%A3%E9%8D%8B%20%E5%8F%B0%E5%8C%97%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJycu5coupQjQRl9dmANfpHuw"
+  },
+  {
+    "name": "燈籠滷味 創始總店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%87%88%E7%B1%A0%E6%BB%B7%E5%91%B3%20%E5%89%B5%E5%A7%8B%E7%B8%BD%E5%BA%97&query_place_id=ChIJQ2RpasjWDRQRbGaCmsN3u_U"
+  },
+  {
+    "name": "師園鹽酥雞 本店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B8%AB%E5%9C%92%E9%B9%BD%E9%85%A5%E9%9B%9E%20%E6%9C%AC%E5%BA%97&query_place_id=ChIJN5sMgIWpQjQRBVYjMgpDIYg"
+  },
+  {
+    "name": "泰國小館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%B3%B0%E5%9C%8B%E5%B0%8F%E9%A4%A8&query_place_id=ChIJGdF1HIupQjQRTff4eXGhEH4"
+  },
+  {
+    "name": "麻辣巴蕾",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%BA%BB%E8%BE%A3%E5%B7%B4%E8%95%BE&query_place_id=ChIJ-X81Er2pQjQRS9wS7t0QPlg"
+  },
+  {
+    "name": "鴉片粉圓",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%B4%89%E7%89%87%E7%B2%89%E5%9C%93&query_place_id=ChIJmVrVBoupQjQRbT6PhVBBGNc"
+  },
+  {
+    "name": "提拉米蘇精緻蛋糕",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%8F%90%E6%8B%89%E7%B1%B3%E8%98%87%E7%B2%BE%E7%B7%BB%E8%9B%8B%E7%B3%95&query_place_id=ChIJuzyFcSyqQjQRS3pgKBNqgaw"
+  },
+  {
+    "name": "阿玉水餃 (生水餃專賣店)",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%98%BF%E7%8E%89%E6%B0%B4%E9%A4%83%20%28%E7%94%9F%E6%B0%B4%E9%A4%83%E5%B0%88%E8%B3%A3%E5%BA%97%29&query_place_id=ChIJXzNlTS-qQjQRCvn2xhSfPAk"
+  },
+  {
+    "name": "龍潭豆花",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%BE%8D%E6%BD%AD%E8%B1%86%E8%8A%B1&query_place_id=ChIJndYG4oqpQjQRaaIRSvBxb3A"
+  },
+  {
+    "name": "歐嬤德式美食 哥德店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%AD%90%E5%AC%A4%E5%BE%B7%E5%BC%8F%E7%BE%8E%E9%A3%9F%20%E5%93%A5%E5%BE%B7%E5%BA%97&query_place_id=ChIJYbE3TImpQjQRwm5Ok39Ck9M"
+  },
+  {
+    "name": "金雞園",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%87%91%E9%9B%9E%E5%9C%92&query_place_id=ChIJNR1gmIupQjQRHvDHWLrvxFk"
+  },
+  {
+    "name": "阿諾可麗餅",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%98%BF%E8%AB%BE%E5%8F%AF%E9%BA%97%E9%A4%85&query_place_id=ChIJz6oohYWpQjQR91NYAHkDqeo"
+  },
+  {
+    "name": "好呷拉麵 甜品吃到飽(公館) *呷：ㄒㄧㄚˊ",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A5%BD%E5%91%B7%E6%8B%89%E9%BA%B5%20%E7%94%9C%E5%93%81%E5%90%83%E5%88%B0%E9%A3%BD%28%E5%85%AC%E9%A4%A8%29%20%2A%E5%91%B7%EF%BC%9A%E3%84%92%E3%84%A7%E3%84%9A%CB%8A&query_place_id=ChIJ3blybvepQjQRSWEi2CN61DA"
+  },
+  {
+    "name": "壹森•泰食堂(師大第一腿)(師大夜市)",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A3%B9%E6%A3%AE%E2%80%A2%E6%B3%B0%E9%A3%9F%E5%A0%82%28%E5%B8%AB%E5%A4%A7%E7%AC%AC%E4%B8%80%E8%85%BF%29%28%E5%B8%AB%E5%A4%A7%E5%A4%9C%E5%B8%82%29&query_place_id=ChIJCXA3qIGpQjQRy-63v5Bz1B4"
+  },
+  {
+    "name": "JJ's POKE & CAFE 鮮魚沙拉飯",
+    "url": "https://www.google.com/maps/search/?api=1&query=JJ%27s%20POKE%20%26%20CAFE%20%E9%AE%AE%E9%AD%9A%E6%B2%99%E6%8B%89%E9%A3%AF&query_place_id=ChIJrUiM4v6pQjQRF5fxVizXryo"
+  },
+  {
+    "name": "小螺波 公館店 - 台灣螺螄粉領導品牌",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E8%9E%BA%E6%B3%A2%20%E5%85%AC%E9%A4%A8%E5%BA%97%20-%20%E5%8F%B0%E7%81%A3%E8%9E%BA%E8%9E%84%E7%B2%89%E9%A0%98%E5%B0%8E%E5%93%81%E7%89%8C&query_place_id=ChIJJWaiT3WpQjQRNt_r3ic5yF4"
+  },
+  {
+    "name": "Brass Joy cafe 銅樂咖啡",
+    "url": "https://www.google.com/maps/search/?api=1&query=Brass%20Joy%20cafe%20%E9%8A%85%E6%A8%82%E5%92%96%E5%95%A1&query_place_id=ChIJsRFP24upQjQRKE_wfJ0HgkI"
+  },
+  {
+    "name": "柳狀元螺螄粉特色鍋物",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%9F%B3%E7%8B%80%E5%85%83%E8%9E%BA%E8%9E%84%E7%B2%89%E7%89%B9%E8%89%B2%E9%8D%8B%E7%89%A9&query_place_id=ChIJ5W8hPRqpQjQRnjkXsEpQTAc"
+  },
+  {
+    "name": "初魚 鉄板料亭-台北泰順店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%88%9D%E9%AD%9A%20%E9%89%84%E6%9D%BF%E6%96%99%E4%BA%AD-%E5%8F%B0%E5%8C%97%E6%B3%B0%E9%A0%86%E5%BA%97&query_place_id=ChIJA-Etd7-pQjQRJ72FIApAoHA"
+  },
+  {
+    "name": "老胡記米粉湯60年老店-復興店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%80%81%E8%83%A1%E8%A8%98%E7%B1%B3%E7%B2%89%E6%B9%AF60%E5%B9%B4%E8%80%81%E5%BA%97-%E5%BE%A9%E8%88%88%E5%BA%97&query_place_id=ChIJ3SQqmyyqQjQR0zDM1Eb2V90"
+  },
+  {
+    "name": "大埔鐵板燒 公館店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E5%9F%94%E9%90%B5%E6%9D%BF%E7%87%92%20%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJ-2_otYqpQjQR7b_nzxuIVbM"
+  },
+  {
+    "name": "Mövenpick Café-莫凡彼台北臺大店",
+    "url": "https://www.google.com/maps/search/?api=1&query=M%C3%B6venpick%20Caf%C3%A9-%E8%8E%AB%E5%87%A1%E5%BD%BC%E5%8F%B0%E5%8C%97%E8%87%BA%E5%A4%A7%E5%BA%97&query_place_id=ChIJpb_qooqpQjQRDRiOLS8laDA"
+  },
+  {
+    "name": "ONE GOOD烤肉飯(大安店）",
+    "url": "https://www.google.com/maps/search/?api=1&query=ONE%20GOOD%E7%83%A4%E8%82%89%E9%A3%AF%28%E5%A4%A7%E5%AE%89%E5%BA%97%EF%BC%89&query_place_id=ChIJh0depGKrQjQRmir7FEHZlXs"
+  },
+  {
+    "name": "朝鑫壽司（Asashi sushi)",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%9C%9D%E9%91%AB%E5%A3%BD%E5%8F%B8%EF%BC%88Asashi%20sushi%29&query_place_id=ChIJE_aMLY6pQjQRe6sq80RUJUI"
+  },
+  {
+    "name": "笑嘻嘻港式現炒飯麵",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%AC%91%E5%98%BB%E5%98%BB%E6%B8%AF%E5%BC%8F%E7%8F%BE%E7%82%92%E9%A3%AF%E9%BA%B5&query_place_id=ChIJexSiLC-qQjQR0LgDorEWhig"
+  },
+  {
+    "name": "古亭",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%A4%E4%BA%AD&query_place_id=ChIJS_msiZqpQjQRIHZ1h0nma3E"
+  },
+  {
+    "name": "極限密室 Limitless Escape Room (密室逃脫)",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%A5%B5%E9%99%90%E5%AF%86%E5%AE%A4%20Limitless%20Escape%20Room%20%28%E5%AF%86%E5%AE%A4%E9%80%83%E8%84%AB%29&query_place_id=ChIJE4RlxYqpQjQRruyaaWMUrMU"
+  },
+  {
+    "name": "Toh-A 桌藏餐廳",
+    "url": "https://www.google.com/maps/search/?api=1&query=Toh-A%20%E6%A1%8C%E8%97%8F%E9%A4%90%E5%BB%B3&query_place_id=ChIJJfMujCiqQjQRzyGPjaePdDU"
+  },
+  {
+    "name": "八方雲集-台大店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%AB%E6%96%B9%E9%9B%B2%E9%9B%86-%E5%8F%B0%E5%A4%A7%E5%BA%97&query_place_id=ChIJe_MK3oupQjQRnzZoMhH5lqs"
+  },
+  {
+    "name": "呂 巷仔口麵食館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%91%82%20%E5%B7%B7%E4%BB%94%E5%8F%A3%E9%BA%B5%E9%A3%9F%E9%A4%A8&query_place_id=ChIJS6UPrSmqQjQRqjL5oLth5rI"
+  },
+  {
+    "name": "山海豆花",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B1%B1%E6%B5%B7%E8%B1%86%E8%8A%B1&query_place_id=ChIJ27dayzLRDRQRE4u4xPxDBr0"
+  },
+  {
+    "name": "發現義大利麵",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%99%BC%E7%8F%BE%E7%BE%A9%E5%A4%A7%E5%88%A9%E9%BA%B5&query_place_id=ChIJ7bzsvIWpQjQR_7znp7ehwPQ"
+  },
+  {
+    "name": "好處餐酒館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A5%BD%E8%99%95%E9%A4%90%E9%85%92%E9%A4%A8&query_place_id=ChIJ6xM2ZompQjQRnuDvmNIzDdA"
+  },
+  {
+    "name": "安好食 新生店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%AE%89%E5%A5%BD%E9%A3%9F%20%E6%96%B0%E7%94%9F%E5%BA%97&query_place_id=ChIJa8heQompQjQR76ML0NBsxL8"
+  },
+  {
+    "name": "深夜未歸-公館店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%B7%B1%E5%A4%9C%E6%9C%AA%E6%AD%B8-%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJB-8Lr-epQjQR74lrOmFCbVU"
+  },
+  {
+    "name": "大福利排骨大王 公館店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E7%A6%8F%E5%88%A9%E6%8E%92%E9%AA%A8%E5%A4%A7%E7%8E%8B%20%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJY-PpkIupQjQRNAef9MdsW4k"
+  },
+  {
+    "name": "寶島肉圓店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%AF%B6%E5%B3%B6%E8%82%89%E5%9C%93%E5%BA%97&query_place_id=ChIJ_8IGdh6qQjQR1WNZ4SvoYHw"
+  },
+  {
+    "name": "米澤製麵YoUdon(台北古亭店)-讚岐烏龍麵專門店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%B1%B3%E6%BE%A4%E8%A3%BD%E9%BA%B5YoUdon%28%E5%8F%B0%E5%8C%97%E5%8F%A4%E4%BA%AD%E5%BA%97%29-%E8%AE%9A%E5%B2%90%E7%83%8F%E9%BE%8D%E9%BA%B5%E5%B0%88%E9%96%80%E5%BA%97&query_place_id=ChIJz3RRJJCpQjQRzpJEgAM_w7Q"
+  },
+  {
+    "name": "Stoppage Time 補時",
+    "url": "https://www.google.com/maps/search/?api=1&query=Stoppage%20Time%20%E8%A3%9C%E6%99%82&query_place_id=ChIJb4yk1iiqQjQRmsoLWtZ9nYQ"
+  },
+  {
+    "name": "THE WALL LIVE HOUSE",
+    "url": "https://www.google.com/maps/search/?api=1&query=THE%20WALL%20LIVE%20HOUSE&query_place_id=ChIJCZ9fWPWpQjQRYIvjUBUhcow"
+  },
+  {
+    "name": "麵屋舜水蟬",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%BA%B5%E5%B1%8B%E8%88%9C%E6%B0%B4%E8%9F%AC&query_place_id=ChIJ1xTIAXKpQjQRxUNu5442utk"
+  },
+  {
+    "name": "卡帛素食烘培‧義式廚房‧港式餐點 總店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8D%A1%E5%B8%9B%E7%B4%A0%E9%A3%9F%E7%83%98%E5%9F%B9%E2%80%A7%E7%BE%A9%E5%BC%8F%E5%BB%9A%E6%88%BF%E2%80%A7%E6%B8%AF%E5%BC%8F%E9%A4%90%E9%BB%9E%20%E7%B8%BD%E5%BA%97&query_place_id=ChIJuWw81C6qQjQRD7lOTyFReqs"
+  },
+  {
+    "name": "小鹿亭",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E9%B9%BF%E4%BA%AD&query_place_id=ChIJYW1dk-upQjQRbFzQRmjRGLQ"
+  },
+  {
+    "name": "魚 日式料理-古亭美食-餐廳-日本料理-壽司-生魚片",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%AD%9A%20%E6%97%A5%E5%BC%8F%E6%96%99%E7%90%86-%E5%8F%A4%E4%BA%AD%E7%BE%8E%E9%A3%9F-%E9%A4%90%E5%BB%B3-%E6%97%A5%E6%9C%AC%E6%96%99%E7%90%86-%E5%A3%BD%E5%8F%B8-%E7%94%9F%E9%AD%9A%E7%89%87&query_place_id=ChIJt1azrJupQjQRDPGRLGX8ZoU"
+  },
+  {
+    "name": "炙り庵steak 牛排~台北師大店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%82%99%E3%82%8A%E5%BA%B5steak%20%E7%89%9B%E6%8E%92~%E5%8F%B0%E5%8C%97%E5%B8%AB%E5%A4%A7%E5%BA%97&query_place_id=ChIJb-2CrUWpQjQRlh5nDOBIlHI"
+  },
+  {
+    "name": "老王炸烤-公館店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%80%81%E7%8E%8B%E7%82%B8%E7%83%A4-%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJXZES8aKpQjQRZIrpXoeCUB0"
+  },
+  {
+    "name": "湛盧咖啡 台大館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%B9%9B%E7%9B%A7%E5%92%96%E5%95%A1%20%E5%8F%B0%E5%A4%A7%E9%A4%A8&query_place_id=ChIJtStsZH-pQjQRTf9LGcurRyE"
+  },
+  {
+    "name": "維綸麵食館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%B6%AD%E7%B6%B8%E9%BA%B5%E9%A3%9F%E9%A4%A8&query_place_id=ChIJ41IbtYqpQjQR248Gimdy8vs"
+  },
+  {
+    "name": "公館45 Old Bar Coffee",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%AC%E9%A4%A845%20Old%20Bar%20Coffee&query_place_id=ChIJw-MfWgSpQjQRzrMsRxRRdIA"
+  },
+  {
+    "name": "朝日壽司",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%9C%9D%E6%97%A5%E5%A3%BD%E5%8F%B8&query_place_id=ChIJpfah2pipQjQR_EjvpvU90Xs"
+  },
+  {
+    "name": "珠寶盒法式點心坊 師大麗水店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%8F%A0%E5%AF%B6%E7%9B%92%E6%B3%95%E5%BC%8F%E9%BB%9E%E5%BF%83%E5%9D%8A%20%E5%B8%AB%E5%A4%A7%E9%BA%97%E6%B0%B4%E5%BA%97&query_place_id=ChIJoc7QFISpQjQR5ldY_v2j8rI"
+  },
+  {
+    "name": "墾丁蛋蛋ㄉㄨㄞ奶",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A2%BE%E4%B8%81%E8%9B%8B%E8%9B%8B%E3%84%89%E3%84%A8%E3%84%9E%E5%A5%B6&query_place_id=ChIJmdQQdoupQjQRXbuKj3Ywky0"
+  },
+  {
+    "name": "福音小館藥膳牛肉麵",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%A6%8F%E9%9F%B3%E5%B0%8F%E9%A4%A8%E8%97%A5%E8%86%B3%E7%89%9B%E8%82%89%E9%BA%B5&query_place_id=ChIJw4W7VB2qQjQRiefwOZk3JpA"
+  },
+  {
+    "name": "康樂意小吃店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%BA%B7%E6%A8%82%E6%84%8F%E5%B0%8F%E5%90%83%E5%BA%97&query_place_id=ChIJl--lEpepQjQRd6k2OULEVPA"
+  },
+  {
+    "name": "Sugar Man Cafe",
+    "url": "https://www.google.com/maps/search/?api=1&query=Sugar%20Man%20Cafe&query_place_id=ChIJCbuhLIWpQjQRQk7gkX1wxkU"
+  },
+  {
+    "name": "永和樓（영화루)韓式中華料理店（大安總店）",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%B0%B8%E5%92%8C%E6%A8%93%EF%BC%88%EC%98%81%ED%99%94%EB%A3%A8%29%E9%9F%93%E5%BC%8F%E4%B8%AD%E8%8F%AF%E6%96%99%E7%90%86%E5%BA%97%EF%BC%88%E5%A4%A7%E5%AE%89%E7%B8%BD%E5%BA%97%EF%BC%89&query_place_id=ChIJTz_y3IerQjQR9VRptRnbw_4"
+  },
+  {
+    "name": "El Sabroso Mexican Food",
+    "url": "https://www.google.com/maps/search/?api=1&query=El%20Sabroso%20Mexican%20Food&query_place_id=ChIJxZPxQYypQjQRmP3Fw5cvpZc"
+  },
+  {
+    "name": "刁四麻辣燙（公館店）",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%88%81%E5%9B%9B%E9%BA%BB%E8%BE%A3%E7%87%99%EF%BC%88%E5%85%AC%E9%A4%A8%E5%BA%97%EF%BC%89&query_place_id=ChIJtQYB3QapQjQRBXIGiA_7U8k"
+  },
+  {
+    "name": "野餐咖啡 Picnic cafe",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%87%8E%E9%A4%90%E5%92%96%E5%95%A1%20Picnic%20cafe&query_place_id=ChIJ9RWM4YipQjQRjgvTW4V2-o0"
+  },
+  {
+    "name": "塊雞師食務所 Achicken Firm",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A1%8A%E9%9B%9E%E5%B8%AB%E9%A3%9F%E5%8B%99%E6%89%80%20Achicken%20Firm&query_place_id=ChIJj4kQLgCpQjQRDRmNzCconGA"
+  },
+  {
+    "name": "安好食 和平店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%AE%89%E5%A5%BD%E9%A3%9F%20%E5%92%8C%E5%B9%B3%E5%BA%97&query_place_id=ChIJA7xCuqirQjQRGwBOltepJQk"
+  },
+  {
+    "name": "翠園越南餐廳",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%BF%A0%E5%9C%92%E8%B6%8A%E5%8D%97%E9%A4%90%E5%BB%B3&query_place_id=ChIJhzDBtYepQjQRt-WI3i_Oli0"
+  },
+  {
+    "name": "古早茶坊",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%A4%E6%97%A9%E8%8C%B6%E5%9D%8A&query_place_id=ChIJyRzQjoWpQjQRDHBYXyxSVSs"
+  },
+  {
+    "name": "阿里媽媽南洋料理",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%98%BF%E9%87%8C%E5%AA%BD%E5%AA%BD%E5%8D%97%E6%B4%8B%E6%96%99%E7%90%86&query_place_id=ChIJmS2nuIqpQjQRUaGdkvl8WPg"
+  },
+  {
+    "name": "蘇草salvia",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%98%87%E8%8D%89salvia&query_place_id=ChIJ-VUTsiiqQjQR_LurwJ6RZ88"
+  },
+  {
+    "name": "首爾之家",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%A6%96%E7%88%BE%E4%B9%8B%E5%AE%B6&query_place_id=ChIJ_4UUh4upQjQRrLM2RIXgA3Q"
+  },
+  {
+    "name": "璞田PureTime家庭料理",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%92%9E%E7%94%B0PureTime%E5%AE%B6%E5%BA%AD%E6%96%99%E7%90%86&query_place_id=ChIJuamf88ipQjQRJcO86MISxFI"
+  },
+  {
+    "name": "王記排骨酥湯",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%8E%8B%E8%A8%98%E6%8E%92%E9%AA%A8%E9%85%A5%E6%B9%AF&query_place_id=ChIJE1zFdJepQjQROJbIFGO46eY"
+  },
+  {
+    "name": "清奈媽媽印度廚房",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%B8%85%E5%A5%88%E5%AA%BD%E5%AA%BD%E5%8D%B0%E5%BA%A6%E5%BB%9A%E6%88%BF&query_place_id=ChIJNbJ7SI6pQjQRGRP1np3P5Po"
+  },
+  {
+    "name": "大連風味館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E9%80%A3%E9%A2%A8%E5%91%B3%E9%A4%A8&query_place_id=ChIJp6lcEyyqQjQRkAA9iISz2m4"
+  },
+  {
+    "name": "Louisa Coffee 路易莎咖啡(師大直營店)",
+    "url": "https://www.google.com/maps/search/?api=1&query=Louisa%20Coffee%20%E8%B7%AF%E6%98%93%E8%8E%8E%E5%92%96%E5%95%A1%28%E5%B8%AB%E5%A4%A7%E7%9B%B4%E7%87%9F%E5%BA%97%29&query_place_id=ChIJ8zC_ddWpQjQRpi2my4N9bIk"
+  },
+  {
+    "name": "西藏廚房",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%A5%BF%E8%97%8F%E5%BB%9A%E6%88%BF&query_place_id=ChIJGZuTtC6qQjQRHzA7XdKg5yk"
+  },
+  {
+    "name": "純愛小吃部 Pure Love Diner Bar",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%B4%94%E6%84%9B%E5%B0%8F%E5%90%83%E9%83%A8%20Pure%20Love%20Diner%20Bar&query_place_id=ChIJsR1Rj0upQjQRCgAyeTzSgss"
+  },
+  {
+    "name": "家園江浙小館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%AE%B6%E5%9C%92%E6%B1%9F%E6%B5%99%E5%B0%8F%E9%A4%A8&query_place_id=ChIJ9---TpqpQjQR7C643oFKTVE"
+  },
+  {
+    "name": "一流清粥小菜",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E4%B8%80%E6%B5%81%E6%B8%85%E7%B2%A5%E5%B0%8F%E8%8F%9C&query_place_id=ChIJtT6JmSyqQjQRwCojfqo_tQc"
+  },
+  {
+    "name": "好好味冰火菠蘿油 台北師大夜市",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A5%BD%E5%A5%BD%E5%91%B3%E5%86%B0%E7%81%AB%E8%8F%A0%E8%98%BF%E6%B2%B9%20%E5%8F%B0%E5%8C%97%E5%B8%AB%E5%A4%A7%E5%A4%9C%E5%B8%82&query_place_id=ChIJVVVVVYSpQjQRTBvn41wW-ac"
+  },
+  {
+    "name": "南川麵館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8D%97%E5%B7%9D%E9%BA%B5%E9%A4%A8&query_place_id=ChIJhbW0KDKqQjQRecAjNGCnt28"
+  },
+  {
+    "name": "黑滷魯肉便當專賣店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%BB%91%E6%BB%B7%E9%AD%AF%E8%82%89%E4%BE%BF%E7%95%B6%E5%B0%88%E8%B3%A3%E5%BA%97&query_place_id=ChIJPZY7xpGpQjQRuLg9ve6pRjg"
+  },
+  {
+    "name": "軟食力 Soft power 大安店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%BB%9F%E9%A3%9F%E5%8A%9B%20Soft%20power%20%E5%A4%A7%E5%AE%89%E5%BA%97&query_place_id=ChIJ_7fI3DSqQjQRQRHddXKz938"
+  },
+  {
+    "name": "極簡咖啡館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%A5%B5%E7%B0%A1%E5%92%96%E5%95%A1%E9%A4%A8&query_place_id=ChIJT7RMuYWpQjQReKLqtP2lOuw"
+  },
+  {
+    "name": "憶馬當鮮 馬來西亞風味料理",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%86%B6%E9%A6%AC%E7%95%B6%E9%AE%AE%20%E9%A6%AC%E4%BE%86%E8%A5%BF%E4%BA%9E%E9%A2%A8%E5%91%B3%E6%96%99%E7%90%86&query_place_id=ChIJuRn4NC-qQjQRJqj4LG88wys"
+  },
+  {
+    "name": "鱷吐司 A Toast",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%B1%B7%E5%90%90%E5%8F%B8%20A%20Toast&query_place_id=ChIJ4cI98NepQjQR3Uy-HdOy5k8"
+  },
+  {
+    "name": "葛樂蒂咖啡館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%91%9B%E6%A8%82%E8%92%82%E5%92%96%E5%95%A1%E9%A4%A8&query_place_id=ChIJ9ZdOiYipQjQRPPhSsgTk8J0"
+  },
+  {
+    "name": "TEOTIHUACAN HAVE A NICE DAY BISTRO 好處特奥蒂瓦坎咖啡餐酒",
+    "url": "https://www.google.com/maps/search/?api=1&query=TEOTIHUACAN%20HAVE%20A%20NICE%20DAY%20BISTRO%20%E5%A5%BD%E8%99%95%E7%89%B9%E5%A5%A5%E8%92%82%E7%93%A6%E5%9D%8E%E5%92%96%E5%95%A1%E9%A4%90%E9%85%92&query_place_id=ChIJ8VNyWSqqQjQRz_rrWE4OhkI"
+  },
+  {
+    "name": "師大雞肉飯專門店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B8%AB%E5%A4%A7%E9%9B%9E%E8%82%89%E9%A3%AF%E5%B0%88%E9%96%80%E5%BA%97&query_place_id=ChIJHdF1F_ipQjQRX-9bAVtiHnM"
+  },
+  {
+    "name": "寶藏巖觀音亭",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%AF%B6%E8%97%8F%E5%B7%96%E8%A7%80%E9%9F%B3%E4%BA%AD&query_place_id=ChIJ-w3d8fSpQjQR3a2ULo8vN8U"
+  },
+  {
+    "name": "沙嗲士多",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%B2%99%E5%97%B2%E5%A3%AB%E5%A4%9A&query_place_id=ChIJ2y44g4upQjQRZgBkRrSr220"
+  },
+  {
+    "name": "老同安小酒館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%80%81%E5%90%8C%E5%AE%89%E5%B0%8F%E9%85%92%E9%A4%A8&query_place_id=ChIJ4Sb8-f2pQjQR8sULWS2PGTU"
+  },
+  {
+    "name": "三時午咖哩屋",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E4%B8%89%E6%99%82%E5%8D%88%E5%92%96%E5%93%A9%E5%B1%8B&query_place_id=ChIJ_fgu74qpQjQRVxMsgm1RIRs"
+  },
+  {
+    "name": "Jana café 嚼咖啡餐廳",
+    "url": "https://www.google.com/maps/search/?api=1&query=Jana%20caf%C3%A9%20%E5%9A%BC%E5%92%96%E5%95%A1%E9%A4%90%E5%BB%B3&query_place_id=ChIJ5xyebaypQjQRKeqNEK_tcRc"
+  },
+  {
+    "name": "大茗本位製茶堂-台北公館店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E8%8C%97%E6%9C%AC%E4%BD%8D%E8%A3%BD%E8%8C%B6%E5%A0%82-%E5%8F%B0%E5%8C%97%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJjbLDiXOpQjQRags-iK7zOCk"
+  },
+  {
+    "name": "炭波波·喫茶（每週一公休）",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%82%AD%E6%B3%A2%E6%B3%A2%C2%B7%E5%96%AB%E8%8C%B6%EF%BC%88%E6%AF%8F%E9%80%B1%E4%B8%80%E5%85%AC%E4%BC%91%EF%BC%89&query_place_id=ChIJ37E9d1OpQjQRtvm3D-AI-xU"
+  },
+  {
+    "name": "秘徑小食光",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%A7%98%E5%BE%91%E5%B0%8F%E9%A3%9F%E5%85%89&query_place_id=ChIJM3P2ruCpQjQREtSGnl9tftI"
+  },
+  {
+    "name": "便當人台北大安店 I`M BENTO",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E4%BE%BF%E7%95%B6%E4%BA%BA%E5%8F%B0%E5%8C%97%E5%A4%A7%E5%AE%89%E5%BA%97%20I%60M%20BENTO&query_place_id=ChIJB_xQ5w2rQjQRfUVLDoz6Fo8"
+  },
+  {
+    "name": "何太守港式菠蘿包專賣店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E4%BD%95%E5%A4%AA%E5%AE%88%E6%B8%AF%E5%BC%8F%E8%8F%A0%E8%98%BF%E5%8C%85%E5%B0%88%E8%B3%A3%E5%BA%97&query_place_id=ChIJNRcMdoupQjQRfxaD3Bz5bng"
+  },
+  {
+    "name": "Zet’s Kuki 澤特餅乾匈牙利煙囪捲",
+    "url": "https://www.google.com/maps/search/?api=1&query=Zet%E2%80%99s%20Kuki%20%E6%BE%A4%E7%89%B9%E9%A4%85%E4%B9%BE%E5%8C%88%E7%89%99%E5%88%A9%E7%85%99%E5%9B%AA%E6%8D%B2&query_place_id=ChIJ2WAZOQCpQjQRSz3Ss0ikjLQ"
+  },
+  {
+    "name": "nul Taipei 歐陸餐廳小酒館",
+    "url": "https://www.google.com/maps/search/?api=1&query=nul%20Taipei%20%E6%AD%90%E9%99%B8%E9%A4%90%E5%BB%B3%E5%B0%8F%E9%85%92%E9%A4%A8&query_place_id=ChIJgWG17tyrQjQRcsXAiVPPrWw"
+  },
+  {
+    "name": "福二漢堡製造所",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%A6%8F%E4%BA%8C%E6%BC%A2%E5%A0%A1%E8%A3%BD%E9%80%A0%E6%89%80&query_place_id=ChIJtzG55OipQjQRhCHciyEWGIM"
+  },
+  {
+    "name": "立秋 Li Chiu",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%AB%8B%E7%A7%8B%20Li%20Chiu&query_place_id=ChIJLXLxDFyrQjQR-dHQa-BnbkI"
+  },
+  {
+    "name": "肉桂樹 The Cinnamon Tree 肉桂捲-師大店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%82%89%E6%A1%82%E6%A8%B9%20The%20Cinnamon%20Tree%20%E8%82%89%E6%A1%82%E6%8D%B2-%E5%B8%AB%E5%A4%A7%E5%BA%97&query_place_id=ChIJYfMhRxSpQjQRNs85XXPjtfU"
+  },
+  {
+    "name": "師大分部神之臭豆腐",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B8%AB%E5%A4%A7%E5%88%86%E9%83%A8%E7%A5%9E%E4%B9%8B%E8%87%AD%E8%B1%86%E8%85%90&query_place_id=ChIJTfEyyFGpQjQR1fXJT3vjMoU"
+  },
+  {
+    "name": "少點鹽健康餐盒專賣萬隆店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B0%91%E9%BB%9E%E9%B9%BD%E5%81%A5%E5%BA%B7%E9%A4%90%E7%9B%92%E5%B0%88%E8%B3%A3%E8%90%AC%E9%9A%86%E5%BA%97&query_place_id=ChIJe2FUDuoDaDQRFMUEu3ppuZQ"
+  },
+  {
+    "name": "宋室台菜",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%AE%8B%E5%AE%A4%E5%8F%B0%E8%8F%9C&query_place_id=ChIJkxmOx6SrQjQRgKMmov4g9mY"
+  },
+  {
+    "name": "ALL DAY ROASTING COMPANY 師大店",
+    "url": "https://www.google.com/maps/search/?api=1&query=ALL%20DAY%20ROASTING%20COMPANY%20%E5%B8%AB%E5%A4%A7%E5%BA%97&query_place_id=ChIJZ1FwPC-pQjQRdvMwXOt_JUg"
+  },
+  {
+    "name": "聚日式鍋物 台北南昌店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%81%9A%E6%97%A5%E5%BC%8F%E9%8D%8B%E7%89%A9%20%E5%8F%B0%E5%8C%97%E5%8D%97%E6%98%8C%E5%BA%97&query_place_id=ChIJn1fdFZCpQjQRnvgTI_LTCkw"
+  },
+  {
+    "name": "永和豆漿大王",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%B0%B8%E5%92%8C%E8%B1%86%E6%BC%BF%E5%A4%A7%E7%8E%8B&query_place_id=ChIJYya0hSyqQjQRkEwgQt4-oC8"
+  }
+]
