@@ -61,6 +61,9 @@ SEND_EXCLUDES = [
     '送過', '送風', '陸續送',
 ]
 
+# "買N送N" is a normal retail promotion, not review incentive
+BUY_N_SEND_N_RE = re.compile(r'買\d+送\d+')
+
 SEND_PROMO_KEYWORDS = [
     '打卡', '活動', '好評', '評論', '分享', '按讚', '追蹤', '關注',
     '五星', '五顆星', '5星', '5顆星', '推薦', '留言', '截圖', '貼文',
@@ -323,6 +326,9 @@ def _check_send_context(text):
     """Check for contextual '送' usage with promo keywords (auditEngine.ts lines 107-129)."""
     if '送' not in text:
         return False
+    # "買N送N" is a normal retail promotion
+    if BUY_N_SEND_N_RE.search(text):
+        return False
     has_clean_send = not any(ex in text for ex in SEND_EXCLUDES)
     has_promo_keyword = any(kw in text for kw in SEND_PROMO_KEYWORDS)
     return has_clean_send and has_promo_keyword
@@ -357,8 +363,17 @@ def audit_review(review, context=None, config: RuleConfig = None):
         }
 
     # 1. Explicit incentive keyword check
+    # Stars ≤ 3: the reviewer is reporting/complaining about wash campaigns,
+    # not participating in them (e.g. "洗評論送紅茶，給一星剛好"). Issue #59.
     matched_kw = _check_incentive_keywords(text)
     if matched_kw:
+        if stars <= 3:
+            return {
+                'isWashed': False,
+                'reason': f'評論提及促銷關鍵字『{matched_kw}』，但星等僅 {stars} 星，判定為揭發/抱怨而非參與洗評。',
+                'confidenceScore': 80,
+                'issueType': None,
+            }
         return {
             'isWashed': True,
             'reason': f'直接提及打卡/活動/贈送交易關鍵字：『{matched_kw}』。',
@@ -368,6 +383,13 @@ def audit_review(review, context=None, config: RuleConfig = None):
 
     # 2. Contextual "送" check
     if _check_send_context(text):
+        if stars <= 3:
+            return {
+                'isWashed': False,
+                'reason': f'評論提及「送」相關促銷語境，但星等僅 {stars} 星，判定為揭發/抱怨而非參與洗評。',
+                'confidenceScore': 80,
+                'issueType': None,
+            }
         return {
             'isWashed': True,
             'reason': '直接匹配到打卡/活動/贈送交易關鍵字：『送』。',
