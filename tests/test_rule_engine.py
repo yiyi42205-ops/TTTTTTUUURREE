@@ -110,6 +110,17 @@ class TestRunStage1Audit:
             assert r['audit']['issueType'] == 'template'
             assert r['audit']['confidenceScore'] == 90
 
+    def test_low_star_duplicate_not_washed(self):
+        """Low-star duplicates are complaints, not wash campaigns."""
+        text = '這家店的牛肉麵真的超級難吃，湯頭油膩，麵條爛掉，牛肉硬到咬不動，千萬不要來。'
+        reviews = [
+            {'username': 'a', 'stars': 1, 'time': '2025-01-01', 'text': text},
+            {'username': 'b', 'stars': 2, 'time': '2025-01-02', 'text': text},
+        ]
+        result = run_stage1_audit(reviews)
+        for r in result['auditedReviews']:
+            assert r['audit']['isWashed'] is False
+
     def test_signals_structure(self):
         reviews = [
             {'username': 'a', 'stars': 5, 'time': '2025-01-01', 'text': '好吃'},

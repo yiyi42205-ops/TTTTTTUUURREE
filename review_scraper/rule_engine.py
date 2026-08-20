@@ -474,20 +474,19 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
             'similarCount': sim_count,
         }, config)
 
-        # Override: hard duplicate detection
-        if not audit['isWashed'] and template_flags[i]:
+        # Override: hard duplicate detection (only for 4+ stars — low-star
+        # duplicates are complaints, not wash campaigns)
+        try:
+            stars = int(review.get('stars') or 0)
+        except (ValueError, TypeError):
+            stars = 0
+        if not audit['isWashed'] and template_flags[i] and stars >= 4:
             audit = {
                 'isWashed': True,
                 'reason': '⚠️ 檢測到此評論內文與店內其他評論相似度大於 75%，高度疑似模板洗評。',
                 'confidenceScore': 90,
                 'issueType': 'template',
             }
-
-        # Override: no_text 5-star in spike period
-        try:
-            stars = int(review.get('stars') or 0)
-        except (ValueError, TypeError):
-            stars = 0
         if audit['issueType'] == 'no_text' and stars == 5 and is_spike:
             audit = {
                 'isWashed': True,
