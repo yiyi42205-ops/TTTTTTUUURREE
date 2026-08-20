@@ -9,6 +9,7 @@ from rule_engine import (
     run_stage1_audit,
     detect_no_text_ratio,
     detect_language_ratio,
+    detect_spike_months,
 )
 
 
@@ -108,6 +109,17 @@ class TestRunStage1Audit:
             assert r['audit']['isWashed'] is True
             assert r['audit']['issueType'] == 'template'
             assert r['audit']['confidenceScore'] == 90
+
+    def test_low_star_duplicate_not_washed(self):
+        """Low-star duplicates are complaints, not wash campaigns."""
+        text = '這家店的牛肉麵真的超級難吃，湯頭油膩，麵條爛掉，牛肉硬到咬不動，千萬不要來。'
+        reviews = [
+            {'username': 'a', 'stars': 1, 'time': '2025-01-01', 'text': text},
+            {'username': 'b', 'stars': 2, 'time': '2025-01-02', 'text': text},
+        ]
+        result = run_stage1_audit(reviews)
+        for r in result['auditedReviews']:
+            assert r['audit']['isWashed'] is False
 
     def test_signals_structure(self):
         reviews = [
@@ -267,6 +279,7 @@ class TestLanguageRatio:
         result = run_stage1_audit(reviews)
         assert 'foreignLanguageRatio' in result['signals']
 
+
 # ─── Regression: Stage 1 verdicts must not be sent to Stage 2 ──
 
 class TestStage1VerdictLock:
@@ -333,3 +346,78 @@ class TestStage1VerdictLock:
         for r1, r2 in zip(result1['auditedReviews'], result2['auditedReviews']):
             assert r1['audit'] == r2['audit'], \
                 f"Non-deterministic verdict for {r1['username']}: {r1['audit']} vs {r2['audit']}"
+
+
+# ─── Spike detection (threshold tuning) ──────────────────────
+
+class TestSpikeDetection:
+    def _make_reviews(self, month_counts):
+        """Helper: generate reviews with given counts per month."""
+        reviews = []
+        for month, count in month_counts.items():
+            for day in range(1, count + 1):
+                d = min(day, 28)
+                reviews.append({'stars': 5, 'time': f'{month}-{d:02d}', 'text': ''})
+        return reviews
+
+    def test_no_spike_uniform(self):
+        """Uniform distribution should not trigger spike."""
+        reviews = self._make_reviews({
+            '2025-01': 15, '2025-02': 15, '2025-03': 15, '2025-04': 15,
+        })
+        _, spike_months = detect_spike_months(reviews)
+        assert spike_months == set()
+
+    def test_spike_at_3x(self):
+        """A month with >3x average and >=10 should be flagged."""
+        reviews = self._make_reviews({
+            '2025-01': 10, '2025-02': 10, '2025-03': 10, '2025-04': 40,
+        })
+        # avg = 17.5, 3x = 52.5 → 40 is NOT a spike
+        _, spike_months = detect_spike_months(reviews)
+        assert '2025-04' not in spike_months
+
+    def test_spike_just_under_3x(self):
+        """A month just under 3x average should NOT be flagged."""
+        reviews = self._make_reviews({
+            '2025-01': 10, '2025-02': 10, '2025-03': 10, '2025-04': 60,
+        })
+        # avg = 22.5, 3x = 67.5 → 60 is NOT a spike (just under)
+        _, spike_months = detect_spike_months(reviews)
+        assert '2025-04' not in spike_months
+
+    def test_spike_clear_outlier(self):
+        """A clear outlier (>3x) should be flagged."""
+        reviews = self._make_reviews({
+            '2025-01': 10, '2025-02': 10, '2025-03': 10, '2025-04': 100,
+        })
+        # avg = 32.5, 3x = 97.5 → 100 IS a spike
+        _, spike_months = detect_spike_months(reviews)
+        assert '2025-04' in spike_months
+
+    def test_spike_below_min_count(self):
+        """Even at >3x, months with <10 reviews should not spike."""
+        reviews = self._make_reviews({
+            '2025-01': 2, '2025-02': 2, '2025-03': 2, '2025-04': 9,
+        })
+        _, spike_months = detect_spike_months(reviews)
+        assert spike_months == set()
+
+    def test_old_2x_would_have_spiked(self):
+        """Verify that the old 2x threshold would flag this but 3x doesn't."""
+        reviews = self._make_reviews({
+            '2025-01': 10, '2025-02': 10, '2025-03': 10, '2025-04': 30,
+        })
+        # avg = 15, 2x = 30 → would spike at 2x; 3x = 45 → no spike at 3x
+        _, spike_months = detect_spike_months(reviews)
+        assert '2025-04' not in spike_months
+
+    def test_config_override(self):
+        """Custom config can loosen or tighten spike detection."""
+        reviews = self._make_reviews({
+            '2025-01': 10, '2025-02': 10, '2025-03': 10, '2025-04': 31,
+        })
+        # avg = 15.25, 2x = 30.5 → 31 > 30.5 → spike with 2x
+        loose = RuleConfig(spike_multiplier=2.0)
+        _, spike_months = detect_spike_months(reviews, loose)
+        assert '2025-04' in spike_months
