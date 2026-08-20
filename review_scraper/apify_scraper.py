@@ -64,6 +64,8 @@ def scrape_via_apify(url: str, max_reviews: int = 50) -> tuple[str | None, list,
             metadata["totalScore"] = first["totalScore"]
         if first.get("reviewsCount") is not None:
             metadata["reviewsCount"] = first["reviewsCount"]
+        if first.get("categoryName") is not None:
+            metadata["categoryName"] = first["categoryName"]
 
     reviews = [normalize_review(item) for item in items if isinstance(item, dict)]
     return place_id, reviews, metadata

@@ -333,4 +333,3 @@ class TestStage1VerdictLock:
         for r1, r2 in zip(result1['auditedReviews'], result2['auditedReviews']):
             assert r1['audit'] == r2['audit'], \
                 f"Non-deterministic verdict for {r1['username']}: {r1['audit']} vs {r2['audit']}"
->>>>>>> 65a9170 (test: add regression tests for Stage 1 verdict lock (Issue #2))

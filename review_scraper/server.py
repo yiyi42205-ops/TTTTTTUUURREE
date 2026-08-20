@@ -18,6 +18,30 @@ from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for
 from rule_engine import run_stage1_audit
 import re
 
+# categoryName keywords that indicate a food/drink venue.  If Apify returns a
+# categoryName that contains none of these tokens, we treat the place as a
+# non-restaurant venue and return an error instead of auditing.
+_FOOD_CATEGORY_KEYWORDS: tuple[str, ...] = (
+    "餐廳", "餐館", "小吃", "飯店", "飯館", "食堂",
+    "咖啡", "茶", "飲料", "飲品", "奶茶", "果汁", "酒吧", "酒館", "啤酒",
+    "麵包", "烘焙", "蛋糕", "甜點", "甜品", "糕點", "冰淇淋", "冰品",
+    "火鍋", "燒烤", "燒肉", "烤肉", "串燒", "鐵板燒",
+    "壽司", "拉麵", "丼飯", "居酒屋", "日本料理", "日式",
+    "披薩", "漢堡", "速食", "炸雞", "牛排",
+    "素食", "蔬食", "早餐", "早午餐", "brunch",
+    "buffet", "自助餐", "便當", "滷味", "鹹酥雞",
+    "restaurant", "cafe", "coffee", "bakery", "bar",
+    "food", "pizza", "burger", "noodle", "sushi",
+    "bistro", "diner", "eatery", "grill", "pub",
+    "dessert", "ice cream", "tea", "juice", "brewery",
+)
+
+
+def _is_food_category(category_name: str) -> bool:
+    """Return True if *category_name* looks like a food/drink venue."""
+    lower = category_name.lower()
+    return any(kw in lower for kw in _FOOD_CATEGORY_KEYWORDS)
+
 # Configure logging format and level
 logging.basicConfig(
     level=logging.INFO,
@@ -182,6 +206,16 @@ def scrape():
         if not target_place_id and not force:
             logger.info(f"No place_id found, probing Apify with 1 review for: {url_to_scrape}")
             probe_place_id, _, probe_metadata = scrape_via_apify(url_to_scrape, max_reviews=1)
+
+            # Early category gate: the 1-review probe already gives us
+            # categoryName — reject non-restaurant venues before the full scrape.
+            cat = (probe_metadata or {}).get("categoryName", "")
+            if cat and not _is_food_category(cat):
+                logger.info(f"Non-restaurant category detected via probe: '{cat}' for {url_to_scrape}")
+                return jsonify({
+                    "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。"
+                }), 400
+
             if probe_place_id:
                 _save_mappings(probe_place_id)
                 target_place_id = probe_place_id
@@ -198,6 +232,15 @@ def scrape():
 
         logger.info(f"Starting Apify scrape for URL: {url_to_scrape} (limit: {max_reviews})")
         apify_place_id, records, metadata = scrape_via_apify(url_to_scrape, max_reviews=max_reviews)
+
+        # Category gate for full scrape (covers the path where we already had
+        # a place_id and skipped the probe above).
+        cat = (metadata or {}).get("categoryName", "")
+        if cat and not _is_food_category(cat):
+            logger.info(f"Non-restaurant category detected: '{cat}' for {url_to_scrape}")
+            return jsonify({
+                "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。"
+            }), 400
 
         final_place_id = apify_place_id or target_place_id
         if final_place_id:
