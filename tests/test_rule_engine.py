@@ -333,4 +333,72 @@ class TestStage1VerdictLock:
         for r1, r2 in zip(result1['auditedReviews'], result2['auditedReviews']):
             assert r1['audit'] == r2['audit'], \
                 f"Non-deterministic verdict for {r1['username']}: {r1['audit']} vs {r2['audit']}"
->>>>>>> 65a9170 (test: add regression tests for Stage 1 verdict lock (Issue #2))
+
+
+# ─── Whistleblower signal (Issue #77) ───────────────────────────
+
+class TestWhistleblowerSignal:
+    def test_low_star_incentive_counted_as_whistleblower(self):
+        """≤3 star reviews mentioning incentive keywords should be counted."""
+        reviews = [
+            {'username': 'wb1', 'stars': 2, 'time': '2025-01-01',
+             'text': '打卡送飲料才來的吧，東西超難吃'},
+            {'username': 'wb2', 'stars': 1, 'time': '2025-01-02',
+             'text': '五星好評送小菜，難怪評價這麼高'},
+            {'username': 'normal', 'stars': 4, 'time': '2025-01-03',
+             'text': '今天點了牛肉麵，味道不錯，環境乾淨舒適。'},
+        ]
+        result = run_stage1_audit(reviews)
+        signals = result['signals']
+        assert signals['whistleblowerCount'] == 2
+        assert len(signals['whistleblowerReviews']) == 2
+        usernames = {r['username'] for r in signals['whistleblowerReviews']}
+        assert usernames == {'wb1', 'wb2'}
+
+    def test_high_star_incentive_not_counted(self):
+        """4-5 star reviews with incentive keywords are wash participants,
+        not whistleblowers."""
+        reviews = [
+            {'username': 'washer', 'stars': 5, 'time': '2025-01-01',
+             'text': '打卡送飲料，好開心！'},
+            {'username': 'normal', 'stars': 4, 'time': '2025-01-02',
+             'text': '餐點普通'},
+        ]
+        result = run_stage1_audit(reviews)
+        assert result['signals']['whistleblowerCount'] == 0
+
+    def test_no_text_review_not_counted(self):
+        """Empty reviews should never be whistleblowers."""
+        reviews = [
+            {'username': 'silent', 'stars': 1, 'time': '2025-01-01', 'text': ''},
+        ]
+        result = run_stage1_audit(reviews)
+        assert result['signals']['whistleblowerCount'] == 0
+
+    def test_empty_reviews_whistleblower_zero(self):
+        """Empty review list should return whistleblowerCount=0."""
+        result = run_stage1_audit([])
+        assert result['signals']['whistleblowerCount'] == 0
+        assert result['signals']['whistleblowerReviews'] == []
+
+    def test_send_context_also_counted(self):
+        """Reviews matching the contextual '送' pattern at low stars
+        should also be counted as whistleblowers."""
+        reviews = [
+            {'username': 'wb', 'stars': 3, 'time': '2025-01-01',
+             'text': '好評送肉片，難怪大家都五星'},
+        ]
+        result = run_stage1_audit(reviews)
+        assert result['signals']['whistleblowerCount'] == 1
+
+    def test_whistleblower_reviews_contain_details(self):
+        """Each whistleblower entry should have username, text, stars."""
+        reviews = [
+            {'username': 'reporter', 'stars': 2, 'time': '2025-01-01',
+             'text': '打卡送飲料的店，食物普通'},
+        ]
+        result = run_stage1_audit(reviews)
+        wb = result['signals']['whistleblowerReviews'][0]
+        assert wb['username'] == 'reporter'
+        assert wb['stars'] == 2
+        assert '打卡' in wb['text']
