@@ -1,0 +1,999 @@
+[
+  {
+    "pid": "ChIJ8VNyWSqqQjQRz_rrWE4OhkI",
+    "name": "TEOTIHUACAN HAVE A NICE DAY BISTRO 好處特奥蒂瓦坎咖啡餐酒",
+    "n": 500,
+    "wash_rate": 0.006,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "TEOTIHUACAN HAVE A NICE DAY BISTRO",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJexSiLC-qQjQR0LgDorEWhig",
+    "name": "笑嘻嘻港式現炒飯麵",
+    "n": 500,
+    "wash_rate": 0.004,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "笑嘻嘻港式現炒飯麵",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJqZEnrpyrQjQRBQb_Yy5rbyc",
+    "name": "九尾 日式串燒居酒屋 (1/22已結束，要搬家啦!)",
+    "n": 180,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "九尾 日式串燒居酒屋",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 50
+  },
+  {
+    "pid": "ChIJCyXrRh6qQjQRmOPG1qMKEJg",
+    "name": "Circle Bar",
+    "n": 152,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "Circle Bar",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 50
+  },
+  {
+    "pid": "ChIJP0BNzfSpQjQRPDHfOrqG2LA",
+    "name": "SUBWAY 師大和平店",
+    "n": 211,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "SUBWAY 師大和平店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJjVY3GISpQjQRu9XxZR1--fg",
+    "name": "咖啡黑潮",
+    "n": 399,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "咖啡黑潮",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJPZY7xpGpQjQRuLg9ve6pRjg",
+    "name": "黑滷魯肉便當專賣店",
+    "n": 500,
+    "wash_rate": 0.004,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "黑滷魯肉便當專賣店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJP8T_FPapQjQROFmvlR8zt9g",
+    "name": "爐子煮賣所 Forno & Stufa",
+    "n": 312,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "爐子煮賣所 Forno & Stufa",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJp6lcEyyqQjQRkAA9iISz2m4",
+    "name": "大連風味館",
+    "n": 500,
+    "wash_rate": 0.002,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "大連風味館",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJabNgEe6pQjQRmNRbOhN5hq0",
+    "name": "八方雲集-大安和平店",
+    "n": 479,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "八方雲集－大安和平店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJW1wFuSmqQjQRfCxk5iBYNVE",
+    "name": "幸福廚房",
+    "n": 82,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "幸福廚房",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJS6UPrSmqQjQRqjL5oLth5rI",
+    "name": "呂 巷仔口麵食館",
+    "n": 500,
+    "wash_rate": 0.004,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "呂 巷仔口麵食館",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJe_MK3oupQjQRnzZoMhH5lqs",
+    "name": "八方雲集-台大店",
+    "n": 500,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "八方雲集－大安和平店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJsR1Rj0upQjQRCgAyeTzSgss",
+    "name": "純愛小吃部 Pure Love Diner Bar",
+    "n": 500,
+    "wash_rate": 0.004,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "純愛小吃部 Pure Love Diner Bar",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJSwZBkYWpQjQRKpcW38-6L_Q",
+    "name": "軒軒滷味",
+    "n": 232,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "軒軒滷味",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJiTZ_TC-qQjQR4KthI_C_i-w",
+    "name": "台灣第一腿",
+    "n": 197,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "台灣第一腿",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 1
+  },
+  {
+    "pid": "ChIJ3bN_cz-rQjQR-79UIv_ehAM",
+    "name": "Coffee Immerse",
+    "n": 55,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "Coffee Immerse",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 20
+  },
+  {
+    "pid": "ChIJE4RlxYqpQjQRruyaaWMUrMU",
+    "name": "極限密室 Limitless Escape Room (密室逃脫)",
+    "n": 500,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "極限密室 Limitless Escape Room",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 25
+  },
+  {
+    "pid": "ChIJq4mT64ipQjQRACd5unkH8FA",
+    "name": "樹下蘇活",
+    "n": 291,
+    "wash_rate": 0.003436426116838488,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "樹下蘇活",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJa1fX24upQjQRcSACk0uuLhg",
+    "name": "聯經書房",
+    "n": 163,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "聯經書房",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJrevtiEOpQjQRHFMAqjMu_og",
+    "name": "許願匙 J.K rolling Bistro",
+    "n": 92,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "許願匙 J.K rolling Bistro",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 25
+  },
+  {
+    "pid": "ChIJv8DhXB2qQjQR1vN75rvwxvw",
+    "name": "漢堡大師",
+    "n": 153,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "漢堡大師",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJX4FpGcOrQjQR9GrISdS2j34",
+    "name": "禮賢樓",
+    "n": 61,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "禮賢樓",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJXwb8qYepQjQR3PXpOY3wHIU",
+    "name": "跳舞山羊咖啡",
+    "n": 471,
+    "wash_rate": 0.006369426751592357,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "跳舞山羊咖啡",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJObxVCIapQjQRJtRS36iiCpw",
+    "name": "弘爺漢堡 大安店 （泰順街）",
+    "n": 136,
+    "wash_rate": 0.0,
+    "layer": "乾淨 (0-1%)",
+    "ai_name_matched": "弘爺漢堡 大安店（泰順街）",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJfS17_zypQjQRJX74ClxumPI",
+    "name": "辛殿麻辣鍋｜公館店",
+    "n": 500,
+    "wash_rate": 0.038,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "辛殿麻辣鍋｜公館店",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 30
+  },
+  {
+    "pid": "ChIJ011SPfCrQjQROzFnNWZa_cU",
+    "name": "轉角冰 大安店丨 新鮮芒果冰 刨冰（售完即打烊、公休請看IG、有低消、無訂位）",
+    "n": 288,
+    "wash_rate": 0.09722222222222222,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "轉角冰 大安店",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 40
+  },
+  {
+    "pid": "ChIJa6bzAwCrQjQRjCex32dpcy4",
+    "name": "鴉片粉圓樂業店",
+    "n": 73,
+    "wash_rate": 0.0684931506849315,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "鴉片粉圓樂業店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJrQ8XbySqQjQR5KXahmU9KTc",
+    "name": "男一快餐（我家廚房）",
+    "n": 84,
+    "wash_rate": 0.05952380952380952,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "男一快餐（我家廚房）",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 0
+  },
+  {
+    "pid": "ChIJtaOURgCpQjQRMKEsyJWGnaU",
+    "name": "山摺山甜點",
+    "n": 177,
+    "wash_rate": 0.07344632768361582,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "山摺山甜點",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 15
+  },
+  {
+    "pid": "ChIJzb0AMHypQjQR3VhJTbAgdCs",
+    "name": "鴉天狗平價日式串燒",
+    "n": 225,
+    "wash_rate": 0.017777777777777778,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "鴉天狗平價日式串燒",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJp4QCQh2qQjQRaNx9s1amx50",
+    "name": "無刺虱目魚湯",
+    "n": 168,
+    "wash_rate": 0.011904761904761904,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "無刺虱目魚湯",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJO0doWACpQjQRyFt-YXa3WaU",
+    "name": "阿益燒肉飯 （泰順街）",
+    "n": 131,
+    "wash_rate": 0.030534351145038167,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "阿益燒肉飯（泰順街）",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 4
+  },
+  {
+    "pid": "ChIJ3UeXah2qQjQRkyg8S_Nl5uM",
+    "name": "萬隆218無骨鹽酥雞",
+    "n": 390,
+    "wash_rate": 0.046153846153846156,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "萬隆218無骨鹽酥雞",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJ7WzJq6arQjQRv8DABHkoBYM",
+    "name": "37號海鮮粥/麵#科技大樓站#成功國宅#遠企百貨#台北教育大學",
+    "n": 445,
+    "wash_rate": 0.051685393258426963,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "37號海鮮粥／麵",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 25
+  },
+  {
+    "pid": "ChIJ6X4IGTipQjQRZj1NaPuq-HY",
+    "name": "美蘭越南小吃",
+    "n": 103,
+    "wash_rate": 0.07766990291262135,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "美蘭越南小吃",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 30
+  },
+  {
+    "pid": "ChIJuwfFV46pQjQRXK3ASekCZfs",
+    "name": "秋奶奶早餐店(肉蛋吐司、鮪魚蛋餅、期間限定草莓三明治，忙碌時無法接聽電話請見諒)",
+    "n": 462,
+    "wash_rate": 0.02813852813852814,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "秋奶奶早餐店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 4
+  },
+  {
+    "pid": "ChIJzZsUZbarQjQRLTbnHFluvO8",
+    "name": "中華一餅",
+    "n": 115,
+    "wash_rate": 0.0782608695652174,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "中華一餅",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJs_7ZnO-pQjQRFVXL_oMKa3Y",
+    "name": "厚食均衡飲食專賣店",
+    "n": 126,
+    "wash_rate": 0.047619047619047616,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "厚食均衡飲食專賣店",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 18
+  },
+  {
+    "pid": "ChIJq4Cddi6qQjQRtSouaYEUL9c",
+    "name": "找餐。店",
+    "n": 494,
+    "wash_rate": 0.02834008097165992,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "找餐。店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJRVzcuymqQjQRp-y1SCb274g",
+    "name": "夏可里朵和平店",
+    "n": 177,
+    "wash_rate": 0.06779661016949153,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "夏可里朵和平店",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 55
+  },
+  {
+    "pid": "ChIJpb_qooqpQjQRDRiOLS8laDA",
+    "name": "Mövenpick Café-莫凡彼台北臺大店",
+    "n": 500,
+    "wash_rate": 0.014,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "Mövenpick Café－莫凡彼台北臺大店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJr5BemIupQjQRzw4yWb3jvcU",
+    "name": "小公館咖啡 精釀啤酒",
+    "n": 303,
+    "wash_rate": 0.0297029702970297,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "小公館咖啡 精釀啤酒",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJa1Mm3S2qQjQRyXBAFBjGv-g",
+    "name": "老龍牛肉麵大王",
+    "n": 217,
+    "wash_rate": 0.02304147465437788,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "老龍牛肉麵大王",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJq6qqqoupQjQRYbGXSz3WNEc",
+    "name": "九品川",
+    "n": 391,
+    "wash_rate": 0.05370843989769821,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "九品川",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJVfBPkyuqQjQRM0cvCXVhYYg",
+    "name": "莉莎小姐義式冰淇淋Gelateria da Lisa",
+    "n": 105,
+    "wash_rate": 0.047619047619047616,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "莉莎小姐義式冰淇淋 Gelateria da Lisa",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 10
+  },
+  {
+    "pid": "ChIJtzG55OipQjQRhCHciyEWGIM",
+    "name": "福二漢堡製造所",
+    "n": 500,
+    "wash_rate": 0.034,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "福二漢堡製造所",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJsSqVEgCpQjQRj7QXN2X-Eos",
+    "name": "泰悠 Thai Yo 個人鍋物（公館店）",
+    "n": 500,
+    "wash_rate": 0.062,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "泰悠 Thai Yo 個人鍋物（公館店）",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 45
+  },
+  {
+    "pid": "ChIJ8WZBxLSrQjQRxvkaPWwAQmQ",
+    "name": "嘉湘滇緬小吃",
+    "n": 164,
+    "wash_rate": 0.06707317073170732,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "嘉湘滇緬小吃",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJ4_gu74qpQjQRSEOje3P3-mE",
+    "name": "水源食坊-不一樣炒飯",
+    "n": 500,
+    "wash_rate": 0.086,
+    "layer": "輕微 (1-10%)",
+    "ai_name_matched": "水源食坊－不一樣炒飯",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 10
+  },
+  {
+    "pid": "ChIJB6MrhBepQjQRwuetBgPipaM",
+    "name": "數寄屋 辻葉 ゆず塩鷄白湯らーめん專門店",
+    "n": 500,
+    "wash_rate": 0.14,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "數寄屋 辻葉 ゆず塩鷄白湯らーめん專門店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJdZHa0vSpQjQRPhCBTrr5T9s",
+    "name": "天使ハート女僕咖啡廳",
+    "n": 142,
+    "wash_rate": 0.11267605633802817,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "天使ハート女僕咖啡廳",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 25
+  },
+  {
+    "pid": "ChIJTwJKgoWpQjQReeg0Zb8cNts",
+    "name": "Second Floor 貳樓師大店",
+    "n": 500,
+    "wash_rate": 0.122,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "Second Floor 貳樓師大店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 4
+  },
+  {
+    "pid": "ChIJfUtHEkGrQjQREunpdYfV-1o",
+    "name": "小南通咖啡",
+    "n": 469,
+    "wash_rate": 0.11087420042643924,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "小南通咖啡",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJ5cfQw4upQjQR_tQAUS9ydxY",
+    "name": "雲香亭",
+    "n": 500,
+    "wash_rate": 0.124,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "雲香亭",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJeVkpkx2qQjQRzKw2fBpSTjI",
+    "name": "三角冰冰品專賣店",
+    "n": 500,
+    "wash_rate": 0.178,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "三角冰冰品專賣店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJ_abqTISpQjQRysXxm47M5Ww",
+    "name": "薩莉亞 師範大學店",
+    "n": 500,
+    "wash_rate": 0.15,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "薩莉亞 師範大學店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJPQpyvYupQjQRRgd96jxz5_I",
+    "name": "靜壽司",
+    "n": 500,
+    "wash_rate": 0.138,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "靜壽司",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 12
+  },
+  {
+    "pid": "ChIJYTvumi2pQjQRtiKzuelmO7E",
+    "name": "貳饌 健康餐盒",
+    "n": 293,
+    "wash_rate": 0.17064846416382254,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "貳饌 健康餐盒",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 15
+  },
+  {
+    "pid": "ChIJeUcnhi6qQjQRZPc14do3CLA",
+    "name": "盛味豐炭烤燒餅",
+    "n": 500,
+    "wash_rate": 0.124,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "盛味豐炭烤燒餅",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJaSKXtKCpQjQRjzaDzfd8sls",
+    "name": "貢丸小吃店",
+    "n": 192,
+    "wash_rate": 0.13020833333333334,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "貢丸小吃店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJ5Zls-surQjQRqMbV9NmeCVA",
+    "name": "麥當勞-台北公館店",
+    "n": 500,
+    "wash_rate": 0.102,
+    "layer": "中度 (10-20%)",
+    "ai_verdict": null,
+    "ai_wash_pct": null
+  },
+  {
+    "pid": "ChIJDaPMVPWpQjQRRnSIIHKXYMc",
+    "name": "小木斑馬 Brunch & coffee",
+    "n": 283,
+    "wash_rate": 0.10600706713780919,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "小木斑馬 Brunch & coffee",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJv0XDTYOpQjQRHs3JkvjFPEc",
+    "name": "巴生仔大馬料理店",
+    "n": 500,
+    "wash_rate": 0.116,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "巴生仔大馬料理店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJp_QNGwCpQjQRVdgnfqAD7oo",
+    "name": "one million tea-bar",
+    "n": 118,
+    "wash_rate": 0.11864406779661017,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "one million tea-bar",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 18
+  },
+  {
+    "pid": "ChIJF2DZ87arQjQR-bBHd6PFEUQ",
+    "name": "樂米餐盒_和平店",
+    "n": 218,
+    "wash_rate": 0.16055045871559634,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "樂米餐盒＿和平店",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 20
+  },
+  {
+    "pid": "ChIJc5eNCQCrQjQRoWsD9uEffJc",
+    "name": "The Project KEEP",
+    "n": 61,
+    "wash_rate": 0.13114754098360656,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "The Project KEEP",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 10
+  },
+  {
+    "pid": "ChIJsUG5UrupQjQRSU1k8m14uDk",
+    "name": "朕點麻小麵 汀州店",
+    "n": 500,
+    "wash_rate": 0.196,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "朕點麻小麵 汀州店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJsY0WagCpQjQRDagXjBZzpn8",
+    "name": "唐緹Tartine 公館店",
+    "n": 141,
+    "wash_rate": 0.19858156028368795,
+    "layer": "中度 (10-20%)",
+    "ai_verdict": null,
+    "ai_wash_pct": null
+  },
+  {
+    "pid": "ChIJDzOZn4upQjQRj3uewI9Rsks",
+    "name": "峨嵋川菜餐廳",
+    "n": 500,
+    "wash_rate": 0.17,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "峨嵋川菜餐廳",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJlzAw5tCrQjQRhI2G4VIvDpU",
+    "name": "大尾刺身生魚片",
+    "n": 139,
+    "wash_rate": 0.1510791366906475,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "大尾刺身生魚片",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 15
+  },
+  {
+    "pid": "ChIJrXLxZd6pQjQRCGqYAj-ZWU0",
+    "name": "有隻貓咖啡",
+    "n": 147,
+    "wash_rate": 0.1564625850340136,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "有隻貓咖啡",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 20
+  },
+  {
+    "pid": "ChIJhxGYVLGpQjQRnxHpgVRy5_o",
+    "name": "一階堂拉麵 古亭店",
+    "n": 461,
+    "wash_rate": 0.13232104121475055,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "一階堂拉麵 古亭店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJd9_2epCpQjQRqXdwTFbNBN8",
+    "name": "鴉 片 粉圓 (古亭店)",
+    "n": 500,
+    "wash_rate": 0.108,
+    "layer": "中度 (10-20%)",
+    "ai_verdict": null,
+    "ai_wash_pct": null
+  },
+  {
+    "pid": "ChIJr7o9xzGrQjQRheBRuB3ECWA",
+    "name": "餃子酒場 晴屋",
+    "n": 232,
+    "wash_rate": 0.14655172413793102,
+    "layer": "中度 (10-20%)",
+    "ai_name_matched": "餃子酒場 晴屋",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 8
+  },
+  {
+    "pid": "ChIJGzuErySqQjQRLhtP_MzBbD8",
+    "name": "公館水岸廣場",
+    "n": 500,
+    "wash_rate": 0.33,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "公館水岸廣場",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJ0_uJ8Y2pQjQRPNvZH3hAop0",
+    "name": "大狗麵線（公館店）",
+    "n": 500,
+    "wash_rate": 0.252,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "大狗麵線（公館店）",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 40
+  },
+  {
+    "pid": "ChIJa3pNU4ypQjQRYl9xMqD6lbY",
+    "name": "中正｜燒肉政宗 YAKINIKU MASAMUNE",
+    "n": 500,
+    "wash_rate": 0.236,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "燒肉政宗 YAKINIKU MASAMUNE",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJ1zuh6JOpQjQRFTbsUFytju0",
+    "name": "龍角 Dragon Horn 台電大樓店",
+    "n": 500,
+    "wash_rate": 0.25,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "龍角 Dragon Horn 台電大樓店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 8
+  },
+  {
+    "pid": "ChIJdZIxj52rQjQRCcJZheMqeWg",
+    "name": "THE Id Bar & Bistro｜大安區經典英倫風酒吧、W.A.P Hood VIP包廂",
+    "n": 466,
+    "wash_rate": 0.2317596566523605,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "THE Id Bar & Bistro",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 60
+  },
+  {
+    "pid": "ChIJ9eASooupQjQRTsk8akzNros",
+    "name": "十二巷拉麵",
+    "n": 500,
+    "wash_rate": 0.458,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "十二巷拉麵",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 25
+  },
+  {
+    "pid": "ChIJD9U3C4epQjQR7idvQVJyAvY",
+    "name": "沾美藝術庭苑 Jimmy’s Garden",
+    "n": 500,
+    "wash_rate": 0.222,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "沾美藝術庭苑 Jimmy's Garden",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJwym0f5-rQjQR7pW6IWAEtfE",
+    "name": "山立燻凍奇鷄",
+    "n": 144,
+    "wash_rate": 0.2361111111111111,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "山立燻凍奇鷄",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 35
+  },
+  {
+    "pid": "ChIJnQyDXIerQjQRmDe7elb2vqU",
+    "name": "上穎牛肉麵 台大創始店",
+    "n": 263,
+    "wash_rate": 0.311787072243346,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "上穎牛肉麵 台大創始店",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 45
+  },
+  {
+    "pid": "ChIJ1w34Oh2qQjQRAQsA1KtkXWQ",
+    "name": "Pizza Hut 必勝客-景美萬隆店",
+    "n": 431,
+    "wash_rate": 0.23433874709976799,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "Pizza Hut必勝客-景美萬隆店",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 40
+  },
+  {
+    "pid": "ChIJ7cPUT2qrQjQREP4Ddl1bNPI",
+    "name": "晨間廚房大安教育店",
+    "n": 204,
+    "wash_rate": 0.25980392156862747,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "晨間廚房大安教育店",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 35
+  },
+  {
+    "pid": "ChIJcebczoupQjQR-muTM2ENPwo",
+    "name": "小木屋鬆餅(台大店)",
+    "n": 500,
+    "wash_rate": 0.206,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "小木屋鬆餅（台大店）",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJ3QVC-o2pQjQRCp7DPyA_6tY",
+    "name": "永和豆漿（臺大公館店）",
+    "n": 419,
+    "wash_rate": 0.2052505966587112,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "永和豆漿（臺大公館店）",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 20
+  },
+  {
+    "pid": "ChIJK_Cgj4upQjQRDrLCS1URSQQ",
+    "name": "義樂麵屋",
+    "n": 500,
+    "wash_rate": 0.304,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "義樂麵屋",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 3
+  },
+  {
+    "pid": "ChIJfRIJcgCrQjQR4UU_q7zSKbw",
+    "name": "好好吃飯",
+    "n": 194,
+    "wash_rate": 0.25257731958762886,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "好好吃飯",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 55
+  },
+  {
+    "pid": "ChIJU_BfTQCpQjQR3runTjDuSik",
+    "name": "協力香雞排公館店",
+    "n": 128,
+    "wash_rate": 0.203125,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "協力香雞排公館店",
+    "ai_verdict": "不確定",
+    "ai_wash_pct": 20
+  },
+  {
+    "pid": "ChIJ85kYyJupQjQRfB73So3YYRk",
+    "name": "爭鮮迴轉壽司-古亭店",
+    "n": 500,
+    "wash_rate": 0.338,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "爭鮮迴轉壽司－古亭店",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 55
+  },
+  {
+    "pid": "ChIJ1cCMyoWpQjQRJ07T4o8IQtU",
+    "name": "八方雲集-師大店",
+    "n": 500,
+    "wash_rate": 0.254,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "八方雲集－大安和平店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 2
+  },
+  {
+    "pid": "ChIJL67opo-pQjQRq3p1Bt356IY",
+    "name": "漢堡王 Burger King 新師大店",
+    "n": 500,
+    "wash_rate": 0.262,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "漢堡王 Burger King 新師大店",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  },
+  {
+    "pid": "ChIJywRWIB2qQjQRZkPavW9TUy0",
+    "name": "滾吧 Qunba 鍋物 (萬隆店)",
+    "n": 500,
+    "wash_rate": 0.324,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "滾吧 Qunba 鍋物（萬隆店）",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 40
+  },
+  {
+    "pid": "ChIJ-0ZOGQCpQjQR8nJVuOVw3us",
+    "name": "ocean Taipei Bar",
+    "n": 252,
+    "wash_rate": 0.21428571428571427,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "ocean Taipei Bar",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 50
+  },
+  {
+    "pid": "ChIJHVghQz-rQjQRxwaavs3AO9g",
+    "name": "JM Café & Bistro",
+    "n": 343,
+    "wash_rate": 0.21865889212827988,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "JM Café & Bistro",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 15
+  },
+  {
+    "pid": "ChIJxycEzVepQjQRrznWliPHdoc",
+    "name": "J角 Jcorner",
+    "n": 173,
+    "wash_rate": 0.2138728323699422,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "J角 Jcorner",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 60
+  },
+  {
+    "pid": "ChIJlxsUjDqrQjQRJ-yG_wp3YK4",
+    "name": "一丁堂拉麵",
+    "n": 500,
+    "wash_rate": 0.272,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "一丁堂拉麵",
+    "ai_verdict": "有洗",
+    "ai_wash_pct": 40
+  },
+  {
+    "pid": "ChIJTeZz6Z6pQjQREhox2T0bOOw",
+    "name": "NALA's Mexican Food",
+    "n": 500,
+    "wash_rate": 0.236,
+    "layer": "重度 (20%+)",
+    "ai_name_matched": "NALA's Mexican Food",
+    "ai_verdict": "沒洗",
+    "ai_wash_pct": 5
+  }
+]
