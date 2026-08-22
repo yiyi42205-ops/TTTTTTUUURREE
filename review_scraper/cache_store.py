@@ -61,6 +61,26 @@ def _connect(db_path: str) -> sqlite3.Connection:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS qa_rate_limit (
+            session_key TEXT PRIMARY KEY,
+            count INTEGER NOT NULL,
+            last_reset REAL NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS qa_cache (
+            place_id TEXT NOT NULL,
+            question TEXT NOT NULL,
+            answer_json TEXT NOT NULL,
+            created_at REAL NOT NULL,
+            PRIMARY KEY (place_id, question)
+        )
+        """
+    )
     return conn
 
 
@@ -167,6 +187,16 @@ def set_cached_audit(place_id: str, audit_result: dict, db_path: str = None) -> 
         conn.close()
 
 
+def invalidate_cached_audit(place_id: str, db_path: str = None) -> None:
+    """Delete the audit_cache entry for a place_id so stale results aren't served."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute("DELETE FROM audit_cache WHERE place_id = ?", (place_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def iter_all_scrape_cache(db_path: str = None):
     """Yields (place_id, reviews_list) for every entry in scrape_cache."""
     conn = _connect(db_path or DB_PATH)
@@ -174,16 +204,6 @@ def iter_all_scrape_cache(db_path: str = None):
         cursor = conn.execute("SELECT place_id, reviews_json FROM scrape_cache")
         for place_id, reviews_json in cursor:
             yield place_id, json.loads(reviews_json)
-    finally:
-        conn.close()
-
-
-def invalidate_cached_audit(place_id: str, db_path: str = None) -> None:
-    """Delete the audit_cache entry for a place_id so stale results aren't served."""
-    conn = _connect(db_path or DB_PATH)
-    try:
-        conn.execute("DELETE FROM audit_cache WHERE place_id = ?", (place_id,))
-        conn.commit()
     finally:
         conn.close()
 
@@ -224,6 +244,65 @@ def set_cached_reviews(place_id: str, reviews: list, source: str, db_path: str =
         )
         # Invalidate stale audit cache when reviews are refreshed
         conn.execute("DELETE FROM audit_cache WHERE place_id = ?", (place_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def check_and_increment_qa_limit(ip: str, place_id: str, limit: int = 20, db_path: str = None) -> bool:
+    """Returns True if the limit is not exceeded (and increments it), False if exceeded."""
+    conn = _connect(db_path or DB_PATH)
+    session_key = f"{ip}_{place_id}"
+    try:
+        # Prune expired rate limit records (older than 24 hours)
+        conn.execute("DELETE FROM qa_rate_limit WHERE ? - last_reset >= 86400", (time.time(),))
+        
+        cursor = conn.execute(
+            """
+            INSERT INTO qa_rate_limit (session_key, count, last_reset)
+            VALUES (?, 1, ?)
+            ON CONFLICT(session_key) DO UPDATE SET
+                count = count + 1
+            WHERE count < ?
+            """,
+            (session_key, time.time(), limit),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+def get_cached_qa(place_id: str, question: str, ttl_seconds: int = CACHE_TTL_SECONDS, db_path: str = None) -> dict | None:
+    """Returns the cached QA response if a fresh entry exists, else None."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        row = conn.execute(
+            "SELECT answer_json, created_at FROM qa_cache WHERE place_id = ? AND question = ?", 
+            (place_id, question)
+        ).fetchone()
+        if not row:
+            return None
+        if time.time() - row[1] > ttl_seconds:
+            return None
+        return json.loads(row[0])
+    finally:
+        conn.close()
+
+
+def set_cached_qa(place_id: str, question: str, answer_json: dict, db_path: str = None) -> None:
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute(
+            """
+            INSERT INTO qa_cache (place_id, question, answer_json, created_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(place_id, question) DO UPDATE SET
+                answer_json = excluded.answer_json,
+                created_at = excluded.created_at
+            """,
+            (place_id, question, json.dumps(answer_json, ensure_ascii=False), time.time())
+        )
         conn.commit()
     finally:
         conn.close()

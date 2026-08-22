@@ -13,8 +13,12 @@ import urllib.request
 from urllib.parse import urlparse
 
 from normalize import normalize_review
-from gemini_client import make_batches, call_gemini_batch, MAX_CONCURRENT_BATCHES
-from cache_store import get_cached_reviews, set_cached_reviews, get_place_id_for_query, set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata
+from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES, call_llm_qa
+from cache_store import (
+    get_cached_reviews, set_cached_reviews, get_place_id_for_query, 
+    set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata,
+    check_and_increment_qa_limit, get_cached_qa, set_cached_qa
+)
 from rule_engine import run_stage1_audit
 import re
 
@@ -59,10 +63,65 @@ if not GEMINI_API_KEY:
     )
 
 genai_client = genai.Client(api_key=GEMINI_API_KEY)
-
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist")
+
+# Global DeepSeek Client
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+deepseek_client = None
+if DEEPSEEK_API_KEY:
+    try:
+        import openai
+        deepseek_client = openai.OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+    except ImportError:
+        logger.warning("openai package not installed. DeepSeek backend will be unavailable.")
+
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 CORS(app)
+
+def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tuple[dict, int] | None]:
+    """
+    Factory helper to resolve the appropriate LLM client instance based on provider and headers.
+    Returns: (client_instance, error_tuple_if_any)
+    """
+    if provider == "gemini":
+        user_api_key = headers.get("X-Gemini-API-Key")
+        if user_api_key:
+            user_api_key = user_api_key.strip()
+            if not user_api_key.startswith("AIzaSy") or len(user_api_key) < 35:
+                logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
+                return None, ({"error": "無效的用戶 Gemini API Key 格式"}, 400)
+            try:
+                return genai.Client(api_key=user_api_key), None
+            except Exception as e:
+                logger.error(f"Failed to init Gemini client: {e}")
+                return None, ({"error": "無法初始化 Gemini Client"}, 400)
+        if not genai_client:
+            return None, ({"error": "Server is missing GEMINI_API_KEY"}, 500)
+        return genai_client, None
+
+    elif provider == "deepseek":
+        try:
+            import openai
+        except ImportError:
+            return None, ({"error": "Server is missing openai package"}, 500)
+            
+        user_api_key = headers.get("X-DeepSeek-API-Key")
+        if user_api_key:
+            user_api_key = user_api_key.strip()
+            if not user_api_key.startswith("sk-"):
+                logger.warning(f"Invalid X-DeepSeek-API-Key format from IP: {ip}")
+                return None, ({"error": "無效的用戶 DeepSeek API Key 格式 (必須以 sk- 開頭)"}, 400)
+            try:
+                return openai.OpenAI(api_key=user_api_key, base_url="https://api.deepseek.com"), None
+            except Exception as e:
+                logger.error(f"Failed to init DeepSeek client: {e}")
+                return None, ({"error": "無法初始化 DeepSeek Client"}, 400)
+        if not deepseek_client:
+            return None, ({"error": "Server is missing DEEPSEEK_API_KEY"}, 500)
+        return deepseek_client, None
+
+    return None, ({"error": f"Unknown provider: {provider}"}, 400)
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -346,23 +405,13 @@ def audit():
     ip = request.remote_addr
     logger.info(f"POST /api/audit request from IP: {ip}")
 
-    # Extract user-provided API key from headers if available
-    user_api_key = request.headers.get("X-Gemini-API-Key")
-    client_to_use = genai_client
-    if user_api_key:
-        user_api_key = user_api_key.strip()
-        if not user_api_key.startswith("AIzaSy") or len(user_api_key) < 35:
-            logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
-            return jsonify({"error": "無效的用戶 API Key 格式 (請確認長度與開頭)"}), 400
-
-        try:
-            client_to_use = genai.Client(api_key=user_api_key)
-            logger.info("Using user-provided Gemini API Key for audit request.")
-        except Exception as e:
-            logger.error(f"Failed to initialize Gemini client with user API key: {e}")
-            return jsonify({"error": "無效的用戶 API Key 格式"}), 400
-
     data = request.get_json() or {}
+    provider = data.get("provider", "gemini")
+
+    client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
+    if err_resp:
+        return jsonify(err_resp[0]), err_resp[1]
+
     store_name = data.get("storeName") or "待審查店家"
     raw_reviews = data.get("reviews")
     if not raw_reviews or not isinstance(raw_reviews, list):
@@ -392,25 +441,142 @@ def audit():
     results = []
     errors = []
     with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_BATCHES) as executor:
-        futures = {executor.submit(call_gemini_batch, client_to_use, store_name, batch): batch for batch in batches}
+        futures = {executor.submit(call_llm_batch, provider, client_to_use, store_name, batch): batch for batch in batches}
         for future in as_completed(futures):
             try:
                 results.extend(future.result())
             except Exception as e:
-                logger.error(f"Gemini batch audit failed: {e}")
+                logger.error(f"LLM ({provider}) batch audit failed: {e}")
                 logger.error(traceback.format_exc())
                 errors.append(str(e))
 
     # Batches are independent LLM calls — one failing shouldn't discard results
     # from the batches that succeeded. Only fail the whole request if nothing came back.
     if errors and not results:
-        return jsonify({"error": "Gemini 語意審計全部批次皆失敗", "details": errors}), 502
+        return jsonify({"error": f"LLM ({provider}) 語意審計全部批次皆失敗", "details": errors}), 502
 
     logger.info(f"Audit completed: {len(results)} reviews classified, {len(errors)} batch failure(s), in {time.time() - start_time:.2f}s.")
     response_body = {"results": results}
     if errors:
         response_body["errors"] = errors
     return jsonify(response_body)
+
+@app.route("/api/summarize", methods=["POST"])
+def summarize():
+    start_time = time.time()
+    
+    # Extract real client IP in case server is behind a proxy (like Nginx)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    ip = forwarded_for.split(",")[0].strip() if forwarded_for else request.remote_addr
+    
+    logger.info(f"POST /api/summarize request from IP: {ip}")
+
+    data = request.get_json() or {}
+    
+    place_id = data.get("placeId")
+    if not place_id or not isinstance(place_id, str) or not place_id.strip():
+        return jsonify({"error": "Missing or invalid placeId"}), 400
+        
+    question = data.get("question")
+    if not isinstance(question, str) or not question.strip():
+        return jsonify({"error": "Missing or invalid question"}), 400
+        
+    # Cap question length to prevent prompt injection / resource exhaustion
+    if len(question) > 500:
+        return jsonify({"error": "問題字數超過上限 (最大 500 字)"}), 400
+
+    raw_reviews = data.get("reviews")
+    if not raw_reviews or not isinstance(raw_reviews, list):
+        return jsonify({"error": "Missing or invalid required field: reviews"}), 400
+
+    store_name = data.get("storeName", "待審查店家")
+    provider = data.get("provider", "gemini")
+
+    # Normalize question for cache key to avoid cache misses from punctuation or spacing differences
+    cache_key_question = re.sub(r'[^\w\s]', '', question).strip()
+
+    # Semantic QA Caching (Skip LLM execution if this question was already asked for this place)
+    cached_qa = get_cached_qa(place_id, cache_key_question)
+    if cached_qa:
+        logger.info(f"QA Cache hit for place '{place_id}', question: '{cache_key_question[:20]}...'")
+        return jsonify(cached_qa)
+
+    # Rate limiting
+    if not check_and_increment_qa_limit(ip, place_id):
+        return jsonify({"error": "每家店每個 IP 提問次數已達上限"}), 429
+
+    # Filter real reviews (isWashed = False)
+    valid_reviews = []
+    for r in raw_reviews:
+        if not isinstance(r, dict):
+            continue
+        
+        # Safely check if audit.isWashed is True
+        audit = r.get("audit") or {}
+        if isinstance(audit, dict) and audit.get("isWashed"):
+            continue
+            
+        text = str(r.get("text") or "").strip()
+        if not text:
+            continue
+            
+        # Give an ID if not exists
+        if "id" not in r:
+            r["id"] = f"r{len(valid_reviews)}"
+            
+        valid_reviews.append(r)
+
+    # Sort reviews by text length (descending) to prioritize the most informative ones,
+    # then protect against excessive token usage by capping at 150 reviews
+    valid_reviews.sort(key=lambda x: len(x.get("text", "")), reverse=True)
+    valid_reviews = valid_reviews[:150]
+
+    if not valid_reviews:
+        return jsonify({
+            "answer": "評論中沒有相關資訊（未找到真實有效評論）",
+            "items": [],
+            "sufficient": False
+        })
+
+    client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
+    if err_resp:
+        return jsonify(err_resp[0]), err_resp[1]
+
+    # Privacy & Cost optimization: Anonymize usernames into integer indices
+    # This prevents PII leakage to the LLM and saves hundreds of tokens per request
+    user_map = {}
+    anonymized_reviews = []
+    for i, r in enumerate(valid_reviews):
+        user_map[str(i)] = r.get("id") or r.get("username")
+        anonymized_reviews.append({
+            "id": str(i),
+            "text": r.get("text", ""),
+            "stars": r.get("stars", 5)
+        })
+
+    # Execute LLM QA
+    try:
+        logger.info(f"Summarizing for '{store_name}' with {len(valid_reviews)} anonymized reviews...")
+        result = call_llm_qa(provider, client_to_use, store_name, anonymized_reviews, question)
+        logger.info(f"Summarize completed in {time.time() - start_time:.2f}s.")
+        
+        # Restore original usernames from the anonymized indices
+        if result.get("items"):
+            for item in result["items"]:
+                mapped_id = user_map.get(str(item.get("id")))
+                if mapped_id:
+                    item["id"] = mapped_id
+                else:
+                    item["id"] = str(item.get("id"))
+        
+        # Save exact-match result to cache
+        set_cached_qa(place_id, cache_key_question, result)
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"LLM QA ({provider}) failed: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({"error": "分析回答失敗", "details": str(e)}), 502
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5001))

@@ -3,6 +3,8 @@ Tests for the canonical Stage 1 rule engine (review_scraper/rule_engine.py)
 and the /api/audit-rules endpoint in server.py.
 """
 import pytest
+from langdetect import DetectorFactory
+DetectorFactory.seed = 0
 from rule_engine import (
     RuleConfig,
     audit_review,

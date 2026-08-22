@@ -444,7 +444,7 @@ def select_llm_sample_stores(results, config: RuleConfig, num_stores=3):
     return scored[:num_stores]
 
 
-def run_llm_sample_mode(base_path, config: RuleConfig, num_stores=3, store_names=None):
+def run_llm_sample_mode(base_path: str, config: RuleConfig, num_stores: int = 5, store_names: list[str] | None = None, provider: str = 'gemini') -> list[dict]:
     """實際呼叫 Gemini API 對少量店家跑 Stage 2 複審，用來測試 prompt 或訊號
     門檻變體對『真實』Stage 2 判定結果的影響 —— 而不只是規則引擎本身的
     precision/recall。這個模式會產生真實 API 費用與配額消耗，因此僅抽
@@ -465,26 +465,30 @@ def run_llm_sample_mode(base_path, config: RuleConfig, num_stores=3, store_names
     except ImportError:
         pass
 
-    api_key = os.getenv('GEMINI_API_KEY')
-    if not api_key:
-        raise RuntimeError(
-            '缺少 GEMINI_API_KEY 環境變數，無法執行小樣本 Gemini 測試模式。'
-            '請在專案根目錄的 .env 檔案中設定 GEMINI_API_KEY（可參考 .env.example）。'
-        )
+    from llm_client import call_llm_batch
 
-    from google import genai
-    from gemini_client import call_gemini_batch
+    if provider == 'gemini':
+        from google import genai
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            raise RuntimeError('缺少 GEMINI_API_KEY 環境變數。請在專案根目錄的 .env 檔案中設定。')
+        client = genai.Client(api_key=api_key)
+    elif provider == 'deepseek':
+        import openai
+        api_key = os.getenv('DEEPSEEK_API_KEY')
+        if not api_key:
+            raise RuntimeError('缺少 DEEPSEEK_API_KEY 環境變數。請在專案根目錄的 .env 檔案中設定。')
+        client = openai.OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
 
     results = evaluate_dataset(base_path, config)
     if store_names:
         sample_stores = [r for r in results if r['restaurant'] in store_names]
     else:
         sample_stores = select_llm_sample_stores(results, config, num_stores)
-
-    client = genai.Client(api_key=api_key)
-
     print('\n' + '=' * 70)
-    print(f'小樣本 Gemini 測試模式（實際呼叫 API，共 {len(sample_stores)} 家店）')
+    print(f'小樣本 {provider.capitalize()} 測試模式（實際呼叫 API，共 {len(sample_stores)} 家店）')
     print('=' * 70)
 
     report = []
@@ -527,9 +531,9 @@ def run_llm_sample_mode(base_path, config: RuleConfig, num_stores=3, store_names
             continue
 
         try:
-            items = call_gemini_batch(client, store['restaurant'], ambiguous)
+            items = call_llm_batch(provider, client, store['restaurant'], ambiguous)
         except Exception as e:
-            print(f"  ✗ {store['restaurant']:<20} Gemini 呼叫失敗：{e}")
+            print(f"  ✗ {store['restaurant']:<20} LLM 呼叫失敗：{e}")
             continue
 
         washed_from_llm = sum(1 for item in items if item.get('isWashed'))
@@ -563,8 +567,10 @@ def parse_args():
                         help='holdout 隨機分割的 seed（預設 42，確保可重現）')
     parser.add_argument('--holdout-stores', help='指定 holdout 店家名稱，逗號分隔（覆寫隨機挑選）')
     parser.add_argument('--llm-sample', type=int, metavar='N', default=None,
-                         help='啟用小樣本 Gemini 測試模式，抽 N 家店實際呼叫 API（會產生真實費用，需要 GEMINI_API_KEY）')
+                         help='啟用小樣本 LLM 測試模式，抽 N 家店實際呼叫 API（會產生真實費用）')
     parser.add_argument('--llm-sample-stores', help='小樣本模式要測試的店家名稱清單，逗號分隔（覆寫自動挑選）')
+    parser.add_argument('--llm-provider', choices=['gemini', 'deepseek'], default='gemini',
+                         help='要測試的模型提供者 (預設 gemini)')
     return parser.parse_args()
 
 
@@ -656,7 +662,7 @@ def main():
 
     if args.llm_sample is not None:
         store_names = args.llm_sample_stores.split(',') if args.llm_sample_stores else None
-        run_llm_sample_mode(base, best_config, num_stores=args.llm_sample, store_names=store_names)
+        run_llm_sample_mode(base, best_config, num_stores=args.llm_sample, store_names=store_names, provider=args.llm_provider)
 
 
 if __name__ == '__main__':
