@@ -133,7 +133,7 @@ def detect_spike_months(reviews):
     if not counts:
         return set()
     avg = sum(counts.values()) / len(counts)
-    return {m for m, c in counts.items() if c > avg * 2 and c >= 10}
+    return {m for m, c in counts.items() if c > avg * 3 and c >= 10}
 
 
 def sample_one_store(csv_path, sample_n=8):

@@ -31,6 +31,8 @@ class RuleConfig:
     similarity_ngram: int = 3
     similarity_threshold: float = 0.45
     low_info_escalation_similar_count: int = 2
+    spike_multiplier: float = 3.0
+    spike_min_count: int = 10
     wash_verdict_threshold: float = 0.03       # evaluation-only (store-level binary)
 
 
@@ -280,8 +282,10 @@ def detect_language_ratio(reviews: list[dict]) -> float:
     return round(non_zh_count / eligible, 4)
 
 
-def detect_spike_months(reviews):
-    """Flags months with review volume > 2x average and >= 10 reviews."""
+def detect_spike_months(reviews, config: RuleConfig = None):
+    """Flags months with review volume > Nx average and >= M reviews."""
+    if config is None:
+        config = RuleConfig()
     counts = defaultdict(int)
     months = []
     for r in reviews:
@@ -296,7 +300,8 @@ def detect_spike_months(reviews):
     if not counts:
         return [False] * len(reviews), set()
     avg = sum(counts.values()) / len(counts)
-    spike = {m for m, c in counts.items() if c > avg * 2 and c >= 10}
+    spike = {m for m, c in counts.items()
+             if c > avg * config.spike_multiplier and c >= config.spike_min_count}
     return [(m in spike) if m else False for m in months], spike
 
 
@@ -425,7 +430,7 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
     # Precompute cross-review signals
     template_flags = detect_templates(reviews, config)
     max_similarity, similar_counts = detect_similarity_signals(reviews, config)
-    spike_flags, spike_months = detect_spike_months(reviews)
+    spike_flags, spike_months = detect_spike_months(reviews, config)
     hot_term_counts, hot_term_max_ratios = detect_hot_term_signals(reviews)
     nearby_long_review_counts = detect_nearby_long_review_counts(reviews)
     no_text_ratio = detect_no_text_ratio(reviews)
@@ -469,20 +474,19 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
             'similarCount': sim_count,
         }, config)
 
-        # Override: hard duplicate detection
-        if not audit['isWashed'] and template_flags[i]:
+        # Override: hard duplicate detection (only for 4+ stars — low-star
+        # duplicates are complaints, not wash campaigns)
+        try:
+            stars = int(review.get('stars') or 0)
+        except (ValueError, TypeError):
+            stars = 0
+        if not audit['isWashed'] and template_flags[i] and stars >= 4:
             audit = {
                 'isWashed': True,
                 'reason': '⚠️ 檢測到此評論內文與店內其他評論相似度大於 75%，高度疑似模板洗評。',
                 'confidenceScore': 90,
                 'issueType': 'template',
             }
-
-        # Override: no_text 5-star in spike period
-        try:
-            stars = int(review.get('stars') or 0)
-        except (ValueError, TypeError):
-            stars = 0
         if audit['issueType'] == 'no_text' and stars == 5 and is_spike:
             audit = {
                 'isWashed': True,
