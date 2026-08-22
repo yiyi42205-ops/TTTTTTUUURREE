@@ -12,6 +12,8 @@ Now it lives here only.
 """
 import math
 import re
+import random
+import hashlib
 from collections import defaultdict
 
 from langdetect import detect, LangDetectException, DetectorFactory
@@ -124,24 +126,65 @@ def is_generic_short_review(text, stars):
 
 # ─── Signal detection functions ──────────────────────────────
 
+_NUM_PERM = 10
+_MINHASH_PRIME = 4294967311
+_rng = random.Random(42)
+_MINHASH_FUNCS = [(_rng.randint(1, _MINHASH_PRIME - 1), _rng.randint(0, _MINHASH_PRIME - 1)) for _ in range(_NUM_PERM)]
+
+def _minhash(ngrams):
+    """Compute MinHash signature for a set of n-grams."""
+    if not ngrams:
+        return None
+    # Use built-in hash for speed; cross-process non-determinism is fine here since signatures aren't persisted.
+    hashed_grams = [hash(g) & 0xFFFFFFFF for g in ngrams]
+    signature = []
+    for a, b in _MINHASH_FUNCS:
+        signature.append(min((a * x + b) % _MINHASH_PRIME for x in hashed_grams))
+    return signature
+
+
 def detect_templates(reviews, config: RuleConfig = None):
-    """Hard duplicate detection via 2-gram Jaccard."""
+    """Hard duplicate detection via MinHash LSH and exact Jaccard fallback."""
     if config is None:
         config = RuleConfig()
-    grams = []
+        
+    grams_list = []
+    signatures = []
+    
     for r in reviews:
         text = r.get('text', '') or ''
         cleaned = re.sub(r'\s+', '', text)
-        grams.append(get_ngram(text, 2) if len(cleaned) > config.min_template_chars else None)
+        if len(cleaned) > config.min_template_chars:
+            grams = get_ngram(text, 2)
+            grams_list.append(grams)
+            signatures.append(_minhash(grams))
+        else:
+            grams_list.append(None)
+            signatures.append(None)
+            
     flags = [False] * len(reviews)
-    for i in range(len(reviews)):
-        if grams[i] is None:
+    
+    # LSH bucketing (b=5 bands, r=2 rows per band)
+    b = 5
+    r = 2
+    buckets = defaultdict(list)
+    
+    for i, sig in enumerate(signatures):
+        if sig is None:
             continue
-        for j in range(i + 1, len(reviews)):
-            if grams[j] is None:
-                continue
-            if jaccard(grams[i], grams[j]) > config.jaccard_threshold:
-                flags[i] = flags[j] = True
+        for band_idx in range(b):
+            band = tuple(sig[band_idx * r : (band_idx + 1) * r])
+            bucket_key = (band_idx, hash(band))
+            
+            # Check collisions in this bucket
+            for j in buckets[bucket_key]:
+                if not flags[i] or not flags[j]:
+                    # Exact Jaccard fallback for candidates
+                    if jaccard(grams_list[i], grams_list[j]) > config.jaccard_threshold:
+                        flags[i] = flags[j] = True
+            
+            buckets[bucket_key].append(i)
+            
     return flags
 
 
