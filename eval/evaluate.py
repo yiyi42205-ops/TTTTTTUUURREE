@@ -132,7 +132,7 @@ def detect_spike_months(reviews):
         return [False] * len(reviews)
 
     avg = sum(month_counts.values()) / len(month_counts)
-    spike = {m for m, c in month_counts.items() if c > avg * 2 and c >= 10}
+    spike = {m for m, c in month_counts.items() if c > avg * 3 and c >= 10}
     return [(m in spike) if m else False for m in review_months]
 
 
