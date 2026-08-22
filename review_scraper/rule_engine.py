@@ -38,17 +38,42 @@ class RuleConfig:
 
 # ─── 常數 ───────────────────────────────────────────────────
 
-INCENTIVE_KEYWORDS = [
-    '打卡', '評論送', '打卡送', '好評送', '免費送',
+# --- Incentive detection: three-factor semantic approach (Issue #87) ---
+#
+# High confidence (direct washed): 評論行為 + 交換關係 + 利益 all present
+#   e.g. 「五星評論送雞翅」「評五星送可樂」「留評論送王子麵」
+#
+# Medium confidence (suspicious, send to Stage 2): only two factors
+#   e.g. 「打卡送飲料」(missing explicit review/star action)
+#
+# No match: only one factor or ambiguous keyword in non-promo context
+#   e.g. 「活動中心」「拍照打卡」「老闆送菜」
+
+# Factor 1: Review/rating action keywords (includes social sharing actions
+# that are commonly tied to review incentive campaigns)
+REVIEW_ACTION_KEYWORDS = [
+    '評論', '評價', '好評', '留言', '五星', '五顆星', '5星', '5顆星',
+    'Google', 'google', '谷歌',
+    '分享', '按讚', '追蹤', '貼文', '截圖',  # social actions tied to campaigns
+]
+
+# Factor 2: Exchange relationship keywords
+EXCHANGE_KEYWORDS = [
+    '送', '贈', '換', '免費', '招待', '折扣', '優惠',
+]
+
+# Factor 3: Compound patterns that directly imply review-for-reward
+# These are high-confidence — two+ factors baked into one phrase
+INCENTIVE_COMPOUND_KEYWORDS = [
+    '評論送', '好評送', '打卡送',
     '送小菜', '送起司球', '送飲料', '送肉', '送單點', '送麻糬', '送奶酪',
 ]
 
-# 「活動」alone is ambiguous (can mean event/activity, not just promo).
-# Only flag when paired with promo context. See Issue #59.
-ACTIVITY_PROMO_CONTEXT = [
-    '送', '打卡', '好評', '評論', '免費', '贈', '五星', '五顆星',
-    '分享', '按讚', '追蹤', '留言', 'Google', 'google', 'IG', 'FB',
-]
+# 「免費送」needs context — "滿150元免費送" is a purchase threshold promo
+FREE_SEND_EXCLUDE_RE = re.compile(r'滿\d+.*免費送|消費.*免費送|免費送\s*[，,]?\s*外送')
+
+# Negation prefixes that invalidate compound keyword matches
+NEGATION_PREFIXES = ['沒有', '沒', '不', '未', '非', '無']
 
 # "送" contextual check — ported from auditEngine.ts lines 107-129
 SEND_EXCLUDES = [
@@ -56,12 +81,31 @@ SEND_EXCLUDES = [
     '送走', '送出', '推送', '面送', '送速度', '送口', '送入', '送到', '送達',
     '送桌', '補送', '送回', '菜梯送', '端送', '發送', '傳送', '運送', '送進',
     '送過', '送風', '陸續送',
+    # Additional excludes for hospitality/retail (Issue #87)
+    '老闆送', '老闆娘送', '店家送', '店員送', '師傅送',  # 招待
+    '附送', '隨餐送',                                     # 餐點搭贈
+    '送人', '送朋友', '送家人', '送親友', '送同事',       # 送禮
 ]
 
-SEND_PROMO_KEYWORDS = [
-    '打卡', '活動', '好評', '評論', '分享', '按讚', '追蹤', '關注',
-    '五星', '五顆星', '5星', '5顆星', '推薦', '留言', '截圖', '貼文',
-    '社群', 'IG', 'FB', '臉書', 'Google', 'google',
+# "買N送N" is a normal retail promotion, not review incentive
+BUY_N_SEND_N_RE = re.compile(r'買\d+送\d+')
+
+# 「打卡」exclusion contexts — photo check-in, revisit, not review incentive
+CHECKIN_EXCLUDE_CONTEXTS = [
+    '拍照打卡', '網美打卡', '打卡拍照', '打卡景點', '打卡點',
+    '打卡留念', '打卡紀念', '來打卡', '回來打卡', '再打卡',
+    '值得打卡', '想打卡', '不打卡', '沒打卡', '沒有打卡',
+    '不用打卡', '不急著打卡', '不會打卡', '不刻意打卡',
+    'IG打卡', 'ig打卡', 'FB打卡', 'fb打卡',
+]
+
+# 「活動」exclusion contexts — event/venue, not promo
+ACTIVITY_EXCLUDE_CONTEXTS = [
+    '活動中心', '活動空間', '辦活動', '舉辦活動', '參加活動',
+    '同學會活動', '公司活動', '親子活動', '家庭活動', '團體活動',
+    '休閒活動', '戶外活動', 'DIY活動', '體驗活動', '藝術活動',
+    '主題活動', '聯名活動', '活動場地', '活動需要',
+    '一直活動',  # 動詞用法
 ]
 
 EMPTY_WORDS = {
@@ -307,25 +351,74 @@ def detect_spike_months(reviews, config: RuleConfig = None):
 
 # ─── Per-review audit (mirrors auditEngine.ts auditReview) ───
 
-def _check_incentive_keywords(text):
-    """Check for explicit incentive keywords, with contextual handling for ambiguous words."""
-    for kw in INCENTIVE_KEYWORDS:
+def _check_incentive_semantic(text):
+    """Three-factor semantic incentive detection (Issue #87).
+
+    Returns:
+        ('high', matched_desc)   — direct review-for-reward, mark as washed
+        ('medium', matched_desc) — suspicious but ambiguous, send to Stage 2
+        None                     — no incentive signal
+    """
+    # 1. Compound keywords — high confidence by themselves
+    #    Skip if preceded by negation within 5 chars (e.g. "沒有參加評論送甜點活動")
+    for kw in INCENTIVE_COMPOUND_KEYWORDS:
         if kw in text:
-            return kw
-    # 「活動」requires promo context — "親子活動" or "公司活動" are not incentive
+            idx = text.index(kw)
+            window = text[max(0, idx - 5):idx]
+            negated = any(neg in window for neg in NEGATION_PREFIXES)
+            if not negated:
+                return ('high', kw)
+
+    # 「免費送」— only if not a purchase-threshold promo
+    if '免費送' in text and not FREE_SEND_EXCLUDE_RE.search(text):
+        idx = text.index('免費送')
+        window = text[max(0, idx - 5):idx]
+        negated = any(neg in window for neg in NEGATION_PREFIXES)
+        if not negated:
+            return ('high', '免費送')
+
+    # 2. Three-factor check: review action + exchange + present in text
+    has_review_action = any(kw in text for kw in REVIEW_ACTION_KEYWORDS)
+    has_exchange = _has_clean_exchange(text)
+
+    if has_review_action and has_exchange:
+        # Check if any review action keyword is negated (e.g. "沒有參加評論送")
+        all_negated = True
+        for kw in REVIEW_ACTION_KEYWORDS:
+            if kw in text:
+                idx = text.index(kw)
+                window = text[max(0, idx - 5):idx]
+                if not any(neg in window for neg in NEGATION_PREFIXES):
+                    all_negated = False
+                    break
+        if not all_negated:
+            return ('high', '評論行為＋交換關係')
+
+    # 3. 「打卡」— only suspicious if paired with exchange, and not in
+    #    photo/revisit context
+    if '打卡' in text:
+        if not any(ex in text for ex in CHECKIN_EXCLUDE_CONTEXTS):
+            if has_exchange:
+                return ('medium', '打卡＋交換關係')
+
+    # 4. 「活動」— only suspicious if paired with exchange, and not in
+    #    event/venue context
     if '活動' in text:
-        if any(ctx in text for ctx in ACTIVITY_PROMO_CONTEXT):
-            return '活動'
+        if not any(ex in text for ex in ACTIVITY_EXCLUDE_CONTEXTS):
+            if has_exchange:
+                return ('medium', '活動＋交換關係')
+
     return None
 
 
-def _check_send_context(text):
-    """Check for contextual '送' usage with promo keywords (auditEngine.ts lines 107-129)."""
-    if '送' not in text:
-        return False
-    has_clean_send = not any(ex in text for ex in SEND_EXCLUDES)
-    has_promo_keyword = any(kw in text for kw in SEND_PROMO_KEYWORDS)
-    return has_clean_send and has_promo_keyword
+def _has_clean_exchange(text):
+    """Check if text contains an exchange keyword in a non-excluded context."""
+    if '送' in text:
+        if BUY_N_SEND_N_RE.search(text):
+            return False
+        if not any(ex in text for ex in SEND_EXCLUDES):
+            return True
+    return any(kw in text for kw in EXCHANGE_KEYWORDS if kw != '送' and kw in text)
 
 
 def audit_review(review, context=None, config: RuleConfig = None):
@@ -356,24 +449,25 @@ def audit_review(review, context=None, config: RuleConfig = None):
             'issueType': 'no_text',
         }
 
-    # 1. Explicit incentive keyword check
-    matched_kw = _check_incentive_keywords(text)
-    if matched_kw:
-        return {
-            'isWashed': True,
-            'reason': f'直接提及打卡/活動/贈送交易關鍵字：『{matched_kw}』。',
-            'confidenceScore': 100,
-            'issueType': 'incentive',
-        }
-
-    # 2. Contextual "送" check
-    if _check_send_context(text):
-        return {
-            'isWashed': True,
-            'reason': '直接匹配到打卡/活動/贈送交易關鍵字：『送』。',
-            'confidenceScore': 100,
-            'issueType': 'incentive',
-        }
+    # 1. Semantic incentive check (Issue #87: three-factor approach)
+    incentive_result = _check_incentive_semantic(text)
+    if incentive_result:
+        level, matched_desc = incentive_result
+        if level == 'high':
+            return {
+                'isWashed': True,
+                'reason': f'偵測到評論誘因：『{matched_desc}』。',
+                'confidenceScore': 100,
+                'issueType': 'incentive',
+            }
+        # medium: suspicious but ambiguous — send to Stage 2 for LLM judgment
+        if level == 'medium':
+            return {
+                'isWashed': False,
+                'reason': f'疑似評論誘因（{matched_desc}），但語境不明確，交由 AI 複審。',
+                'confidenceScore': 50,
+                'issueType': None,
+            }
 
     # 3. Short generic review / low_info
     if is_generic_short_review(text, stars):
