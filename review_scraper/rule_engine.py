@@ -41,9 +41,6 @@ INCENTIVE_KEYWORDS = [
     '送小菜', '送起司球', '送飲料', '送肉', '送單點', '送麻糬', '送奶酪',
 ]
 
-# Additional keywords that trigger incentive check without the "送" context
-NON_SEND_KEYWORDS = ['打卡', '五星', '五顆星', '好評']
-
 # 「活動」alone is ambiguous (can mean event/activity, not just promo).
 # Only flag when paired with promo context. See Issue #59.
 ACTIVITY_PROMO_CONTEXT = [
@@ -269,10 +266,13 @@ def detect_language_ratio(reviews: list[dict]) -> float:
         eligible += 1
         try:
             lang = detect(text)
-            if lang not in ('zh-cn', 'zh-tw', 'ko', 'ja'):
-                # ko/ja included: langdetect frequently misclassifies short
-                # Chinese text as Korean or Japanese due to shared CJK chars.
-                non_zh_count += 1
+            if lang not in ('zh-cn', 'zh-tw'):
+                # langdetect frequently misclassifies short Chinese text as Korean or Japanese 
+                # due to shared CJK chars, so we make an exception for short texts.
+                if lang in ('ko', 'ja') and len(text) < 20:
+                    pass
+                else:
+                    non_zh_count += 1
         except LangDetectException:
             pass
     if eligible == 0:
