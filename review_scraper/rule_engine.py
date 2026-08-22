@@ -14,7 +14,8 @@ import math
 import re
 from collections import defaultdict
 
-from langdetect import detect, LangDetectException
+from langdetect import detect, LangDetectException, DetectorFactory
+DetectorFactory.seed = 0
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -36,12 +37,16 @@ class RuleConfig:
 # ─── 常數 ───────────────────────────────────────────────────
 
 INCENTIVE_KEYWORDS = [
-    '打卡', '活動', '評論送', '打卡送', '好評送', '免費送',
+    '打卡', '評論送', '打卡送', '好評送', '免費送',
     '送小菜', '送起司球', '送飲料', '送肉', '送單點', '送麻糬', '送奶酪',
 ]
 
-# Additional keywords that trigger incentive check without the "送" context
-NON_SEND_KEYWORDS = ['打卡', '活動', '五星', '五顆星', '好評']
+# 「活動」alone is ambiguous (can mean event/activity, not just promo).
+# Only flag when paired with promo context. See Issue #59.
+ACTIVITY_PROMO_CONTEXT = [
+    '送', '打卡', '好評', '評論', '免費', '贈', '五星', '五顆星',
+    '分享', '按讚', '追蹤', '留言', 'Google', 'google', 'IG', 'FB',
+]
 
 # "送" contextual check — ported from auditEngine.ts lines 107-129
 SEND_EXCLUDES = [
@@ -262,7 +267,12 @@ def detect_language_ratio(reviews: list[dict]) -> float:
         try:
             lang = detect(text)
             if lang not in ('zh-cn', 'zh-tw'):
-                non_zh_count += 1
+                # langdetect frequently misclassifies short Chinese text as Korean or Japanese 
+                # due to shared CJK chars, so we make an exception for short texts.
+                if lang in ('ko', 'ja') and len(text) < 20:
+                    pass
+                else:
+                    non_zh_count += 1
         except LangDetectException:
             pass
     if eligible == 0:
@@ -293,10 +303,14 @@ def detect_spike_months(reviews):
 # ─── Per-review audit (mirrors auditEngine.ts auditReview) ───
 
 def _check_incentive_keywords(text):
-    """Check for explicit incentive keywords."""
+    """Check for explicit incentive keywords, with contextual handling for ambiguous words."""
     for kw in INCENTIVE_KEYWORDS:
         if kw in text:
             return kw
+    # 「活動」requires promo context — "親子活動" or "公司活動" are not incentive
+    if '活動' in text:
+        if any(ctx in text for ctx in ACTIVITY_PROMO_CONTEXT):
+            return '活動'
     return None
 
 
