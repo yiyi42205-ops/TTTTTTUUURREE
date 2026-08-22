@@ -31,7 +31,7 @@ def fake_audit_items(batch):
 
 
 def test_audit_returns_results_for_each_review(client, monkeypatch):
-    monkeypatch.setattr(server, "call_gemini_batch", lambda genai_client, store_name, batch: fake_audit_items(batch))
+    monkeypatch.setattr(server, "call_llm_batch", lambda provider, client, store_name, batch: fake_audit_items(batch))
 
     reviews = [make_review(i) for i in range(5)]
     resp = client.post("/api/audit", json={"storeName": "測試店家", "reviews": reviews})
@@ -56,10 +56,10 @@ def test_audit_non_list_reviews_field_returns_4xx(client):
 
 
 def test_audit_malformed_gemini_response_returns_error_not_crash(client, monkeypatch):
-    def raise_malformed(genai_client, store_name, batch):
+    def raise_malformed(provider, client, store_name, batch):
         raise ValueError("Gemini 回傳內容非合法 JSON：模擬缺欄位/格式錯誤")
 
-    monkeypatch.setattr(server, "call_gemini_batch", raise_malformed)
+    monkeypatch.setattr(server, "call_llm_batch", raise_malformed)
 
     reviews = [make_review(i) for i in range(3)]
     resp = client.post("/api/audit", json={"storeName": "測試店家", "reviews": reviews})
@@ -73,13 +73,13 @@ def test_audit_malformed_gemini_response_returns_error_not_crash(client, monkeyp
 def test_audit_partial_batch_failure_still_returns_successful_results(client, monkeypatch):
     call_count = {"n": 0}
 
-    def sometimes_failing(genai_client, store_name, batch):
+    def sometimes_failing(provider, client, store_name, batch):
         call_count["n"] += 1
         if call_count["n"] == 1:
             raise ValueError("模擬第一批失敗")
         return fake_audit_items(batch)
 
-    monkeypatch.setattr(server, "call_gemini_batch", sometimes_failing)
+    monkeypatch.setattr(server, "call_llm_batch", sometimes_failing)
     monkeypatch.setattr(server, "make_batches", lambda reviews: [reviews[:1], reviews[1:]])
 
     reviews = [make_review(i) for i in range(2)]
@@ -94,11 +94,11 @@ def test_audit_partial_batch_failure_still_returns_successful_results(client, mo
 def test_audit_splits_100_reviews_into_multiple_batches(client, monkeypatch):
     seen_batch_sizes = []
 
-    def recording(genai_client, store_name, batch):
+    def recording(provider, client, store_name, batch):
         seen_batch_sizes.append(len(batch))
         return fake_audit_items(batch)
 
-    monkeypatch.setattr(server, "call_gemini_batch", recording)
+    monkeypatch.setattr(server, "call_llm_batch", recording)
 
     reviews = [make_review(i) for i in range(100)]
     resp = client.post("/api/audit", json={"storeName": "測試店家", "reviews": reviews})
@@ -110,7 +110,7 @@ def test_audit_splits_100_reviews_into_multiple_batches(client, monkeypatch):
 
 
 def test_audit_api_key_validation(client, monkeypatch):
-    monkeypatch.setattr(server, "call_gemini_batch", lambda genai_client, store_name, batch: fake_audit_items(batch))
+    monkeypatch.setattr(server, "call_llm_batch", lambda provider, client, store_name, batch: fake_audit_items(batch))
     reviews = [make_review(0)]
 
     # 1. Valid API key (starts with AIzaSy and is >= 35 chars)
@@ -130,7 +130,7 @@ def test_audit_api_key_validation(client, monkeypatch):
         headers={"X-Gemini-API-Key": invalid_prefix}
     )
     assert resp.status_code == 400
-    assert "無效的用戶 API Key 格式" in resp.get_json()["error"]
+    assert "無效的用戶 Gemini API Key 格式" in resp.get_json()["error"]
 
     # 3. Too short API key
     too_short = "AIzaSy" + "A" * 20
@@ -140,5 +140,5 @@ def test_audit_api_key_validation(client, monkeypatch):
         headers={"X-Gemini-API-Key": too_short}
     )
     assert resp.status_code == 400
-    assert "無效的用戶 API Key 格式" in resp.get_json()["error"]
+    assert "無效的用戶 Gemini API Key 格式" in resp.get_json()["error"]
 
