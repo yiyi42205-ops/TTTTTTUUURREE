@@ -436,3 +436,102 @@ def test_scrape_rejects_oversized_url(client):
     assert "URL length exceeds limit" in resp.get_json()["error"]
 
 
+# ---- Non-restaurant category gate ----
+
+def test_scrape_rejects_non_restaurant_category(client, monkeypatch):
+    """When Apify returns a non-food categoryName (e.g. 公園), the endpoint
+    should return 400 with an appropriate error message."""
+    def fake_scrape(url, max_reviews=50):
+        return "ChIJ_park", [
+            {"username": "u1", "stars": 5, "time": "2025-01-01", "text": "漂亮", "images": [], "hasText": True, "imageCount": 0},
+        ], {"totalScore": 4.5, "categoryName": "公園"}
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape)
+
+    resp = client.post("/api/scrape", json={"url": "https://maps.google.com/?cid=park1"})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert "本系統僅適用於餐飲店家" in data["error"]
+    assert "公園" in data["error"]
+
+
+def test_scrape_allows_restaurant_category(client, monkeypatch):
+    """A venue with a food-related categoryName should pass through normally."""
+    def fake_scrape(url, max_reviews=50):
+        return "ChIJ_rest", [
+            {"username": "u1", "stars": 5, "time": "2025-01-01", "text": "好吃", "images": [], "hasText": True, "imageCount": 0},
+        ], {"totalScore": 4.3, "categoryName": "餐廳"}
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape)
+
+    resp = client.post("/api/scrape", json={"url": "https://maps.google.com/?cid=rest1"})
+    assert resp.status_code == 200
+    assert len(resp.get_json()["reviews"]) == 1
+
+
+def test_scrape_allows_missing_category(client, monkeypatch):
+    """When no categoryName is present (e.g. Playwright fallback or old cache),
+    the request should proceed without blocking."""
+    def fake_scrape(url, max_reviews=50):
+        return "ChIJ_nocat", [
+            {"username": "u1", "stars": 4, "time": "2025-01-01", "text": "ok", "images": [], "hasText": True, "imageCount": 0},
+        ], {"totalScore": 4.0}
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape)
+
+    resp = client.post("/api/scrape", json={"url": "https://maps.google.com/?cid=nocat"})
+    assert resp.status_code == 200
+
+
+def test_scrape_probe_rejects_non_restaurant_before_full_scrape(client, monkeypatch):
+    """The probe path should also reject non-restaurant venues early, before
+    running a full (and costly) Apify scrape."""
+    full_scrape_called = {"called": False}
+
+    call_count = {"n": 0}
+    def fake_scrape(url, max_reviews=50):
+        call_count["n"] += 1
+        if max_reviews == 1:
+            # Probe — returns non-restaurant category
+            return None, [], {"categoryName": "觀光景點"}
+        full_scrape_called["called"] = True
+        return "ChIJ_x", [
+            {"username": "u1", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0},
+        ], {"categoryName": "觀光景點"}
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape)
+
+    # Use a URL that won't match any cached place_id, forcing a probe
+    resp = client.post("/api/scrape", json={"url": "https://maps.google.com/?cid=tourist1"})
+    assert resp.status_code == 400
+    assert "本系統僅適用於餐飲店家" in resp.get_json()["error"]
+    assert not full_scrape_called["called"], "Full scrape should not run after probe rejects"
+
+
+def test_is_food_category_helper():
+    """Spot-check the _is_food_category helper for common categories."""
+    from server import _is_food_category
+
+    # Food venues
+    assert _is_food_category("餐廳")
+    assert _is_food_category("日本料理餐廳")
+    assert _is_food_category("咖啡廳")
+    assert _is_food_category("飲料店")
+    assert _is_food_category("火鍋店")
+    assert _is_food_category("Italian Restaurant")
+    assert _is_food_category("Coffee shop")
+    assert _is_food_category("Pizza place")
+    assert _is_food_category("Bakery")
+    assert _is_food_category("Bar")
+    assert _is_food_category("素食餐廳")
+
+    # Non-food venues
+    assert not _is_food_category("公園")
+    assert not _is_food_category("觀光景點")
+    assert not _is_food_category("博物館")
+    assert not _is_food_category("購物中心")
+    assert not _is_food_category("旅館")
+    assert not _is_food_category("Church")
+    assert not _is_food_category("Museum")
+
+
