@@ -44,6 +44,7 @@ import sys
 from dataclasses import asdict
 from datetime import datetime, date
 from pathlib import Path
+from typing import Optional
 
 # Allow importing from review_scraper/
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'review_scraper'))
@@ -444,7 +445,7 @@ def select_llm_sample_stores(results, config: RuleConfig, num_stores=3):
     return scored[:num_stores]
 
 
-def run_llm_sample_mode(base_path: str, config: RuleConfig, num_stores: int = 5, store_names: list[str] | None = None, provider: str = 'gemini') -> list[dict]:
+def run_llm_sample_mode(base_path: str, config: RuleConfig, num_stores: int = 5, store_names: Optional[list] = None, provider: str = 'gemini') -> list[dict]:
     """實際呼叫 Gemini API 對少量店家跑 Stage 2 複審，用來測試 prompt 或訊號
     門檻變體對『真實』Stage 2 判定結果的影響 —— 而不只是規則引擎本身的
     precision/recall。這個模式會產生真實 API 費用與配額消耗，因此僅抽
