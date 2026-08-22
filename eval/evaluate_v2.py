@@ -71,8 +71,8 @@ TODAY = date.today()
 # 預設要掃描的參數組合清單 —— 可用 --sweep-config 換成自訂清單
 DEFAULT_SWEEP = [
     RuleConfig(label='baseline'),
-    RuleConfig(label='stricter_jaccard_0.85', jaccard_threshold=0.85),
-    RuleConfig(label='looser_jaccard_0.65', jaccard_threshold=0.65),
+    RuleConfig(label='stricter_simhash_2', simhash_hamming_threshold=2),
+    RuleConfig(label='looser_simhash_4', simhash_hamming_threshold=4),
     RuleConfig(label='stricter_similarity_0.55', similarity_threshold=0.55),
     RuleConfig(label='looser_similarity_0.35', similarity_threshold=0.35),
     RuleConfig(label='stricter_low_info_esc_3', low_info_escalation_similar_count=3),
@@ -328,14 +328,14 @@ def print_sweep_table(rows, title='參數組合掃描結果（規則引擎，純
     print('\n' + '=' * 118)
     print(title)
     print('=' * 118)
-    print(f"{'label':<28} {'jaccard':<9} {'sim_thr':<9} {'low_info_esc':<13} {'wash_thr':<10} "
+    print(f"{'label':<28} {'simhash':<9} {'sim_thr':<9} {'low_info_esc':<13} {'wash_thr':<10} "
           f"{'Prec':<8} {'Rec':<8} {'F1':<8} {'low_info%':<10}")
     print('-' * 118)
 
     best = max(rows, key=lambda r: r['f1'])
     for row in rows:
         marker = ' ⭐' if row is best else ''
-        print(f"{row['label']:<28} {row['jaccard_threshold']:<9.2f} {row['similarity_threshold']:<9.2f} "
+        print(f"{row['label']:<28} {row['simhash_hamming_threshold']:<9d} {row['similarity_threshold']:<9.2f} "
               f"{row['low_info_escalation_similar_count']:<13} {row['wash_verdict_threshold']:<10.3f} "
               f"{row['precision']:<8.1%} {row['recall']:<8.1%} {row['f1']:<8.3f} "
               f"{row['avg_low_info_ratio']:<10.1%}{marker}")

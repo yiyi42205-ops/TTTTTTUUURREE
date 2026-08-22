@@ -12,6 +12,7 @@ Now it lives here only.
 """
 import math
 import re
+import hashlib
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
@@ -23,7 +24,7 @@ from datetime import datetime
 class RuleConfig:
     """規則引擎的所有門檻值集中於此一個物件，供參數掃描逐組覆寫。"""
     label: str = 'default'
-    jaccard_threshold: float = 0.75
+    simhash_hamming_threshold: int = 3
     min_template_chars: int = 6
     similarity_ngram: int = 3
     similarity_threshold: float = 0.45
@@ -123,7 +124,11 @@ def _simhash(ngrams, hashbits=64):
     Uses bytearray for fast per-bit accumulation.
     """
     mask = (1 << hashbits) - 1
-    hashes = [hash(gram) & mask for gram in ngrams]
+    # Use hashlib to ensure deterministic hashing across processes
+    hashes = []
+    for gram in ngrams:
+        h_bytes = hashlib.md5(gram.encode('utf-8')).digest()[:8]
+        hashes.append(int.from_bytes(h_bytes, 'little') & mask)
     if not hashes:
         return 0
     counts = [0] * hashbits
@@ -184,7 +189,7 @@ def detect_templates(reviews, config: RuleConfig = None):
             block_val = (fp >> (b << 4)) & _SIMHASH_BLOCK_MASK
             key = (b, block_val)
             for j in buckets[key]:
-                if _hamming_distance(fp, fingerprints[j]) <= 3:
+                if _hamming_distance(fp, fingerprints[j]) <= config.simhash_hamming_threshold:
                     flags[i] = flags[j] = True
             buckets[key].append(i)
 

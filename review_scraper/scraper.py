@@ -8,7 +8,6 @@ from playwright_stealth import Stealth
 from bs4 import BeautifulSoup
 import sys
 import builtins
-import urllib.parse
 from urllib.parse import unquote
 
 # ---------------------------------------------------------------------------
@@ -143,6 +142,95 @@ def parse_relative_time(relative_str: str) -> str:
         
     return relative_str
 
+def _dismiss_review_dialog(page):
+    """Dismiss the 'Write a Review' modal dialog that Google Maps sometimes shows
+    when navigating via query_place_id URLs. This modal intercepts all pointer
+    events on the underlying page."""
+    try:
+        dialog = page.query_selector('div[role="dialog"].goog-reviews-write-widget-modal-content')
+        if not dialog:
+            return
+        print("[Python Scraper] Found 'Write a Review' modal dialog, dismissing...")
+        # Press Escape to close the modal
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(1000)
+        # Verify it's gone
+        dialog_after = page.query_selector('div[role="dialog"].goog-reviews-write-widget-modal-content')
+        if dialog_after:
+            # Try clicking the backdrop
+            page.evaluate('''() => {
+                const bg = document.querySelector('.goog-reviews-write-widget-modal-bg');
+                if (bg) bg.click();
+            }''')
+            page.wait_for_timeout(1000)
+        print("[Python Scraper] Dismissed 'Write a Review' dialog.")
+    except Exception as e:
+        print(f"[Python Scraper] Failed to dismiss review dialog: {e}")
+
+
+def _switch_to_newest_sort(page):
+    """Click the sort menu and select '最新' (Newest) to get chronological order.
+    Google Maps defaults to '最相關' (Most relevant) which buries no-text and
+    short reviews, causing systematic bias in scraped data."""
+    try:
+        # The sort button: aria-label="排序評論" or class "S9kvJb"
+        sort_button = page.query_selector('button[aria-label*="排序"], button[aria-label*="Sort"], button.S9kvJb, button.g88MCb')
+        if not sort_button:
+            print("[Python Scraper] Could not find sort button, using default sort order.")
+            return
+        sort_button.click()
+        print("[Python Scraper] Clicked sort button, waiting for dropdown...")
+
+        # Wait for the dropdown menu to actually appear
+        try:
+            page.wait_for_selector('[role="menuitemradio"]', timeout=5000)
+        except Exception:
+            # Dropdown didn't appear — may have a modal overlay or wrong button.
+            # Dismiss any remaining dialogs and retry.
+            print("[Python Scraper] Dropdown didn't appear. Dismissing dialogs and retrying...")
+            _dismiss_review_dialog(page)
+            sort_button_retry = page.query_selector('button[aria-label="排序評論"], button[aria-label*="排序"], button[aria-label*="Sort"]')
+            if sort_button_retry:
+                sort_button_retry.click()
+                try:
+                    page.wait_for_selector('[role="menuitemradio"]', timeout=5000)
+                except Exception:
+                    print("[Python Scraper] Dropdown still didn't appear after retry.")
+                    return
+            else:
+                print("[Python Scraper] Could not find sort button for retry.")
+                return
+
+        # Click '最新' option in the dropdown menu
+        newest_clicked = page.evaluate('''() => {
+            const items = Array.from(document.querySelectorAll('[role="menuitemradio"]'));
+            for (const item of items) {
+                const text = item.textContent.trim();
+                if (text === '最新' || text === 'Newest') {
+                    item.click();
+                    return true;
+                }
+            }
+            // Debug: log what options were found
+            const texts = items.map(i => i.textContent.trim());
+            console.log('Sort menu items found:', JSON.stringify(texts));
+            return false;
+        }''')
+
+        if newest_clicked:
+            print("[Python Scraper] Switched to '最新' (Newest) sort order.")
+            page.wait_for_timeout(2000)  # Wait for reviews to reload
+        else:
+            # Log available options for debugging
+            options = page.evaluate('''() => {
+                return Array.from(document.querySelectorAll('[role="menuitemradio"]'))
+                    .map(i => i.textContent.trim());
+            }''')
+            print(f"[Python Scraper] Could not find '最新' option. Available options: {options}")
+    except Exception as e:
+        print(f"[Python Scraper] Failed to switch sort order: {e}")
+
+
 def scroll_and_extract_reviews(page, max_reviews: int = 50):
     """
     Scrolls the Google Maps review pane down to sequentially load lazy-loaded elements.
@@ -172,6 +260,12 @@ def scroll_and_extract_reviews(page, max_reviews: int = 50):
             print(f"[Python Scraper] Could not find any review elements (.jftiEf) even after scrolling: {e_fallback}")
             return reviews_data
     
+    # Dismiss any "撰寫評論" (Write a Review) modal that may overlay the page
+    _dismiss_review_dialog(page)
+
+    # Switch to "最新" (Newest) sort before scrolling to avoid "最相關" bias
+    _switch_to_newest_sort(page)
+
     last_review_count = 0
     consecutive_same_count = 0
     print("[Python Scraper] Starting review scroll loop...")
@@ -345,24 +439,26 @@ def extract_place_name_from_url(url: str) -> str:
     """
     Extracts the human-readable place name from a Google Maps URL.
     e.g. https://www.google.com/maps/place/%E5%B0%8F%E9%AB%98%E6%8B%89%E9%BA%B5/... -> '小高拉麵'
-    Also handles /maps/search/?api=1&query=...&query_place_id=... format.
+         https://www.google.com/maps/search/?api=1&query=Second+Floor+貳樓師大店&... -> 'Second Floor 貳樓師大店'
     Returns the decoded place name, or the original string if it is already a place name (not a URL).
     """
     if not url.startswith("http://") and not url.startswith("https://"):
         return url
+    # /maps/place/<name>/...
     match = re.search(r'/maps/place/([^/@]+)', url)
     if match:
         raw = match.group(1)
-        # Decode percent-encoded characters
         decoded = unquote(raw).replace('+', ' ').strip()
         if decoded:
             return decoded
-    # Handle /maps/search/?api=1&query=<name>&query_place_id=... format
-    parsed = urllib.parse.urlparse(url)
-    params = urllib.parse.parse_qs(parsed.query)
-    query_val = params.get('query', [''])[0]
-    if query_val:
-        return query_val
+    # /maps/search/?api=1&query=<name>&...
+    from urllib.parse import urlparse, parse_qs
+    parsed = urlparse(url)
+    qs = parse_qs(parsed.query)
+    if 'query' in qs:
+        decoded = qs['query'][0].replace('+', ' ').strip()
+        if decoded:
+            return decoded
     return ""
 
 
@@ -485,43 +581,47 @@ def _click_reviews_tab(page) -> bool:
     return success
 
 
-def _has_query_place_id(url: str) -> bool:
-    """Check if URL contains query_place_id parameter (precise place identifier)."""
-    return 'query_place_id=' in url
-
-
 def navigate_to_place_reviews(page, url: str) -> bool:
     """
     Navigates to the Google Maps place page and activates the Reviews tab.
 
     Strategy:
-      - For URLs with query_place_id: navigate directly via page.goto() first
-        (these URLs contain a precise place identifier so Google Maps resolves
-        them to the exact place page). Fall back to search box if that fails.
-      - For other URLs/names: navigate to maps.google.com first, then use the
-        search box to search for the place name. This bypasses bot detection
-        which normally hides the reviews tab.
+      Navigate to maps.google.com first, then use the search box to search for the place name or URL.
+      This bypasses the bot detection which normally hides the reviews tab.
+      For place_id URLs, search the place_id directly in the search box.
     """
-    # URLs with query_place_id can be navigated directly — they resolve to the
-    # exact place page without needing the search box.
-    if _has_query_place_id(url):
-        print(f"[Python Scraper] URL has query_place_id, navigating directly...")
+    # If URL contains a bare place_id (no query name), visit Maps homepage
+    # first (to get cookies/bypass bot detection), then navigate to the place.
+    place_id_match = re.search(r'place_id:(ChIJ[\w-]+)', url)
+    if place_id_match:
+        place_id = place_id_match.group(1)
+        print(f"[Python Scraper] place_id URL detected: {place_id}")
+        print("[Python Scraper] Visiting Maps homepage first for cookies...")
+        page.goto("https://www.google.com/maps?hl=zh-TW", wait_until="domcontentloaded", timeout=30000)
+        time.sleep(4)
+        # Dismiss consent dialog
         try:
-            page.goto(url + "&hl=zh-TW", wait_until="domcontentloaded", timeout=30000)
-            time.sleep(6)
-            if _check_place_loaded(page):
-                print("[Python Scraper] ✓ Direct navigation landed on place page.")
-                if _click_reviews_tab(page):
-                    return True
-                print("[Python Scraper] Reviews tab hidden (bot detection), falling back to search box...")
-            else:
-                print("[Python Scraper] Direct navigation didn't land on place page, falling back to search box...")
-        except Exception as e:
-            print(f"[Python Scraper] Direct navigation failed: {e}, falling back to search box...")
-
-    place_name = extract_place_name_from_url(url)
-    search_query = place_name if place_name else url
-    print(f"[Python Scraper] Search query: '{search_query}'")
+            page.evaluate('''() => {
+                const btns = Array.from(document.querySelectorAll('button, form button'));
+                const acceptBtn = btns.find(b => b.textContent.includes('全部同意') || b.textContent.includes('Accept all') || b.textContent.includes('同意'));
+                if (acceptBtn) acceptBtn.click();
+            }''')
+            time.sleep(2)
+        except Exception:
+            pass
+        # Now navigate to the place via query_place_id
+        target_url = f"https://www.google.com/maps/search/?api=1&query=_&query_place_id={place_id}"
+        print(f"[Python Scraper] Navigating to: {target_url}")
+        page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
+        time.sleep(8)
+        if _check_place_loaded(page):
+            return _click_reviews_tab(page)
+        print("[Python Scraper] place_id navigation failed to load place panel.")
+        return False
+    else:
+        place_name = extract_place_name_from_url(url)
+        search_query = place_name if place_name else url
+        print(f"[Python Scraper] Search query: '{search_query}'")
 
     print("[Python Scraper] Navigating to Google Maps home page first to bypass bot detection...")
     page.goto("https://www.google.com/maps?hl=zh-TW", wait_until="domcontentloaded", timeout=30000)

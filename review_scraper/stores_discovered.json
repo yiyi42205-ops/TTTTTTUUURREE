@@ -525,6 +525,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "國立臺灣大學傅鐘",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E5%82%85%E9%90%98&query_place_id=ChIJCWju_ompQjQRSTt7sUJQG3c",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "阿玉水餃 (生水餃專賣店)",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%98%BF%E7%8E%89%E6%B0%B4%E9%A4%83%20(%E7%94%9F%E6%B0%B4%E9%A4%83%E5%B0%88%E8%B3%A3%E5%BA%97)&query_place_id=ChIJXzNlTS-qQjQRCvn2xhSfPAk",
     "region": "③ 溫州街/新生南路（東）"
@@ -635,6 +640,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "Qtime 公館店",
+    "url": "https://www.google.com/maps/search/?api=1&query=Qtime%20%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJAbLKl4upQjQRQsUVeXxyHgQ",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "想聚 Mr.Jardeng",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%83%B3%E8%81%9A%20Mr.Jardeng&query_place_id=ChIJX26GJyIDaDQRcxpj-qsLTLQ",
     "region": "⑤ 公館商圈（南）"
@@ -723,6 +733,11 @@
     "name": "inn cafe 師大店",
     "url": "https://www.google.com/maps/search/?api=1&query=inn%20cafe%20%E5%B8%AB%E5%A4%A7%E5%BA%97&query_place_id=ChIJLddjuoWpQjQR305xoI6W43Y",
     "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "國立臺灣科技大學",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E7%A7%91%E6%8A%80%E5%A4%A7%E5%AD%B8&query_place_id=ChIJrcDEdiGqQjQRVfQp7kRe25A",
+    "region": "④ 台大校園周邊（中心）"
   },
   {
     "name": "十二巷拉麵",
@@ -850,6 +865,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "國立臺灣師範大學",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%B8%AB%E7%AF%84%E5%A4%A7%E5%AD%B8&query_place_id=ChIJYb4lRIWpQjQRNAav7O-Ymcc",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "銀座河粉蛋麵 SlNCE 1976(公館台大)",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%8A%80%E5%BA%A7%E6%B2%B3%E7%B2%89%E8%9B%8B%E9%BA%B5%20SlNCE%201976(%E5%85%AC%E9%A4%A8%E5%8F%B0%E5%A4%A7)&query_place_id=ChIJn_43m4upQjQR7NWYb9rn7CY",
     "region": "⑤ 公館商圈（南）"
@@ -898,6 +918,11 @@
     "name": "壹森泰食堂~師大第一腿(公館店）",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%A3%B9%E6%A3%AE%E6%B3%B0%E9%A3%9F%E5%A0%82~%E5%B8%AB%E5%A4%A7%E7%AC%AC%E4%B8%80%E8%85%BF(%E5%85%AC%E9%A4%A8%E5%BA%97%EF%BC%89&query_place_id=ChIJQY_kFOCpQjQRJNwso0YcVuc",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "谷墨商旅 GoodMore Hotel",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%B0%B7%E5%A2%A8%E5%95%86%E6%97%85%20GoodMore%20Hotel&query_place_id=ChIJAaMjLISpQjQRgjsXYfrppMY",
+    "region": "② 大安/科技大樓（東北）"
   },
   {
     "name": "大狗麵線（師大店）",
@@ -1080,6 +1105,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "捷絲旅 臺大尊賢館 (Just Sleep Taipei NTU)",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%8D%B7%E7%B5%B2%E6%97%85%20%E8%87%BA%E5%A4%A7%E5%B0%8A%E8%B3%A2%E9%A4%A8%20(Just%20Sleep%20Taipei%20NTU)&query_place_id=ChIJnTf9loqpQjQRkJ81-URNMRQ",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "大福利排骨大王 公館店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E7%A6%8F%E5%88%A9%E6%8E%92%E9%AA%A8%E5%A4%A7%E7%8E%8B%20%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJY-PpkIupQjQRNAef9MdsW4k",
     "region": "⑤ 公館商圈（南）"
@@ -1210,6 +1240,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "天主教聖家堂",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A4%A9%E4%B8%BB%E6%95%99%E8%81%96%E5%AE%B6%E5%A0%82&query_place_id=ChIJ26tyKIGpQjQRkp-X_W1UorQ",
+    "region": "③ 溫州街/新生南路（東）"
+  },
+  {
     "name": "野餐咖啡 Picnic cafe",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%87%8E%E9%A4%90%E5%92%96%E5%95%A1%20Picnic%20cafe&query_place_id=ChIJ9RWM4YipQjQRjgvTW4V2-o0",
     "region": "③ 溫州街/新生南路（東）"
@@ -1320,6 +1355,11 @@
     "region": "⑦ 師大/龍泉街（西北）"
   },
   {
+    "name": "全聯福利中心 文山萬年店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E8%81%AF%E7%A6%8F%E5%88%A9%E4%B8%AD%E5%BF%83%20%E6%96%87%E5%B1%B1%E8%90%AC%E5%B9%B4%E5%BA%97&query_place_id=ChIJR8L7L_apQjQRiHWMvwrH_sU",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "南川麵館",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%8D%97%E5%B7%9D%E9%BA%B5%E9%A4%A8&query_place_id=ChIJhbW0KDKqQjQRecAjNGCnt28",
     "region": "② 大安/科技大樓（東北）"
@@ -1425,8 +1465,18 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "國立臺北教育大學",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E5%8C%97%E6%95%99%E8%82%B2%E5%A4%A7%E5%AD%B8&query_place_id=ChIJESYjqAipQjQRxyVQGteyv-4",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "拿坡里披薩 和平店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%8B%BF%E5%9D%A1%E9%87%8C%E6%8A%AB%E8%96%A9%20%E5%92%8C%E5%B9%B3%E5%BA%97&query_place_id=ChIJu_rKFH2rQjQRces8SYIDOn0",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "QhAt帽子烤密室工廠",
+    "url": "https://www.google.com/maps/search/?api=1&query=QhAt%E5%B8%BD%E5%AD%90%E7%83%A4%E5%AF%86%E5%AE%A4%E5%B7%A5%E5%BB%A0&query_place_id=ChIJq-z2zmOpQjQR_sBQPQtnlVo",
     "region": "② 大安/科技大樓（東北）"
   },
   {
@@ -1450,6 +1500,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "Pipe Live Music",
+    "url": "https://www.google.com/maps/search/?api=1&query=Pipe%20Live%20Music&query_place_id=ChIJa1Rks4ypQjQRj61Zbkvp-x8",
+    "region": "④ 台大校園周邊（中心）"
+  },
+  {
     "name": "好呷拉麵 甜品吃到飽(師大) *呷：ㄒㄧㄚˊ",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%A5%BD%E5%91%B7%E6%8B%89%E9%BA%B5%20%E7%94%9C%E5%93%81%E5%90%83%E5%88%B0%E9%A3%BD(%E5%B8%AB%E5%A4%A7)%20*%E5%91%B7%EF%BC%9A%E3%84%92%E3%84%A7%E3%84%9A%CB%8A&query_place_id=ChIJbdR_yO2pQjQROvsiWcPbvZY",
     "region": "⑦ 師大/龍泉街（西北）"
@@ -1470,8 +1525,18 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "樂家康超市 台北同安店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%A8%82%E5%AE%B6%E5%BA%B7%E8%B6%85%E5%B8%82%20%E5%8F%B0%E5%8C%97%E5%90%8C%E5%AE%89%E5%BA%97&query_place_id=ChIJt24Ys6CpQjQRFn0CiCVzyhk",
+    "region": "① 古亭/中正（北）"
+  },
+  {
     "name": "高記燒臘大安廚房",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%AB%98%E8%A8%98%E7%87%92%E8%87%98%E5%A4%A7%E5%AE%89%E5%BB%9A%E6%88%BF&query_place_id=ChIJI1nkMIurQjQRUM7LKww2wKA",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "全聯福利中心 大安復興南店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E8%81%AF%E7%A6%8F%E5%88%A9%E4%B8%AD%E5%BF%83%20%E5%A4%A7%E5%AE%89%E5%BE%A9%E8%88%88%E5%8D%97%E5%BA%97&query_place_id=ChIJwyhwHiyqQjQRHdo7FR-Awyc",
     "region": "② 大安/科技大樓（東北）"
   },
   {
@@ -1695,6 +1760,11 @@
     "region": "⑦ 師大/龍泉街（西北）"
   },
   {
+    "name": "樂家康超市 台北師大店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%A8%82%E5%AE%B6%E5%BA%B7%E8%B6%85%E5%B8%82%20%E5%8F%B0%E5%8C%97%E5%B8%AB%E5%A4%A7%E5%BA%97&query_place_id=ChIJUdb7NfipQjQRXWP5VtkkiDM",
+    "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
     "name": "路燈咖啡 師大店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%B7%AF%E7%87%88%E5%92%96%E5%95%A1%20%E5%B8%AB%E5%A4%A7%E5%BA%97&query_place_id=ChIJfXP7YIWpQjQRzDo5v6WPkac",
     "region": "⑦ 師大/龍泉街（西北）"
@@ -1785,6 +1855,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "市定古蹟紀州庵",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B8%82%E5%AE%9A%E5%8F%A4%E8%B9%9F%E7%B4%80%E5%B7%9E%E5%BA%B5&query_place_id=ChIJpRnPUJGpQjQRe2-2qydgGBw",
+    "region": "① 古亭/中正（北）"
+  },
+  {
     "name": "丼丼GO-公館店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E4%B8%BC%E4%B8%BCGO-%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJ8c5IGwCpQjQRp8tESrYNSR0",
     "region": "⑤ 公館商圈（南）"
@@ -1865,6 +1940,11 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "國立臺灣師範大學 圖書館總館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%B8%AB%E7%AF%84%E5%A4%A7%E5%AD%B8%20%E5%9C%96%E6%9B%B8%E9%A4%A8%E7%B8%BD%E9%A4%A8&query_place_id=ChIJ_RYYFoWpQjQRfsdRgQoZchU",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "JOHN DOE CAFÉ 無名氏咖啡",
     "url": "https://www.google.com/maps/search/?api=1&query=JOHN%20DOE%20CAF%C3%89%20%E7%84%A1%E5%90%8D%E6%B0%8F%E5%92%96%E5%95%A1&query_place_id=ChIJXb2HFx2qQjQRb3897wBw4Fk",
     "region": "⑤ 公館商圈（南）"
@@ -1905,6 +1985,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "國立臺灣大學圖書館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E5%9C%96%E6%9B%B8%E9%A4%A8&query_place_id=ChIJq7ZG3SaqQjQRX12lGfyiwdY",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "Mimi's Cafe米米咖啡",
     "url": "https://www.google.com/maps/search/?api=1&query=Mimi's%20Cafe%E7%B1%B3%E7%B1%B3%E5%92%96%E5%95%A1&query_place_id=ChIJ9VvPhoupQjQRO3l3GebY64I",
     "region": "⑤ 公館商圈（南）"
@@ -1915,9 +2000,19 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "雋美佳茶業公司",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%9B%8B%E7%BE%8E%E4%BD%B3%E8%8C%B6%E6%A5%AD%E5%85%AC%E5%8F%B8&query_place_id=ChIJxfQnSSmqQjQRvhxC2lMKCHA",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "Pasta 2 Go",
     "url": "https://www.google.com/maps/search/?api=1&query=Pasta%202%20Go&query_place_id=ChIJXbirD4mpQjQRIaUprnvvILw",
     "region": "③ 溫州街/新生南路（東）"
+  },
+  {
+    "name": "國立臺灣師範大學 公館校區",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%B8%AB%E7%AF%84%E5%A4%A7%E5%AD%B8%20%E5%85%AC%E9%A4%A8%E6%A0%A1%E5%8D%80&query_place_id=ChIJi3OrJx6qQjQRdTRYN4zjWy4",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "伊洛瓦底雲泰餐廳",
@@ -2050,6 +2145,11 @@
     "region": "④ 台大校園周邊（中心）"
   },
   {
+    "name": "古亭快印(數位印刷)-預約制",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%A4%E4%BA%AD%E5%BF%AB%E5%8D%B0(%E6%95%B8%E4%BD%8D%E5%8D%B0%E5%88%B7)-%E9%A0%90%E7%B4%84%E5%88%B6&query_place_id=ChIJ8X2l32GpQjQRCACTRvB96Lg",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "肉之間大盤肉幸福鍋物 台北古亭店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%82%89%E4%B9%8B%E9%96%93%E5%A4%A7%E7%9B%A4%E8%82%89%E5%B9%B8%E7%A6%8F%E9%8D%8B%E7%89%A9%20%E5%8F%B0%E5%8C%97%E5%8F%A4%E4%BA%AD%E5%BA%97&query_place_id=ChIJWWt4WmmpQjQRP2ImkCooIJg",
     "region": "⑤ 公館商圈（南）"
@@ -2113,6 +2213,21 @@
     "name": "小職人 師大店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E8%81%B7%E4%BA%BA%20%E5%B8%AB%E5%A4%A7%E5%BA%97&query_place_id=ChIJr2ITZoWpQjQRWLITI7rRu9E",
     "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "全聯福利中心 大安北師店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E8%81%AF%E7%A6%8F%E5%88%A9%E4%B8%AD%E5%BF%83%20%E5%A4%A7%E5%AE%89%E5%8C%97%E5%B8%AB%E5%BA%97&query_place_id=ChIJD6Fl206rQjQR4Q_unzVv8Pg",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "全聯和平店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E8%81%AF%E5%92%8C%E5%B9%B3%E5%BA%97&query_place_id=ChIJC-9ZUPerQjQRZwfoSEPdquY",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "蒐機王",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%92%90%E6%A9%9F%E7%8E%8B&query_place_id=ChIJNQbYj5qpQjQR6BjTKZZNOQo",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "MD創作料理（台大明達館）",
@@ -2255,6 +2370,11 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "國立臺灣大學校門古蹟",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E6%A0%A1%E9%96%80%E5%8F%A4%E8%B9%9F&query_place_id=ChIJ7UXozYupQjQRjPFJ0cVUULU",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "達文西咖啡 - 台大旗艦店（溫州店）",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%81%94%E6%96%87%E8%A5%BF%E5%92%96%E5%95%A1%20-%20%E5%8F%B0%E5%A4%A7%E6%97%97%E8%89%A6%E5%BA%97%EF%BC%88%E6%BA%AB%E5%B7%9E%E5%BA%97%EF%BC%89&query_place_id=ChIJCRed4JmpQjQRpOEwyWt1wwU",
     "region": "③ 溫州街/新生南路（東）"
@@ -2390,8 +2510,23 @@
     "region": "其他"
   },
   {
+    "name": "嚦咕桌遊空間-公館店/自助麻將",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9A%A6%E5%92%95%E6%A1%8C%E9%81%8A%E7%A9%BA%E9%96%93-%E5%85%AC%E9%A4%A8%E5%BA%97%2F%E8%87%AA%E5%8A%A9%E9%BA%BB%E5%B0%87&query_place_id=ChIJSVqdmjmpQjQRqDBx6PkMP68",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "樂和牛排館",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%A8%82%E5%92%8C%E7%89%9B%E6%8E%92%E9%A4%A8&query_place_id=ChIJq8em6qGrQjQReEADI2rNAOU",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "蘭納泰式舒壓會館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%98%AD%E7%B4%8D%E6%B3%B0%E5%BC%8F%E8%88%92%E5%A3%93%E6%9C%83%E9%A4%A8&query_place_id=ChIJhZgZ9pqpQjQRnXYC0GyX99s",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "舒適圈．Comfortzone",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%88%92%E9%81%A9%E5%9C%88%EF%BC%8EComfortzone&query_place_id=ChIJ847djjGqQjQREq7rfUFyDhc",
     "region": "② 大安/科技大樓（東北）"
   },
   {
@@ -2785,6 +2920,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "7-ELEVEN 博源門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E5%8D%9A%E6%BA%90%E9%96%80%E5%B8%82&query_place_id=ChIJ7SAJn4ypQjQRMjHcyfBAU1U",
+    "region": "④ 台大校園周邊（中心）"
+  },
+  {
     "name": "忠誠山東蔥油餅",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%BF%A0%E8%AA%A0%E5%B1%B1%E6%9D%B1%E8%94%A5%E6%B2%B9%E9%A4%85&query_place_id=ChIJ_d8nLS-qQjQRJLb-DpgSI8k",
     "region": "② 大安/科技大樓（東北）"
@@ -2863,6 +3003,11 @@
     "name": "厚宅",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%8E%9A%E5%AE%85&query_place_id=ChIJG63H1zKrQjQRHDmucp9LJ4Q",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "國立臺灣大學鹿鳴廣場",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E9%B9%BF%E9%B3%B4%E5%BB%A3%E5%A0%B4&query_place_id=ChIJI-seliCqQjQRw2pzIkTea8o",
+    "region": "④ 台大校園周邊（中心）"
   },
   {
     "name": "港式萬隆燒臘",
@@ -3030,6 +3175,11 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "尖端視光眼鏡－公館門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B0%96%E7%AB%AF%E8%A6%96%E5%85%89%E7%9C%BC%E9%8F%A1%EF%BC%8D%E5%85%AC%E9%A4%A8%E9%96%80%E5%B8%82&query_place_id=ChIJ798wmxeqQjQRJqmSO1eA7lw",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "雙囍家常料理",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%9B%99%E5%9B%8D%E5%AE%B6%E5%B8%B8%E6%96%99%E7%90%86&query_place_id=ChIJU09lSJqpQjQR0DsiKqtRtGY",
     "region": "⑤ 公館商圈（南）"
@@ -3040,6 +3190,11 @@
     "region": "⑦ 師大/龍泉街（西北）"
   },
   {
+    "name": "福華文教會館卓越廳",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%A6%8F%E8%8F%AF%E6%96%87%E6%95%99%E6%9C%83%E9%A4%A8%E5%8D%93%E8%B6%8A%E5%BB%B3&query_place_id=ChIJT5Gka16pQjQRSNoosj5f7Kc",
+    "region": "③ 溫州街/新生南路（東）"
+  },
+  {
     "name": "銀兔湯咖哩 創始旗艦店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%8A%80%E5%85%94%E6%B9%AF%E5%92%96%E5%93%A9%20%E5%89%B5%E5%A7%8B%E6%97%97%E8%89%A6%E5%BA%97&query_place_id=ChIJM-wLaJWpQjQRsAY7d_io1UQ",
     "region": "⑦ 師大/龍泉街（西北）"
@@ -3048,6 +3203,11 @@
     "name": "蒙藏文化館",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%92%99%E8%97%8F%E6%96%87%E5%8C%96%E9%A4%A8&query_place_id=ChIJ9_lfoIapQjQRkk9MwUBKqGc",
     "region": "③ 溫州街/新生南路（東）"
+  },
+  {
+    "name": "全聯福利中心Pxmart 中正同安店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E8%81%AF%E7%A6%8F%E5%88%A9%E4%B8%AD%E5%BF%83Pxmart%20%E4%B8%AD%E6%AD%A3%E5%90%8C%E5%AE%89%E5%BA%97&query_place_id=ChIJQQeJntepQjQRFa2FswI-wtk",
+    "region": "① 古亭/中正（北）"
   },
   {
     "name": "JODO 飯糰咖啡手作專門店 台北汀州店",
@@ -3205,6 +3365,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "龍泉市場",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%BE%8D%E6%B3%89%E5%B8%82%E5%A0%B4&query_place_id=ChIJZ19W_46pQjQRtDJsJbDQaJg",
+    "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
     "name": "女九餐廳",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%A5%B3%E4%B9%9D%E9%A4%90%E5%BB%B3&query_place_id=ChIJp4dzrieqQjQRL9y15nZac5k",
     "region": "⑤ 公館商圈（南）"
@@ -3243,6 +3408,11 @@
     "name": "James Joyce Irish Bar-Anhe 安和酒吧",
     "url": "https://www.google.com/maps/search/?api=1&query=James%20Joyce%20Irish%20Bar-Anhe%20%E5%AE%89%E5%92%8C%E9%85%92%E5%90%A7&query_place_id=ChIJRQDmvEqrQjQRFVLOsJ2Ufc8",
     "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "承攜行旅 - 台北台大館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%89%BF%E6%94%9C%E8%A1%8C%E6%97%85%20-%20%E5%8F%B0%E5%8C%97%E5%8F%B0%E5%A4%A7%E9%A4%A8&query_place_id=ChIJg7wMgf2pQjQRNyH3UgpKvzg",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "丼壽司",
@@ -3330,6 +3500,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "7-ELEVEN 長星門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E9%95%B7%E6%98%9F%E9%96%80%E5%B8%82&query_place_id=ChIJN1a3qyWqQjQRPA916qJUBYs",
+    "region": "④ 台大校園周邊（中心）"
+  },
+  {
     "name": "賈福廚房（寵物友善）",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%B3%88%E7%A6%8F%E5%BB%9A%E6%88%BF%EF%BC%88%E5%AF%B5%E7%89%A9%E5%8F%8B%E5%96%84%EF%BC%89&query_place_id=ChIJyZKvmiuqQjQR2RPTk1xQsLA",
     "region": "② 大安/科技大樓（東北）"
@@ -3343,6 +3518,11 @@
     "name": "NENE CHICKEN 師大店",
     "url": "https://www.google.com/maps/search/?api=1&query=NENE%20CHICKEN%20%E5%B8%AB%E5%A4%A7%E5%BA%97&query_place_id=ChIJTaTxU5ipQjQR9xCtq7fNsJs",
     "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "生計食品有限公司",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%94%9F%E8%A8%88%E9%A3%9F%E5%93%81%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8&query_place_id=ChIJrfQHGpCpQjQR3B44_Uh-CkA",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "有飲 Youin 創意飲品-台北公館店",
@@ -3523,6 +3703,11 @@
     "name": "喜禾嘉",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%96%9C%E7%A6%BE%E5%98%89&query_place_id=ChIJj5qtOtCpQjQR5H9mlKS0-fk",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "國立臺灣大學男生第一宿舍",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E7%94%B7%E7%94%9F%E7%AC%AC%E4%B8%80%E5%AE%BF%E8%88%8D&query_place_id=ChIJk50NaiSqQjQRSKlfoTfo8cs",
+    "region": "④ 台大校園周邊（中心）"
   },
   {
     "name": "阿孟石碗燒河粉",
@@ -3985,6 +4170,11 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "象緣泰式養生會館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%B1%A1%E7%B7%A3%E6%B3%B0%E5%BC%8F%E9%A4%8A%E7%94%9F%E6%9C%83%E9%A4%A8&query_place_id=ChIJ475b4MzWDRQRTcrZ6Di7leQ",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "布拉格咖啡館",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%B8%83%E6%8B%89%E6%A0%BC%E5%92%96%E5%95%A1%E9%A4%A8&query_place_id=ChIJL2Fa84WpQjQRE6YF4v4s7XQ",
     "region": "③ 溫州街/新生南路（東）"
@@ -4295,6 +4485,11 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "開平學苑 Kai Ping Academy",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%96%8B%E5%B9%B3%E5%AD%B8%E8%8B%91%20Kai%20Ping%20Academy&query_place_id=ChIJJ0VPQAqrQjQREtGVmT92_ek",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "北極熊抱",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%8C%97%E6%A5%B5%E7%86%8A%E6%8A%B1&query_place_id=ChIJfVGWf5CpQjQR-SBl1YCCC3s",
     "region": "① 古亭/中正（北）"
@@ -4323,6 +4518,11 @@
     "name": "五桐號WooTea 台北古亭店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E4%BA%94%E6%A1%90%E8%99%9FWooTea%20%E5%8F%B0%E5%8C%97%E5%8F%A4%E4%BA%AD%E5%BA%97&query_place_id=ChIJuTF1EUSpQjQRFQb8cundnBE",
     "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "樂家康超市 台北羅斯福店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%A8%82%E5%AE%B6%E5%BA%B7%E8%B6%85%E5%B8%82%20%E5%8F%B0%E5%8C%97%E7%BE%85%E6%96%AF%E7%A6%8F%E5%BA%97&query_place_id=ChIJNZV1ZI6pQjQRjhjolzoiuBw",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "郁川軒拉麵（辛担担麵）",
@@ -4375,6 +4575,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "錦安市場 昭和町文物市集",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E9%8C%A6%E5%AE%89%E5%B8%82%E5%A0%B4%20%E6%98%AD%E5%92%8C%E7%94%BA%E6%96%87%E7%89%A9%E5%B8%82%E9%9B%86&query_place_id=ChIJe7yJbYSpQjQRWKgqXWSDg7w",
+    "region": "③ 溫州街/新生南路（東）"
+  },
+  {
     "name": "品軒樓",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%93%81%E8%BB%92%E6%A8%93&query_place_id=ChIJ__9vmiCqQjQRrXJgNYJ2NT8",
     "region": "⑤ 公館商圈（南）"
@@ -4398,6 +4603,11 @@
     "name": "ocean Taipei Bar",
     "url": "https://www.google.com/maps/search/?api=1&query=ocean%20Taipei%20Bar&query_place_id=ChIJ-0ZOGQCpQjQR8nJVuOVw3us",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "樂家康超市 大安和平東店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%A8%82%E5%AE%B6%E5%BA%B7%E8%B6%85%E5%B8%82%20%E5%A4%A7%E5%AE%89%E5%92%8C%E5%B9%B3%E6%9D%B1%E5%BA%97&query_place_id=ChIJK_TZ_ZCpQjQRKi_sv2qFr0A",
+    "region": "② 大安/科技大樓（東北）"
   },
   {
     "name": "英仕堡精緻早午餐汀州店",
@@ -4715,6 +4925,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "台北富邦銀行 古亭分行",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%B0%E5%8C%97%E5%AF%8C%E9%82%A6%E9%8A%80%E8%A1%8C%20%E5%8F%A4%E4%BA%AD%E5%88%86%E8%A1%8C&query_place_id=ChIJfyuOUo6pQjQRnNtIP2CxvgI",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "Delight Café 日光咖啡 | 早午餐",
     "url": "https://www.google.com/maps/search/?api=1&query=Delight%20Caf%C3%A9%20%E6%97%A5%E5%85%89%E5%92%96%E5%95%A1%20%7C%20%E6%97%A9%E5%8D%88%E9%A4%90&query_place_id=ChIJMaLOKW-pQjQRkCc5w7R3Sho",
     "region": "⑦ 師大/龍泉街（西北）"
@@ -4772,6 +4987,11 @@
   {
     "name": "熊大牛肉麵",
     "url": "https://www.google.com/maps/search/?api=1&query=%E7%86%8A%E5%A4%A7%E7%89%9B%E8%82%89%E9%BA%B5&query_place_id=ChIJkaYjc26pQjQRpyhCEtaB9EQ",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "古亭市場",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%A4%E4%BA%AD%E5%B8%82%E5%A0%B4&query_place_id=ChIJ8QJejpqpQjQRLB1g66MmMGw",
     "region": "⑤ 公館商圈（南）"
   },
   {
@@ -4875,6 +5095,11 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "三禾影電器視聽有限公司",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E4%B8%89%E7%A6%BE%E5%BD%B1%E9%9B%BB%E5%99%A8%E8%A6%96%E8%81%BD%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8&query_place_id=ChIJm27u2C6qQjQR8SAikP6zc9k",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "丘丘麻糬商號",
     "url": "https://www.google.com/maps/search/?api=1&query=%E4%B8%98%E4%B8%98%E9%BA%BB%E7%B3%AC%E5%95%86%E8%99%9F&query_place_id=ChIJWwl3UwCpQjQR1vzlTGaCW0c",
     "region": "③ 溫州街/新生南路（東）"
@@ -4883,6 +5108,11 @@
     "name": "中正一村 眷村麵食",
     "url": "https://www.google.com/maps/search/?api=1&query=%E4%B8%AD%E6%AD%A3%E4%B8%80%E6%9D%91%20%E7%9C%B7%E6%9D%91%E9%BA%B5%E9%A3%9F&query_place_id=ChIJa0z0tKSpQjQRA5KpoHpZqtc",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "樂家康超市 台北新生南店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%A8%82%E5%AE%B6%E5%BA%B7%E8%B6%85%E5%B8%82%20%E5%8F%B0%E5%8C%97%E6%96%B0%E7%94%9F%E5%8D%97%E5%BA%97&query_place_id=ChIJwUI1VlWpQjQRuVNNh4T69z4",
+    "region": "③ 溫州街/新生南路（東）"
   },
   {
     "name": "烏弄原生茶飲(台北公館店)",
@@ -4943,6 +5173,11 @@
     "name": "晨間廚房大安教育店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%99%A8%E9%96%93%E5%BB%9A%E6%88%BF%E5%A4%A7%E5%AE%89%E6%95%99%E8%82%B2%E5%BA%97&query_place_id=ChIJ7cPUT2qrQjQREP4Ddl1bNPI",
     "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "7-ELEVEN 大台門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E5%A4%A7%E5%8F%B0%E9%96%80%E5%B8%82&query_place_id=ChIJM9YB3IupQjQRmXJLMkzNGP8",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "麵匡匡拉麵食堂 台北萬隆店",
@@ -5062,6 +5297,11 @@
   {
     "name": "李有甜鮮米釀 台大公館飲料店(暫停營業)",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%9D%8E%E6%9C%89%E7%94%9C%E9%AE%AE%E7%B1%B3%E9%87%80%20%E5%8F%B0%E5%A4%A7%E5%85%AC%E9%A4%A8%E9%A3%B2%E6%96%99%E5%BA%97(%E6%9A%AB%E5%81%9C%E7%87%9F%E6%A5%AD)&query_place_id=ChIJg_TXFACpQjQRGTBSEVpxo40",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "夢想健身 - 師大會館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A4%A2%E6%83%B3%E5%81%A5%E8%BA%AB%20-%20%E5%B8%AB%E5%A4%A7%E6%9C%83%E9%A4%A8&query_place_id=ChIJtfAuhsWpQjQR1cCsPkzUvqQ",
     "region": "⑤ 公館商圈（南）"
   },
   {
@@ -5195,6 +5435,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "7-ELEVEN 新羅福門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E6%96%B0%E7%BE%85%E7%A6%8F%E9%96%80%E5%B8%82&query_place_id=ChIJDbLTX3SpQjQRitjFxpLtpxk",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "欣杭小吃",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%AC%A3%E6%9D%AD%E5%B0%8F%E5%90%83&query_place_id=ChIJLcq7ygCpQjQRu4jtbw_i1qM",
     "region": "① 古亭/中正（北）"
@@ -5233,6 +5478,11 @@
     "name": "台越小吃店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%B0%E8%B6%8A%E5%B0%8F%E5%90%83%E5%BA%97&query_place_id=ChIJ33McYKipQjQRiifDS_97bNE",
     "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "台北市立圖書館 道藩分館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%B0%E5%8C%97%E5%B8%82%E7%AB%8B%E5%9C%96%E6%9B%B8%E9%A4%A8%20%E9%81%93%E8%97%A9%E5%88%86%E9%A4%A8&query_place_id=ChIJjxCxQS-qQjQROCYnqmILDRU",
+    "region": "③ 溫州街/新生南路（東）"
   },
   {
     "name": "潭莊小卷米粉",
@@ -5315,6 +5565,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "國立臺灣師範大學進修推廣學院",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%B8%AB%E7%AF%84%E5%A4%A7%E5%AD%B8%E9%80%B2%E4%BF%AE%E6%8E%A8%E5%BB%A3%E5%AD%B8%E9%99%A2&query_place_id=ChIJa9lTVYSpQjQRS2DSG4eJWm0",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "山摺山甜點",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%B1%B1%E6%91%BA%E5%B1%B1%E7%94%9C%E9%BB%9E&query_place_id=ChIJtaOURgCpQjQRMKEsyJWGnaU",
     "region": "⑤ 公館商圈（南）"
@@ -5330,6 +5585,11 @@
     "region": "⑦ 師大/龍泉街（西北）"
   },
   {
+    "name": "7-ELEVEN 禾光門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E7%A6%BE%E5%85%89%E9%96%80%E5%B8%82&query_place_id=ChIJ1bY0vimqQjQRBM4YjG6d6Eg",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "TrueWin初韻 台北古亭店",
     "url": "https://www.google.com/maps/search/?api=1&query=TrueWin%E5%88%9D%E9%9F%BB%20%E5%8F%B0%E5%8C%97%E5%8F%A4%E4%BA%AD%E5%BA%97&query_place_id=ChIJa40VsSWpQjQR0q7R3iLzhwE",
     "region": "② 大安/科技大樓（東北）"
@@ -5342,6 +5602,11 @@
   {
     "name": "Sydney 餐盒&咖啡專門（公館外帶門市）",
     "url": "https://www.google.com/maps/search/?api=1&query=Sydney%20%E9%A4%90%E7%9B%92%26%E5%92%96%E5%95%A1%E5%B0%88%E9%96%80%EF%BC%88%E5%85%AC%E9%A4%A8%E5%A4%96%E5%B8%B6%E9%96%80%E5%B8%82%EF%BC%89&query_place_id=ChIJMzkQnEirQjQRsEo-d0p_kCk",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "全家便利商店 古亭店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E5%AE%B6%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E5%8F%A4%E4%BA%AD%E5%BA%97&query_place_id=ChIJw0eM39CrQjQRnVt7dwO1o0Q",
     "region": "⑤ 公館商圈（南）"
   },
   {
@@ -5460,6 +5725,11 @@
     "region": "⑦ 師大/龍泉街（西北）"
   },
   {
+    "name": "國立臺灣師範大學學生宿舍",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%B8%AB%E7%AF%84%E5%A4%A7%E5%AD%B8%E5%AD%B8%E7%94%9F%E5%AE%BF%E8%88%8D&query_place_id=ChIJt--cpoWpQjQRZ1LuObBGtJY",
+    "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
     "name": "泰順製冰所｜豆花 燒麻糬 紅豆湯 燒仙草 刨冰 雪花冰 銀耳湯 嫩仙草 綠豆湯 剉冰",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%B3%B0%E9%A0%86%E8%A3%BD%E5%86%B0%E6%89%80%EF%BD%9C%E8%B1%86%E8%8A%B1%20%E7%87%92%E9%BA%BB%E7%B3%AC%20%E7%B4%85%E8%B1%86%E6%B9%AF%20%E7%87%92%E4%BB%99%E8%8D%89%20%E5%88%A8%E5%86%B0%20%E9%9B%AA%E8%8A%B1%E5%86%B0%20%E9%8A%80%E8%80%B3%E6%B9%AF%20%E5%AB%A9%E4%BB%99%E8%8D%89%20%E7%B6%A0%E8%B1%86%E6%B9%AF%20%E5%89%89%E5%86%B0&query_place_id=ChIJy6a0bQCpQjQRIqncKtiwVek",
     "region": "⑦ 師大/龍泉街（西北）"
@@ -5570,6 +5840,11 @@
     "region": "⑦ 師大/龍泉街（西北）"
   },
   {
+    "name": "7-ELEVEN 溫東門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E6%BA%AB%E6%9D%B1%E9%96%80%E5%B8%82&query_place_id=ChIJY7zt-4apQjQRz7Iet0XPr9c",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "蛋餅俱樂部",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%9B%8B%E9%A4%85%E4%BF%B1%E6%A8%82%E9%83%A8&query_place_id=ChIJAShCapKrQjQR3vF_2ZDxKUs",
     "region": "② 大安/科技大樓（東北）"
@@ -5608,6 +5883,11 @@
     "name": "就是果汁吧",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%B0%B1%E6%98%AF%E6%9E%9C%E6%B1%81%E5%90%A7&query_place_id=ChIJ46uk1C6qQjQRvXA2ii9FbxA",
     "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "台北大安會館(長租)",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%B0%E5%8C%97%E5%A4%A7%E5%AE%89%E6%9C%83%E9%A4%A8(%E9%95%B7%E7%A7%9F)&query_place_id=ChIJW2kAu4WpQjQR0Q-cmad7eyw",
+    "region": "⑦ 師大/龍泉街（西北）"
   },
   {
     "name": "公館米粉湯",
@@ -5665,6 +5945,11 @@
     "region": "⑦ 師大/龍泉街（西北）"
   },
   {
+    "name": "小吉市場",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E5%90%89%E5%B8%82%E5%A0%B4&query_place_id=ChIJ6UkBrHmpQjQRlkIrdslMWZg",
+    "region": "① 古亭/中正（北）"
+  },
+  {
     "name": "米尼司早餐吧",
     "url": "https://www.google.com/maps/search/?api=1&query=%E7%B1%B3%E5%B0%BC%E5%8F%B8%E6%97%A9%E9%A4%90%E5%90%A7&query_place_id=ChIJRWesypGpQjQR39WtPi4BJVM",
     "region": "① 古亭/中正（北）"
@@ -5675,6 +5960,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "7-ELEVEN 萬福門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E8%90%AC%E7%A6%8F%E9%96%80%E5%B8%82&query_place_id=ChIJxfgUJPapQjQRZvxg8-cv_II",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "通哥日式串燒",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%80%9A%E5%93%A5%E6%97%A5%E5%BC%8F%E4%B8%B2%E7%87%92&query_place_id=ChIJH1tG24qpQjQRl_lTdYmcnQQ",
     "region": "⑤ 公館商圈（南）"
@@ -5682,6 +5972,11 @@
   {
     "name": "達人手作 食飯食麵",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%81%94%E4%BA%BA%E6%89%8B%E4%BD%9C%20%E9%A3%9F%E9%A3%AF%E9%A3%9F%E9%BA%B5&query_place_id=ChIJmzRjEgCpQjQRWmhHBsHHydw",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "國立臺灣大學昆蟲標本館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E6%98%86%E8%9F%B2%E6%A8%99%E6%9C%AC%E9%A4%A8&query_place_id=ChIJYRGc2iGqQjQR79Cus2_IscM",
     "region": "⑤ 公館商圈（南）"
   },
   {
@@ -5760,6 +6055,11 @@
     "region": "⑦ 師大/龍泉街（西北）"
   },
   {
+    "name": "國立臺灣大學進修推廣學院",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E9%80%B2%E4%BF%AE%E6%8E%A8%E5%BB%A3%E5%AD%B8%E9%99%A2&query_place_id=ChIJo3-3ACCqQjQR-bVyi7l7Z84",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "古亭水煎包蔥油餅",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%A4%E4%BA%AD%E6%B0%B4%E7%85%8E%E5%8C%85%E8%94%A5%E6%B2%B9%E9%A4%85&query_place_id=ChIJp3r2u5qpQjQRATms0jGTBEs",
     "region": "⑤ 公館商圈（南）"
@@ -5817,6 +6117,11 @@
   {
     "name": "佬窩好湯養生餐廳",
     "url": "https://www.google.com/maps/search/?api=1&query=%E4%BD%AC%E7%AA%A9%E5%A5%BD%E6%B9%AF%E9%A4%8A%E7%94%9F%E9%A4%90%E5%BB%B3&query_place_id=ChIJyWvFYSyqQjQR9huWFMZ1IEs",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "7-ELEVEN 合億門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E5%90%88%E5%84%84%E9%96%80%E5%B8%82&query_place_id=ChIJNxHUC0CrQjQRh6WXkXnzgIU",
     "region": "② 大安/科技大樓（東北）"
   },
   {
@@ -5885,9 +6190,24 @@
     "region": "① 古亭/中正（北）"
   },
   {
+    "name": "7-ELEVEN 古亭門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E5%8F%A4%E4%BA%AD%E9%96%80%E5%B8%82&query_place_id=ChIJDbLTX3SpQjQRMrBjbpmFRKc",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "師大藍牌牛肉麵",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%B8%AB%E5%A4%A7%E8%97%8D%E7%89%8C%E7%89%9B%E8%82%89%E9%BA%B5&query_place_id=ChIJB_N8rI-pQjQRUDcu5o2ZkKE",
     "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "7-ELEVEN 黎元門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E9%BB%8E%E5%85%83%E9%96%80%E5%B8%82&query_place_id=ChIJpyta18yrQjQR2w3OJN5kS_o",
+    "region": "③ 溫州街/新生南路（東）"
+  },
+  {
+    "name": "全家便利商店 萬和店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E5%AE%B6%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E8%90%AC%E5%92%8C%E5%BA%97&query_place_id=ChIJv1OQXx2qQjQRyCUxb8PaVIo",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "巢飯麵食館（大安店）",
@@ -6015,9 +6335,19 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "7-ELEVEN 新萬盛門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E6%96%B0%E8%90%AC%E7%9B%9B%E9%96%80%E5%B8%82&query_place_id=ChIJn9COZR6qQjQRkxohqOwYCMQ",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "義麵館",
     "url": "https://www.google.com/maps/search/?api=1&query=%E7%BE%A9%E9%BA%B5%E9%A4%A8&query_place_id=ChIJr8nKUo6pQjQRaGxnl2ugufE",
     "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "國立臺灣大學管理學院",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E7%AE%A1%E7%90%86%E5%AD%B8%E9%99%A2&query_place_id=ChIJp5sinIWpQjQRw-y3EM3j0T4",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "陳家麵食",
@@ -6205,6 +6535,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "萊爾富便利商店大安新台大店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%90%8A%E7%88%BE%E5%AF%8C%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%E5%A4%A7%E5%AE%89%E6%96%B0%E5%8F%B0%E5%A4%A7%E5%BA%97&query_place_id=ChIJ_W4rTNGrQjQROpysOW7qlgE",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "屏東空軍涼麵",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%B1%8F%E6%9D%B1%E7%A9%BA%E8%BB%8D%E6%B6%BC%E9%BA%B5&query_place_id=ChIJgcV-_CuqQjQRFawERNYKFWc",
     "region": "② 大安/科技大樓（東北）"
@@ -6300,6 +6635,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "7-ELEVEN 溫州門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E6%BA%AB%E5%B7%9E%E9%96%80%E5%B8%82&query_place_id=ChIJiYwPvY6pQjQRzVUYgnpgwag",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "豐田早餐店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%B1%90%E7%94%B0%E6%97%A9%E9%A4%90%E5%BA%97&query_place_id=ChIJJwtHk5-pQjQR7H93GQhLUAk",
     "region": "⑤ 公館商圈（南）"
@@ -6332,6 +6672,11 @@
   {
     "name": "公館夜市【素食鹹酥雞】",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%AC%E9%A4%A8%E5%A4%9C%E5%B8%82%E3%80%90%E7%B4%A0%E9%A3%9F%E9%B9%B9%E9%85%A5%E9%9B%9E%E3%80%91&query_place_id=ChIJn-RB6oqpQjQRTBPsvDY6QF8",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "【信義房屋】古亭店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E3%80%90%E4%BF%A1%E7%BE%A9%E6%88%BF%E5%B1%8B%E3%80%91%E5%8F%A4%E4%BA%AD%E5%BA%97&query_place_id=ChIJOaEBnJqpQjQRGec9nXZDT68",
     "region": "⑤ 公館商圈（南）"
   },
   {
@@ -6385,6 +6730,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "7-ELEVEN 和鑫門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E5%92%8C%E9%91%AB%E9%96%80%E5%B8%82&query_place_id=ChIJMdll4TWrQjQRXarPBAYkvzE",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "美而美早餐店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E7%BE%8E%E8%80%8C%E7%BE%8E%E6%97%A9%E9%A4%90%E5%BA%97&query_place_id=ChIJTeVyR5qpQjQRw9nUUJtKR-M",
     "region": "⑤ 公館商圈（南）"
@@ -6430,6 +6780,11 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "7-ELEVEN 辛亥門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E8%BE%9B%E4%BA%A5%E9%96%80%E5%B8%82&query_place_id=ChIJU1a0HSiqQjQRjBsppnC74W8",
+    "region": "③ 溫州街/新生南路（東）"
+  },
+  {
     "name": "莉莎小姐義式冰淇淋Gelateria da Lisa",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%8E%89%E8%8E%8E%E5%B0%8F%E5%A7%90%E7%BE%A9%E5%BC%8F%E5%86%B0%E6%B7%87%E6%B7%8BGelateria%20da%20Lisa&query_place_id=ChIJVfBPkyuqQjQRM0cvCXVhYYg",
     "region": "⑤ 公館商圈（南）"
@@ -6458,6 +6813,11 @@
     "name": "美蘭越南小吃",
     "url": "https://www.google.com/maps/search/?api=1&query=%E7%BE%8E%E8%98%AD%E8%B6%8A%E5%8D%97%E5%B0%8F%E5%90%83&query_place_id=ChIJ6X4IGTipQjQRZj1NaPuq-HY",
     "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "萊爾富便利商店 文山萬隆站",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%90%8A%E7%88%BE%E5%AF%8C%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E6%96%87%E5%B1%B1%E8%90%AC%E9%9A%86%E7%AB%99&query_place_id=ChIJFZdfEB2qQjQRU_MJXa9dLto",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "台南無刺虱目魚店",
@@ -6500,14 +6860,29 @@
     "region": "④ 台大校園周邊（中心）"
   },
   {
+    "name": "7-ELEVEN 和金門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E5%92%8C%E9%87%91%E9%96%80%E5%B8%82&query_place_id=ChIJpRttLYWpQjQReckLsooAFL0",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "旺月捌手作飲品-公館店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%97%BA%E6%9C%88%E6%8D%8C%E6%89%8B%E4%BD%9C%E9%A3%B2%E5%93%81-%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJZcoyAwCpQjQR6CyB_9aNmb0",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "全家便利商店 台大楓林店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E5%AE%B6%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E5%8F%B0%E5%A4%A7%E6%A5%93%E6%9E%97%E5%BA%97&query_place_id=ChIJZ_U0Jo2rQjQR5xyeMZAGcuA",
     "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "余 東山鴨頭",
     "url": "https://www.google.com/maps/search/?api=1&query=%E4%BD%99%20%E6%9D%B1%E5%B1%B1%E9%B4%A8%E9%A0%AD&query_place_id=ChIJFWg7kYWpQjQRfufh5-mdaqM",
     "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "全家便利商店 金門店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E5%AE%B6%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E9%87%91%E9%96%80%E5%BA%97&query_place_id=ChIJw0eM39CrQjQRNiEsX_u3WP4",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "就是愛煎餅果子咔滋飯糰和平店",
@@ -6538,6 +6913,11 @@
     "name": "台北阿郎炸雞",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%8F%B0%E5%8C%97%E9%98%BF%E9%83%8E%E7%82%B8%E9%9B%9E&query_place_id=ChIJD8ii65CpQjQRtzWouitcU24",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "7-ELEVEN 龍門門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E9%BE%8D%E9%96%80%E9%96%80%E5%B8%82&query_place_id=ChIJJVCF1YepQjQR0qxcoT7NFa8",
+    "region": "② 大安/科技大樓（東北）"
   },
   {
     "name": "起初好好 BeginGood 咖啡廳/早午餐",
@@ -6690,6 +7070,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "全家便利商店 羅館店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E5%AE%B6%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E7%BE%85%E9%A4%A8%E5%BA%97&query_place_id=ChIJV8PTNJ6pQjQRlN6QJFdy22g",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "早點吃（早餐供應至13:00）/福興鍋燒麵",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%97%A9%E9%BB%9E%E5%90%83%EF%BC%88%E6%97%A9%E9%A4%90%E4%BE%9B%E6%87%89%E8%87%B313%3A00%EF%BC%89%2F%E7%A6%8F%E8%88%88%E9%8D%8B%E7%87%92%E9%BA%B5&query_place_id=ChIJI3965KipQjQRBwHKHqNKRxY",
     "region": "⑤ 公館商圈（南）"
@@ -6775,9 +7160,19 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "普利擎汽車保修(台北台大店)",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%99%AE%E5%88%A9%E6%93%8E%E6%B1%BD%E8%BB%8A%E4%BF%9D%E4%BF%AE(%E5%8F%B0%E5%8C%97%E5%8F%B0%E5%A4%A7%E5%BA%97)&query_place_id=ChIJYTOmQr2pQjQRR4yKxCt8bVk",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "藝素佳素食",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%97%9D%E7%B4%A0%E4%BD%B3%E7%B4%A0%E9%A3%9F&query_place_id=ChIJ3w5fIOyrQjQRj-DLqFROcvI",
     "region": "④ 台大校園周邊（中心）"
+  },
+  {
+    "name": "全家便利商店 和新店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E5%AE%B6%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E5%92%8C%E6%96%B0%E5%BA%97&query_place_id=ChIJw0eM39CrQjQRKyxxckfL2-w",
+    "region": "② 大安/科技大樓（東北）"
   },
   {
     "name": "源山拉麵",
@@ -6820,6 +7215,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "國立臺灣大學地質標本館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E5%9C%B0%E8%B3%AA%E6%A8%99%E6%9C%AC%E9%A4%A8&query_place_id=ChIJNfVW_dCrQjQR4M6Rla_tUik",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "野橙咖啡",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%87%8E%E6%A9%99%E5%92%96%E5%95%A1&query_place_id=ChIJn-0tDVOrQjQRDcSD7SN8F44",
     "region": "⑤ 公館商圈（南）"
@@ -6827,6 +7227,11 @@
   {
     "name": "Beaver Coffee Roastery 烘豆河狸",
     "url": "https://www.google.com/maps/search/?api=1&query=Beaver%20Coffee%20Roastery%20%E7%83%98%E8%B1%86%E6%B2%B3%E7%8B%B8&query_place_id=ChIJvUUL5UWpQjQRuzdxqWxGQDc",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "澎友~澎湖海鮮特產",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%BE%8E%E5%8F%8B~%E6%BE%8E%E6%B9%96%E6%B5%B7%E9%AE%AE%E7%89%B9%E7%94%A2&query_place_id=ChIJE1BN-SyqQjQRpn3AVPkOBa0",
     "region": "② 大安/科技大樓（東北）"
   },
   {
@@ -6848,6 +7253,11 @@
     "name": "鮮堡漢堡",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%AE%AE%E5%A0%A1%E6%BC%A2%E5%A0%A1&query_place_id=ChIJe0kzNIypQjQRGXruur3uJUA",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "蛇叔的第二專業 - 蛇叔烘豆工作室",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%9B%87%E5%8F%94%E7%9A%84%E7%AC%AC%E4%BA%8C%E5%B0%88%E6%A5%AD%20-%20%E8%9B%87%E5%8F%94%E7%83%98%E8%B1%86%E5%B7%A5%E4%BD%9C%E5%AE%A4&query_place_id=ChIJy4wVAwCrQjQRIU0_Um0J2Hc",
+    "region": "② 大安/科技大樓（東北）"
   },
   {
     "name": "戰 鬥雞 油雞 醉雞 鮮燙蔬菜 輕食餐盒 古亭同安店",
@@ -6980,6 +7390,11 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "勝美堅實業有限公司",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%8B%9D%E7%BE%8E%E5%A0%85%E5%AF%A6%E6%A5%AD%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8&query_place_id=ChIJJUI7Oy-qQjQRHc3kUuUioHU",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "La More 最時髦的冰粉店",
     "url": "https://www.google.com/maps/search/?api=1&query=La%20More%20%E6%9C%80%E6%99%82%E9%AB%A6%E7%9A%84%E5%86%B0%E7%B2%89%E5%BA%97&query_place_id=ChIJsYwMwJ2rQjQR5bvROcLoQTs",
     "region": "⑦ 師大/龍泉街（西北）"
@@ -7015,6 +7430,11 @@
     "region": "② 大安/科技大樓（東北）"
   },
   {
+    "name": "全家便利商店 和東店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E5%AE%B6%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E5%92%8C%E6%9D%B1%E5%BA%97&query_place_id=ChIJCdviOCmqQjQRbGsA0XWU76g",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "石門山豆花鋪（師大店）",
     "url": "https://www.google.com/maps/search/?api=1&query=%E7%9F%B3%E9%96%80%E5%B1%B1%E8%B1%86%E8%8A%B1%E9%8B%AA%EF%BC%88%E5%B8%AB%E5%A4%A7%E5%BA%97%EF%BC%89&query_place_id=ChIJ1d-ugOupQjQR1dEFdzkqPp0",
     "region": "⑦ 師大/龍泉街（西北）"
@@ -7023,6 +7443,11 @@
     "name": "民享號咖啡",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%B0%91%E4%BA%AB%E8%99%9F%E5%92%96%E5%95%A1&query_place_id=ChIJr5nuxj6pQjQRuC4EbK0W7NE",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "萊爾富便利商店 大安學霸店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%90%8A%E7%88%BE%E5%AF%8C%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E5%A4%A7%E5%AE%89%E5%AD%B8%E9%9C%B8%E5%BA%97&query_place_id=ChIJQ0FeN1erQjQRCdFSZMdGcNY",
+    "region": "③ 溫州街/新生南路（東）"
   },
   {
     "name": "多多小吃",
@@ -7045,6 +7470,11 @@
     "region": "① 古亭/中正（北）"
   },
   {
+    "name": "桂冠實業股份有限公司",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E6%A1%82%E5%86%A0%E5%AF%A6%E6%A5%AD%E8%82%A1%E4%BB%BD%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8&query_place_id=ChIJ4TJDXI6pQjQRIu11pcZHduo",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "7-Eleven 羅鑫門市",
     "url": "https://www.google.com/maps/search/?api=1&query=7-Eleven%20%E7%BE%85%E9%91%AB%E9%96%80%E5%B8%82&query_place_id=ChIJXw2TIeGpQjQRhhJ2q16NxM4",
     "region": "⑤ 公館商圈（南）"
@@ -7062,6 +7492,11 @@
   {
     "name": "屋台料理 滿載",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%B1%8B%E5%8F%B0%E6%96%99%E7%90%86%20%E6%BB%BF%E8%BC%89&query_place_id=ChIJlXi5uXupQjQR_m8FVokTT5s",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "全家便利商店 台大二活店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E5%AE%B6%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E5%8F%B0%E5%A4%A7%E4%BA%8C%E6%B4%BB%E5%BA%97&query_place_id=ChIJxTnUxYqpQjQR_2jTAnvUyTc",
     "region": "⑤ 公館商圈（南）"
   },
   {
@@ -7130,6 +7565,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "全家便利商店 興和店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E5%AE%B6%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E8%88%88%E5%92%8C%E5%BA%97&query_place_id=ChIJiYZJcompQjQRQbyT0iUNC4U",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "也好珈琲營業所 Yehow Coffee",
     "url": "https://www.google.com/maps/search/?api=1&query=%E4%B9%9F%E5%A5%BD%E7%8F%88%E7%90%B2%E7%87%9F%E6%A5%AD%E6%89%80%20Yehow%20Coffee&query_place_id=ChIJt2TNBSypQjQRjufUzH3FneE",
     "region": "③ 溫州街/新生南路（東）"
@@ -7138,6 +7578,11 @@
     "name": "紅心地瓜球 師大店｜預訂自取外送服務加入官方LINE：@243zrwwl｜店休日於社群粉專LINE官方公告",
     "url": "https://www.google.com/maps/search/?api=1&query=%E7%B4%85%E5%BF%83%E5%9C%B0%E7%93%9C%E7%90%83%20%E5%B8%AB%E5%A4%A7%E5%BA%97%EF%BD%9C%E9%A0%90%E8%A8%82%E8%87%AA%E5%8F%96%E5%A4%96%E9%80%81%E6%9C%8D%E5%8B%99%E5%8A%A0%E5%85%A5%E5%AE%98%E6%96%B9LINE%EF%BC%9A%40243zrwwl%EF%BD%9C%E5%BA%97%E4%BC%91%E6%97%A5%E6%96%BC%E7%A4%BE%E7%BE%A4%E7%B2%89%E5%B0%88LINE%E5%AE%98%E6%96%B9%E5%85%AC%E5%91%8A&query_place_id=ChIJh-SU7QGpQjQRGexcvc1I3YI",
     "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "全家便利商店 和復店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%A8%E5%AE%B6%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E5%92%8C%E5%BE%A9%E5%BA%97&query_place_id=ChIJaQQ7ZtOrQjQRrRklhw9J-JY",
+    "region": "② 大安/科技大樓（東北）"
   },
   {
     "name": "The Project KEEP",
@@ -7172,6 +7617,11 @@
   {
     "name": "迷客夏Milksha 臺北公館店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%BF%B7%E5%AE%A2%E5%A4%8FMilksha%20%E8%87%BA%E5%8C%97%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJjctFSkGpQjQRyK0ZFNDKODA",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "國立臺灣大學鄭江樓",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E9%84%AD%E6%B1%9F%E6%A8%93&query_place_id=ChIJ__8v1iWqQjQRxlQ2LMmT4o0",
     "region": "⑤ 公館商圈（南）"
   },
   {
@@ -7325,6 +7775,11 @@
     "region": "④ 台大校園周邊（中心）"
   },
   {
+    "name": "萊爾富便利商店 文山師大店",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%90%8A%E7%88%BE%E5%AF%8C%E4%BE%BF%E5%88%A9%E5%95%86%E5%BA%97%20%E6%96%87%E5%B1%B1%E5%B8%AB%E5%A4%A7%E5%BA%97&query_place_id=ChIJf1VHIVepQjQR4nou1rF1NJc",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "原味廚房《原味便當》",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%8E%9F%E5%91%B3%E5%BB%9A%E6%88%BF%E3%80%8A%E5%8E%9F%E5%91%B3%E4%BE%BF%E7%95%B6%E3%80%8B&query_place_id=ChIJveMvgyWpQjQRqj3LJ2_jB0o",
     "region": "③ 溫州街/新生南路（東）"
@@ -7405,6 +7860,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "國立台灣大學學新館",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E5%8F%B0%E7%81%A3%E5%A4%A7%E5%AD%B8%E5%AD%B8%E6%96%B0%E9%A4%A8&query_place_id=ChIJZa8XpNGrQjQRro7K4uuIL9Q",
+    "region": "④ 台大校園周邊（中心）"
+  },
+  {
     "name": "鳥蛋達人-公館店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%B3%A5%E8%9B%8B%E9%81%94%E4%BA%BA-%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJO2v85oqpQjQRd591H4K3Nyc",
     "region": "⑤ 公館商圈（南）"
@@ -7448,6 +7908,11 @@
     "name": "萬隆赤肉羹",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%90%AC%E9%9A%86%E8%B5%A4%E8%82%89%E7%BE%B9&query_place_id=ChIJ8YwzJc-rQjQRKJghVn7qIUg",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "好孕工作室",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A5%BD%E5%AD%95%E5%B7%A5%E4%BD%9C%E5%AE%A4&query_place_id=ChIJY_kGdWCpQjQRq4tBy25RH2Q",
+    "region": "③ 溫州街/新生南路（東）"
   },
   {
     "name": "古亭市場無名黑白切麵攤",
@@ -7845,6 +8310,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "國立臺灣大學生物機電工程學系",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E7%94%9F%E7%89%A9%E6%A9%9F%E9%9B%BB%E5%B7%A5%E7%A8%8B%E5%AD%B8%E7%B3%BB&query_place_id=ChIJkzMEKSSqQjQR4gJzRFRCpc8",
+    "region": "⑤ 公館商圈（南）"
+  },
+  {
     "name": "夯飽炭燒排骨-古亭店",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%A4%AF%E9%A3%BD%E7%82%AD%E7%87%92%E6%8E%92%E9%AA%A8-%E5%8F%A4%E4%BA%AD%E5%BA%97&query_place_id=ChIJRafHsJipQjQRsAvI0VTfRA8",
     "region": "⑤ 公館商圈（南）"
@@ -7945,6 +8415,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "姐弟蔬果店（水果店）",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%A7%90%E5%BC%9F%E8%94%AC%E6%9E%9C%E5%BA%97%EF%BC%88%E6%B0%B4%E6%9E%9C%E5%BA%97%EF%BC%89&query_place_id=ChIJaWOLvSiqQjQRjn7XmH9hKZQ",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "公館必吃泰國冰淇淋",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%AC%E9%A4%A8%E5%BF%85%E5%90%83%E6%B3%B0%E5%9C%8B%E5%86%B0%E6%B7%87%E6%B7%8B&query_place_id=ChIJF7aQOACpQjQRVJBKNzAomjM",
     "region": "⑤ 公館商圈（南）"
@@ -7967,6 +8442,11 @@
   {
     "name": "邊田庄便當本舖（和平天龍門市部）",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%82%8A%E7%94%B0%E5%BA%84%E4%BE%BF%E7%95%B6%E6%9C%AC%E8%88%96%EF%BC%88%E5%92%8C%E5%B9%B3%E5%A4%A9%E9%BE%8D%E9%96%80%E5%B8%82%E9%83%A8%EF%BC%89&query_place_id=ChIJdaN0YgCrQjQROeY7Ocfc0Ww",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "7-ELEVEN 青田門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E9%9D%92%E7%94%B0%E9%96%80%E5%B8%82&query_place_id=ChIJ-WgrXwCpQjQRxQvAOtGLogI",
     "region": "② 大安/科技大樓（東北）"
   },
   {
@@ -8008,6 +8488,11 @@
     "name": "綠吐司 Green Toast",
     "url": "https://www.google.com/maps/search/?api=1&query=%E7%B6%A0%E5%90%90%E5%8F%B8%20Green%20Toast&query_place_id=ChIJBeSSK_GpQjQRQ_pzQ4grKiM",
     "region": "⑦ 師大/龍泉街（西北）"
+  },
+  {
+    "name": "國立臺灣大學生物資源暨農學院附設農業試驗場農產品展售中心",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E7%94%9F%E7%89%A9%E8%B3%87%E6%BA%90%E6%9A%A8%E8%BE%B2%E5%AD%B8%E9%99%A2%E9%99%84%E8%A8%AD%E8%BE%B2%E6%A5%AD%E8%A9%A6%E9%A9%97%E5%A0%B4%E8%BE%B2%E7%94%A2%E5%93%81%E5%B1%95%E5%94%AE%E4%B8%AD%E5%BF%83&query_place_id=ChIJ9XaOuSCqQjQRDB-hbRVwMHw",
+    "region": "④ 台大校園周邊（中心）"
   },
   {
     "name": "和平健康餐",
@@ -8085,6 +8570,11 @@
     "region": "⑤ 公館商圈（南）"
   },
   {
+    "name": "臺灣大學生物資源暨農學院附設農業試驗場畜牧組",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E7%94%9F%E7%89%A9%E8%B3%87%E6%BA%90%E6%9A%A8%E8%BE%B2%E5%AD%B8%E9%99%A2%E9%99%84%E8%A8%AD%E8%BE%B2%E6%A5%AD%E8%A9%A6%E9%A9%97%E5%A0%B4%E7%95%9C%E7%89%A7%E7%B5%84&query_place_id=ChIJAcCtzCOqQjQRsSeI7c6gK-c",
+    "region": "④ 台大校園周邊（中心）"
+  },
+  {
     "name": "八樣燒臘便當",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%85%AB%E6%A8%A3%E7%87%92%E8%87%98%E4%BE%BF%E7%95%B6&query_place_id=ChIJ-eupCIWpQjQR4iBY9qskI98",
     "region": "② 大安/科技大樓（東北）"
@@ -8103,6 +8593,11 @@
     "name": "巧沛東方美",
     "url": "https://www.google.com/maps/search/?api=1&query=%E5%B7%A7%E6%B2%9B%E6%9D%B1%E6%96%B9%E7%BE%8E&query_place_id=ChIJR5TbPpKpQjQR2yReG-pcCW0",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "三瓦咖啡室｜太陽學院｜植物水晶礦石門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E4%B8%89%E7%93%A6%E5%92%96%E5%95%A1%E5%AE%A4%EF%BD%9C%E5%A4%AA%E9%99%BD%E5%AD%B8%E9%99%A2%EF%BD%9C%E6%A4%8D%E7%89%A9%E6%B0%B4%E6%99%B6%E7%A4%A6%E7%9F%B3%E9%96%80%E5%B8%82&query_place_id=ChIJd_hncmmrQjQRnYu0-ebT5IA",
+    "region": "② 大安/科技大樓（東北）"
   },
   {
     "name": "笈甜水果行",
@@ -8138,6 +8633,11 @@
     "name": "海南雞食堂",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%B5%B7%E5%8D%97%E9%9B%9E%E9%A3%9F%E5%A0%82&query_place_id=ChIJMycduX-rQjQR7Aqcde_vwQ0",
     "region": "④ 台大校園周邊（中心）"
+  },
+  {
+    "name": "7-ELEVEN 空指部門市",
+    "url": "https://www.google.com/maps/search/?api=1&query=7-ELEVEN%20%E7%A9%BA%E6%8C%87%E9%83%A8%E9%96%80%E5%B8%82&query_place_id=ChIJmwN5kq6rQjQR0QU9FRUKrWg",
+    "region": "⑤ 公館商圈（南）"
   },
   {
     "name": "主耀廚房",
@@ -8215,6 +8715,11 @@
     "region": "④ 台大校園周邊（中心）"
   },
   {
+    "name": "舞茶茶有限公司",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%88%9E%E8%8C%B6%E8%8C%B6%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8&query_place_id=ChIJkYT-eZCpQjQRcuoJQ-k5jXo",
+    "region": "① 古亭/中正（北）"
+  },
+  {
     "name": "迦拿(滷肉飯,牛肉麵)",
     "url": "https://www.google.com/maps/search/?api=1&query=%E8%BF%A6%E6%8B%BF(%E6%BB%B7%E8%82%89%E9%A3%AF%2C%E7%89%9B%E8%82%89%E9%BA%B5)&query_place_id=ChIJXyEAuZ-pQjQRu5u3QCns9G8",
     "region": "⑤ 公館商圈（南）"
@@ -8228,6 +8733,11 @@
     "name": "HWC 黑沃咖啡 科技店",
     "url": "https://www.google.com/maps/search/?api=1&query=HWC%20%E9%BB%91%E6%B2%83%E5%92%96%E5%95%A1%20%E7%A7%91%E6%8A%80%E5%BA%97&query_place_id=ChIJz-_Etc2rQjQR9qMJAw5gPKQ",
     "region": "② 大安/科技大樓（東北）"
+  },
+  {
+    "name": "國立臺灣大學建築與城鄉研究所 公館分部",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E5%9C%8B%E7%AB%8B%E8%87%BA%E7%81%A3%E5%A4%A7%E5%AD%B8%E5%BB%BA%E7%AF%89%E8%88%87%E5%9F%8E%E9%84%89%E7%A0%94%E7%A9%B6%E6%89%80%20%E5%85%AC%E9%A4%A8%E5%88%86%E9%83%A8&query_place_id=ChIJFxHAWSaqQjQRZOsqvJNzv0M",
+    "region": "④ 台大校園周邊（中心）"
   },
   {
     "name": "肉羹麵",
@@ -8265,6 +8775,11 @@
     "region": "③ 溫州街/新生南路（東）"
   },
   {
+    "name": "琪花瑤草 設計花坊",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%90%AA%E8%8A%B1%E7%91%A4%E8%8D%89%20%E8%A8%AD%E8%A8%88%E8%8A%B1%E5%9D%8A&query_place_id=ChIJ-3C6-uCrQjQR0zSunuxlW1I",
+    "region": "② 大安/科技大樓（東北）"
+  },
+  {
     "name": "清秋堂",
     "url": "https://www.google.com/maps/search/?api=1&query=%E6%B8%85%E7%A7%8B%E5%A0%82&query_place_id=ChIJA3fr6YapQjQRUsR7zFzMHuM",
     "region": "② 大安/科技大樓（東北）"
@@ -8283,6 +8798,11 @@
     "name": "雞同鴨講燒臘",
     "url": "https://www.google.com/maps/search/?api=1&query=%E9%9B%9E%E5%90%8C%E9%B4%A8%E8%AC%9B%E7%87%92%E8%87%98&query_place_id=ChIJg-zzCTerQjQR4dXmt9JCaD4",
     "region": "④ 台大校園周邊（中心）"
+  },
+  {
+    "name": "紀州庵對面Studio",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E7%B4%80%E5%B7%9E%E5%BA%B5%E5%B0%8D%E9%9D%A2Studio&query_place_id=ChIJP-s05uKpQjQRe9L0de1nIxE",
+    "region": "① 古亭/中正（北）"
   },
   {
     "name": "宮秘園(台北店)",
@@ -8328,6 +8848,11 @@
     "name": "17食堂",
     "url": "https://www.google.com/maps/search/?api=1&query=17%E9%A3%9F%E5%A0%82&query_place_id=ChIJFRkxSNqpQjQRJrGl_QMUO-A",
     "region": "⑤ 公館商圈（南）"
+  },
+  {
+    "name": "胖子雜貨店＿專營日本/其他進口水果＿客製水果禮盒",
+    "url": "https://www.google.com/maps/search/?api=1&query=%E8%83%96%E5%AD%90%E9%9B%9C%E8%B2%A8%E5%BA%97%EF%BC%BF%E5%B0%88%E7%87%9F%E6%97%A5%E6%9C%AC%2F%E5%85%B6%E4%BB%96%E9%80%B2%E5%8F%A3%E6%B0%B4%E6%9E%9C%EF%BC%BF%E5%AE%A2%E8%A3%BD%E6%B0%B4%E6%9E%9C%E7%A6%AE%E7%9B%92&query_place_id=ChIJmaZnV-erQjQRRcRry1MMuOc",
+    "region": "② 大安/科技大樓（東北）"
   },
   {
     "name": "ตำบอยส์ 泰兄弟 泰式料理",
