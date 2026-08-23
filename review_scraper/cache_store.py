@@ -7,6 +7,7 @@ and place_id maps to the actual scraped reviews.
 import json
 import os
 import sqlite3
+import typing
 import time
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cache.db")
@@ -54,7 +55,7 @@ def _connect(db_path: str) -> sqlite3.Connection:
     return conn
 
 
-def get_place_id_for_query(query: str, db_path: str = None) -> str | None:
+def get_place_id_for_query(query: str, db_path: str = None) -> typing.Optional[str]:
     """Look up a normalized URL or text search in the mapping table."""
     conn = _connect(db_path or DB_PATH)
     try:

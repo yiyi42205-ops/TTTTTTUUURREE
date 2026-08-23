@@ -63,7 +63,8 @@ def resolve_google_share_url(url: str) -> str:
         logger.warning(f"Failed to resolve share.google URL {url}: {e}")
     return url
 
-def extract_place_id(url: str) -> str | None:
+import typing
+def extract_place_id(url: str) -> typing.Optional[str]:
     try:
         req = urllib.request.Request(
             url,
