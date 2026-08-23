@@ -13,7 +13,7 @@ Now it lives here only.
 import math
 import re
 import random
-import hashlib
+import zlib
 from collections import defaultdict
 
 from langdetect import detect, LangDetectException, DetectorFactory
@@ -136,7 +136,7 @@ def _minhash(ngrams):
     if not ngrams:
         return None
     # Use built-in hash for speed; cross-process non-determinism is fine here since signatures aren't persisted.
-    hashed_grams = [hash(g) & 0xFFFFFFFF for g in ngrams]
+    hashed_grams = [zlib.crc32(g.encode('utf-8')) & 0xFFFFFFFF for g in ngrams]
     signature = []
     for a, b in _MINHASH_FUNCS:
         signature.append(min((a * x + b) % _MINHASH_PRIME for x in hashed_grams))
