@@ -24,3 +24,5 @@ report.md
 tune_results.json
 llm_input.json
 
+batch_crawl_checkpoint.json
+review_scraper/batch_crawl_checkpoint.json
