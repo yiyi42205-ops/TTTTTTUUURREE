@@ -98,7 +98,13 @@ def call_gemini_batch(client, store_name: str, batch: list) -> list:
 def parse_gemini_summary_json(raw_text: str) -> dict:
     """Parses Gemini's text response into the summarize dict (warnings & recommendations).
     Raises ValueError if the content isn't recoverable as a JSON dict."""
-    cleaned = _extract_json_block(_strip_markdown_fences(raw_text or ''))
+    cleaned = _strip_markdown_fences(raw_text or '')
+    
+    # Summarize returns an object, not an array. We extract the outermost object.
+    obj_match = re.search(r'\{[\s\S]*\}', cleaned)
+    if obj_match:
+        cleaned = obj_match.group(0)
+        
     try:
         parsed = json.loads(cleaned)
     except json.JSONDecodeError as e:
@@ -115,17 +121,32 @@ def parse_gemini_summary_json(raw_text: str) -> dict:
 
 def call_gemini_summarize(client, store_name: str, reviews: list) -> dict:
     """Filters genuine reviews and sends them to Gemini for single-mode summarization."""
-    # 1. Strict filter for genuine reviews
-    genuine_reviews = [r for r in reviews if r.get('isWashed') is False]
-    
-    # 2. Trim fields to save token space
-    summarize_material = [
-        {'id': r.get('id'), 'username': r.get('username'), 'stars': r.get('stars'), 'text': r.get('text')}
-        for r in genuine_reviews
+    # 1. Strict filter for genuine reviews WITH text
+    genuine_reviews = [
+        r for r in reviews 
+        if r.get('isWashed') is False and str(r.get('text', '')).strip() != ''
     ]
     
-    if not summarize_material:
+    # 2. Sort by text length (descending) and truncate to top 150 to save tokens and prioritize rich content
+    genuine_reviews.sort(key=lambda x: len(str(x.get('text', ''))), reverse=True)
+    genuine_reviews = genuine_reviews[:150]
+    
+    if not genuine_reviews:
         return {'warnings': [], 'recommendations': []}
+
+    # 3. Anonymize IDs (map long Google IDs to R1, R2...) to save tokens and prevent hallucination
+    id_map = {}
+    summarize_material = []
+    
+    for i, r in enumerate(genuine_reviews):
+        short_id = f"R{i+1}"
+        id_map[short_id] = r.get('id')
+        summarize_material.append({
+            'id': short_id,
+            'username': r.get('username'),
+            'stars': r.get('stars'),
+            'text': r.get('text')
+        })
 
     prompt_text = build_summarize_prompt(
         store_name=store_name,
@@ -137,4 +158,32 @@ def call_gemini_summarize(client, store_name: str, reviews: list) -> dict:
         contents=prompt_text,
         config={'response_mime_type': 'application/json'},
     )
-    return parse_gemini_summary_json(getattr(response, 'text', None))
+    
+    # 4. Parse JSON and map back IDs, filtering out hallucinations
+    parsed_json = parse_gemini_summary_json(getattr(response, 'text', None))
+    
+    def map_back(item):
+        valid_ids = []
+        for short_id in item.get('sourceReviewIds', []):
+            real_id = id_map.get(short_id)
+            if real_id:
+                valid_ids.append(real_id)
+        item['sourceReviewIds'] = valid_ids
+        return item
+        
+    parsed_warnings = []
+    for w in parsed_json.get('warnings', []):
+        w_mapped = map_back(w)
+        if w_mapped['sourceReviewIds']:
+            parsed_warnings.append(w_mapped)
+            
+    parsed_recommendations = []
+    for r in parsed_json.get('recommendations', []):
+        r_mapped = map_back(r)
+        if r_mapped['sourceReviewIds']:
+            parsed_recommendations.append(r_mapped)
+            
+    parsed_json['warnings'] = parsed_warnings
+    parsed_json['recommendations'] = parsed_recommendations
+    
+    return parsed_json

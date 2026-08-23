@@ -62,3 +62,69 @@ def test_summarize_golden_case(client):
     # 3. Source ID must be attached
     golden_id_found = any(golden_review_id in w.get("sourceReviewIds", []) for w in warnings)
     assert golden_id_found, "Golden review ID was not attached to the warnings"
+def test_gemini_client_summarize_robustness(monkeypatch):
+    """
+    Test the robust safeguards in call_gemini_summarize:
+    1. Empty reviews are filtered out.
+    2. Truncation to 150.
+    3. Sorting by length.
+    4. ID anonymization and mapping back.
+    5. Hallucination prevention (dropping hallucinated IDs).
+    """
+    from gemini_client import call_gemini_summarize
+    import json
+    
+    class FakeResponse:
+        def __init__(self, text):
+            self.text = text
+            
+    class FakeModels:
+        def generate_content(self, model, contents, config):
+            # Verify the prompt received anonymized IDs (R1, R2...)
+            assert "RealLongId" not in contents
+            assert "R1" in contents
+            
+            fake_json = {
+                "warnings": [
+                    {
+                        "summary": "有評論者提到排隊很久",
+                        "sourceReviewIds": ["R1", "R999"], # R999 is hallucinated
+                        "supportCount": 1
+                    },
+                    {
+                        "summary": "有評論者提到完全幻覺的警告",
+                        "sourceReviewIds": ["R999"], # Fully hallucinated source
+                        "supportCount": 1
+                    }
+                ],
+                "recommendations": []
+            }
+            return FakeResponse(json.dumps(fake_json))
+            
+    class FakeClient:
+        models = FakeModels()
+        
+    reviews = [
+        {"id": "RealLongId_1", "text": "This is a very very long review text to test sorting.", "isWashed": False},
+        {"id": "RealLongId_2", "text": "Short", "isWashed": False},
+        {"id": "Washed_1", "text": "Fake", "isWashed": True},
+        {"id": "Empty_1", "text": "", "isWashed": False},
+        {"id": "Empty_2", "text": "   ", "isWashed": False}
+    ]
+    
+    # Add 200 reviews to test truncation (150 max)
+    for i in range(200):
+        reviews.append({"id": f"Pad_{i}", "text": f"Pad {i}", "isWashed": False})
+        
+    result = call_gemini_summarize(FakeClient(), "TestStore", reviews)
+    
+    warnings = result["warnings"]
+    
+    # R1 should map back to RealLongId_1, because it's the longest text and sorted first.
+    # The hallucinated warning with ONLY R999 should be entirely dropped.
+    assert len(warnings) == 1, "Warning with completely hallucinated source should be dropped"
+    
+    mapped_ids = warnings[0]["sourceReviewIds"]
+    assert "RealLongId_1" in mapped_ids, "R1 should map back to RealLongId_1"
+    assert "R999" not in mapped_ids, "Hallucinated R999 should be filtered out"
+    assert "R1" not in mapped_ids, "Short IDs should not leak to the final result"
