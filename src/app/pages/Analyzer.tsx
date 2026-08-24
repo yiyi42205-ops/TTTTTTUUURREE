@@ -365,7 +365,7 @@ export function Analyzer() {
             <Info className="w-5 h-5 text-[#e8c547] shrink-0 mt-0.5" />
             <div className="text-xs md:text-sm text-[#4a5d52] leading-relaxed">
               <span className="font-extrabold text-[#8b7534] bg-[#e8c547]/20 px-1.5 py-0.5 rounded mr-1">測試數據庫已加載</span>
-              系統內建拉麵、手搖飲、健康餐等 18 間店家真實歷史評論。您可以直接在對比欄位搜尋，或從下方推薦庫快速加載店家進行多店「濾水」對照！
+              系統內建拉麵、手搖飲、健康餐等 18 間店家歷史評論數據。您可以直接在對比欄位搜尋，或從下方推薦庫快速加載店家進行多店結構對比分析！
             </div>
           </motion.div>
         )}
@@ -380,7 +380,7 @@ export function Analyzer() {
             >
               <div className="text-3xl mb-1 text-[#e8c547] select-none tracking-widest">★☆★☆★</div>
               <h1 className="text-xl md:text-2xl font-black text-[#4a5d52] font-display">
-                真實口碑評價對比分析儀
+                評論結構對比分析儀
               </h1>
               <p className="text-xs text-[#6b8e7f] mt-1 font-medium">
                 選擇下方店家測試數據集，或透過即時爬蟲抓取 Google Map 上最新資料
@@ -505,7 +505,7 @@ export function Analyzer() {
                                     </span>
                                   </div>
                                   <span className="text-[10px] text-[#6b8e7f] font-extrabold">
-                                    {restaurant.isWashed ? '包含刷評' : '真實綠色'}
+                                    {restaurant.isWashed ? '含結構異常' : '結構自然'}
                                   </span>
                                 </button>
                               ))}
@@ -545,7 +545,7 @@ export function Analyzer() {
                         exit={{ opacity: 0 }}
                         className="flex items-center justify-center gap-2 font-display text-base tracking-wide"
                       >
-                        開始評價「濾水分析」（對比 {matchedCount} 間）
+                        開始結構分析（對比 {matchedCount} 間）
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -708,7 +708,7 @@ export function Analyzer() {
                     <div>
                       <span className="font-extrabold block text-xs">{r.name}</span>
                       <span className="text-[9px] opacity-75 font-medium">
-                        {r.isWashed ? '包含促銷好評送禮' : '自然有機真實評論'}
+                        {r.isWashed ? '含促銷結構特徵' : '自然有機評論'}
                       </span>
                     </div>
                     <Plus className="w-3.5 h-3.5 shrink-0 ml-1" />
@@ -789,7 +789,7 @@ export function Analyzer() {
                 雙階段審查：正則規則引擎 + AI 語意防護網
               </h3>
               <p className="text-xs text-[#6b8e7f] leading-relaxed font-bold">
-                這套工具並非單純呼叫語言模型。第一階段先由 Python Regex 引擎掃描評論區「五星贈送」、「打卡送」等字詞，進行硬性剃除；第二階段才會將剩餘模糊評論（以及密集期）整包送到 Gemini Flash 1.5 進行上下文語意溯源，判斷是否為集團化網軍操作，實現極高準確度的洗評過濾。
+                這套工具並非單純呼叫語言模型。第一階段先由 Python 規則引擎掃描評論結構特徵（如促銷關鍵字、模板化用語等），進行初步分類；第二階段將模糊評論送至 Gemini 進行上下文語意分析，識別不自然的評論結構模式，實現高準確度的結構異常偵測。
               </p>
             </div>
             <div className="shrink-0">
