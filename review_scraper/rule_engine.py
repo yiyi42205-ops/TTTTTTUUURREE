@@ -62,7 +62,31 @@ EXCHANGE_KEYWORDS = [
     '送', '贈', '換', '免費', '招待', '折扣', '優惠',
 ]
 
-# Factor 3: Compound patterns that directly imply review-for-reward
+# Factor 3: Benefit/reward keywords — food items or prizes commonly given
+# as incentives. Derived from audit_cache incentive review analysis (2026-08-24).
+BENEFIT_KEYWORDS = [
+    # 飲品
+    '飲料', '紅茶', '可樂', '奶茶', '豆漿', '冰沙', '冰茶', '果汁', '汽水',
+    '咖啡', '拿鐵', '奶蓋', '冬瓜茶', '綠茶', '鮮奶茶', '珍奶', '珍珠奶茶',
+    # 小菜/配餐
+    '小菜', '濃湯', '青菜', '蛤蠣', '蛤蜊', '鴨血', '豆腐', '鐵板豆腐',
+    '薯餅', '地瓜球', '油條', '老油條', '蛋', '玉米蛋', '蝦', '肉',
+    '雞翅', '雞塊', '炸雞', '雞排', '豬排', '排骨', '滷味', '蔥油餅',
+    # 甜點
+    '甜點', '蛋糕', '小蛋糕', '奶酪', '焦糖奶酪', '布丁', '冰淇淋',
+    '優格', '麻糬', '起司球', '起司', '檸檬塔', '王子麵', '餅乾',
+    # 單點/套餐
+    '單點', '一道菜', '一樣菜', '一份',
+    # 折扣/禮品
+    '好禮', '禮物', '折價券', '優惠券', '折扣', 'shot',
+]
+
+# Generic pattern: 「送」followed by a food/reward noun (catch items not in the list)
+BENEFIT_AFTER_SEND_RE = re.compile(
+    r'送[一１]?(?:杯|碗|盤|份|塊|片|球|顆|瓶|罐|包|盒|籃|支|串|個)'
+)
+
+# Compound patterns that directly imply review-for-reward
 # These are high-confidence — two+ factors baked into one phrase
 INCENTIVE_COMPOUND_KEYWORDS = [
     '評論送', '好評送', '打卡送',
@@ -377,9 +401,10 @@ def _check_incentive_semantic(text):
         if not negated:
             return ('high', '免費送')
 
-    # 2. Three-factor check: review action + exchange + present in text
+    # 2. Three-factor check: review action + exchange + benefit
     has_review_action = any(kw in text for kw in REVIEW_ACTION_KEYWORDS)
     has_exchange = _has_clean_exchange(text)
+    has_benefit_kw = _has_benefit(text)
 
     if has_review_action and has_exchange:
         # Check if any review action keyword is negated (e.g. "沒有參加評論送")
@@ -392,13 +417,18 @@ def _check_incentive_semantic(text):
                     all_negated = False
                     break
         if not all_negated:
-            return ('high', '評論行為＋交換關係')
+            if has_benefit_kw:
+                return ('high', '評論行為＋交換關係＋利益')
+            # Two factors only — suspicious but not conclusive
+            return ('medium', '評論行為＋交換關係（缺具體利益）')
 
     # 3. 「打卡」— only suspicious if paired with exchange, and not in
     #    photo/revisit context
     if '打卡' in text:
         if not any(ex in text for ex in CHECKIN_EXCLUDE_CONTEXTS):
             if has_exchange:
+                if has_benefit_kw:
+                    return ('medium', '打卡＋交換關係＋利益')
                 return ('medium', '打卡＋交換關係')
 
     # 4. 「活動」— only suspicious if paired with exchange, and not in
@@ -406,6 +436,8 @@ def _check_incentive_semantic(text):
     if '活動' in text:
         if not any(ex in text for ex in ACTIVITY_EXCLUDE_CONTEXTS):
             if has_exchange:
+                if has_benefit_kw:
+                    return ('medium', '活動＋交換關係＋利益')
                 return ('medium', '活動＋交換關係')
 
     return None
@@ -419,6 +451,15 @@ def _has_clean_exchange(text):
         if not any(ex in text for ex in SEND_EXCLUDES):
             return True
     return any(kw in text for kw in EXCHANGE_KEYWORDS if kw != '送' and kw in text)
+
+
+def _has_benefit(text):
+    """Check if text mentions a specific benefit/reward (Factor 3)."""
+    if any(kw in text for kw in BENEFIT_KEYWORDS):
+        return True
+    if BENEFIT_AFTER_SEND_RE.search(text):
+        return True
+    return False
 
 
 def audit_review(review, context=None, config: RuleConfig = None):
