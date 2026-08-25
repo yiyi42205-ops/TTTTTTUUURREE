@@ -216,13 +216,22 @@ def main():
 
             # Send to Gemini in batches — NO retries (max_retries=0) to avoid
             # burning money on 503/504 errors. Failed batches are skipped.
+            # Each successful batch is saved to cache IMMEDIATELY so Ctrl+C
+            # doesn't lose completed work.
             batches = make_batches(to_send, target_size=args.batch_size, max_size=args.batch_size + 10)
-            results = []
+            text_by_username = {r['username']: r.get('text', '') for r in to_send}
             batch_failures = 0
+            batch_saved = 0
             for bi, batch in enumerate(batches):
                 try:
                     batch_results = call_llm_batch('gemini', client, store_name, batch, max_retries=0)
-                    results.extend(batch_results)
+                    # Save immediately
+                    cache_entries = [
+                        {**r, '_original_text': text_by_username.get(r.get('username', ''), '')}
+                        for r in batch_results
+                    ]
+                    set_cached_stage2_batch(place_id, cache_entries)
+                    batch_saved += len(batch_results)
                 except Exception as e:
                     print(f'  ⚠️  Batch {bi+1}/{len(batches)} failed for {place_id[:40]}: {e}')
                     batch_failures += 1
@@ -239,15 +248,6 @@ def main():
                     print(f'\n🛑 連續 {consecutive_failures} 家全部 batch 失敗，停止執行')
                     break
                 continue
-
-            # Write results to stage2_cache
-            if results:
-                text_by_username = {r['username']: r.get('text', '') for r in to_send}
-                cache_entries = [
-                    {**r, '_original_text': text_by_username.get(r.get('username', ''), '')}
-                    for r in results
-                ]
-                set_cached_stage2_batch(place_id, cache_entries)
 
             if i % 50 == 0 or i == len(all_stores):
                 elapsed = time.time() - start
