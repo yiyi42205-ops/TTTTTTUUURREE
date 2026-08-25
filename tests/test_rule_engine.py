@@ -12,6 +12,8 @@ from rule_engine import (
     detect_no_text_ratio,
     detect_language_ratio,
     detect_spike_months,
+    hits_structural_template,
+    compute_structural_confidence,
 )
 
 
@@ -423,3 +425,129 @@ class TestSpikeDetection:
         loose = RuleConfig(spike_multiplier=2.0)
         _, spike_months = detect_spike_months(reviews, loose)
         assert '2025-04' in spike_months
+
+
+# ─── Structural template detection (rule 2.6) ─────────────────
+
+class TestHitsStructuralTemplate:
+    def test_similarity_hit(self):
+        sig = {'maxSimilarity': 0.60, 'similarCount': 3, 'hotTermCount': 0, 'hotTermMaxRatio': 0.0}
+        assert hits_structural_template(sig) is True
+
+    def test_hot_term_hit(self):
+        sig = {'maxSimilarity': 0.20, 'similarCount': 0, 'hotTermCount': 2, 'hotTermMaxRatio': 0.35}
+        assert hits_structural_template(sig) is True
+
+    def test_both_hit(self):
+        sig = {'maxSimilarity': 0.60, 'similarCount': 3, 'hotTermCount': 3, 'hotTermMaxRatio': 0.5}
+        assert hits_structural_template(sig) is True
+
+    def test_neither_hit(self):
+        sig = {'maxSimilarity': 0.40, 'similarCount': 1, 'hotTermCount': 1, 'hotTermMaxRatio': 0.1}
+        assert hits_structural_template(sig) is False
+
+    def test_similarity_just_below_threshold(self):
+        sig = {'maxSimilarity': 0.54, 'similarCount': 2, 'hotTermCount': 0, 'hotTermMaxRatio': 0.0}
+        assert hits_structural_template(sig) is False
+
+    def test_similar_count_below_threshold(self):
+        sig = {'maxSimilarity': 0.60, 'similarCount': 1, 'hotTermCount': 0, 'hotTermMaxRatio': 0.0}
+        assert hits_structural_template(sig) is False
+
+    def test_hot_term_count_below_threshold(self):
+        sig = {'maxSimilarity': 0.0, 'similarCount': 0, 'hotTermCount': 1, 'hotTermMaxRatio': 0.5}
+        assert hits_structural_template(sig) is False
+
+    def test_hot_term_ratio_below_threshold(self):
+        sig = {'maxSimilarity': 0.0, 'similarCount': 0, 'hotTermCount': 2, 'hotTermMaxRatio': 0.29}
+        assert hits_structural_template(sig) is False
+
+
+class TestComputeStructuralConfidence:
+    def test_minimum(self):
+        """All signals at zero → minimum confidence (60)."""
+        assert compute_structural_confidence(0, 0.0, 0) == 60
+
+    def test_maximum(self):
+        """All signals at or above cap → maximum confidence (95)."""
+        assert compute_structural_confidence(5, 1.0, 5) == 95
+
+    def test_above_cap(self):
+        """Values above cap should still be capped at 95."""
+        assert compute_structural_confidence(10, 2.0, 10) == 95
+
+    def test_partial(self):
+        """similarCount=2, hotTermMaxRatio=0.3, nearby=0 → partial composite."""
+        # composite = 0.4*(2/5) + 0.4*(0.3) + 0.2*(0/5) = 0.4*0.4 + 0.4*0.3 = 0.16+0.12 = 0.28
+        # confidence = 60 + 0.28 * 35 = 60 + 9.8 = 69.8 → 70
+        assert compute_structural_confidence(2, 0.3, 0) == 70
+
+    def test_matches_typescript(self):
+        """Cross-check with auditEngine.ts structural branch values."""
+        # similarCount=3, hotTermMaxRatio=0.5, nearby=2
+        # composite = 0.4*(3/5) + 0.4*(0.5) + 0.2*(2/5) = 0.24+0.20+0.08 = 0.52
+        # confidence = 60 + 0.52*35 = 60 + 18.2 = 78.2 → 78
+        assert compute_structural_confidence(3, 0.5, 2) == 78
+
+
+class TestStructuralTemplateInStage1:
+    """Integration: rule 2.6 in run_stage1_audit catches structural templates."""
+
+    def _make_similar_reviews(self, n=10):
+        """Generate reviews with high structural similarity and shared phrases."""
+        # Template-like reviews: same opening + closing, minor middle variation.
+        # 3-gram Jaccard should be high among these; shared 4+ char phrases
+        # ("招牌豚骨拉麵", "湯頭濃郁順口") repeat across ≥ 3 reviews.
+        base_texts = [
+            '招牌豚骨拉麵湯頭濃郁順口，叉燒軟嫩，推薦必吃！',
+            '招牌豚骨拉麵湯頭濃郁順口，麵條Q彈，推薦必吃！',
+            '招牌豚骨拉麵湯頭濃郁順口，溏心蛋好吃，推薦必吃！',
+            '招牌豚骨拉麵湯頭濃郁順口，份量十足，推薦必吃！',
+            '招牌豚骨拉麵湯頭濃郁順口，CP值超高，推薦必吃！',
+            '招牌豚骨拉麵湯頭濃郁順口，配菜豐富，推薦必吃！',
+            '招牌豚骨拉麵湯頭濃郁順口，很有日本味，推薦必吃！',
+            '招牌豚骨拉麵湯頭濃郁順口，小菜也棒，推薦必吃！',
+            '招牌豚骨拉麵湯頭濃郁順口，環境乾淨，推薦必吃！',
+            '招牌豚骨拉麵湯頭濃郁順口，服務親切，推薦必吃！',
+        ]
+        reviews = []
+        for i in range(n):
+            reviews.append({
+                'username': f'user_{i}',
+                'stars': 5,
+                'time': f'2025-03-{(i % 28) + 1:02d}T12:{i:02d}:00',
+                'text': base_texts[i % len(base_texts)],
+            })
+        return reviews
+
+    def test_structural_template_caught_in_stage1(self):
+        reviews = self._make_similar_reviews(10)
+        result = run_stage1_audit(reviews)
+        structural_hits = [
+            r for r in result['auditedReviews']
+            if r['audit'].get('verdictBasis') == 'structural'
+        ]
+        assert len(structural_hits) > 0
+        for r in structural_hits:
+            assert r['audit']['isWashed'] is True
+            assert r['audit']['issueType'] == 'template'
+            assert 60 <= r['audit']['confidenceScore'] <= 95
+
+    def test_structural_template_not_sent_to_stage2(self):
+        """Reviews caught by rule 2.6 should have issueType='template', not None."""
+        reviews = self._make_similar_reviews(10)
+        result = run_stage1_audit(reviews)
+        for r in result['auditedReviews']:
+            if r['audit'].get('verdictBasis') == 'structural':
+                assert r['audit']['issueType'] == 'template'
+
+    def test_low_signal_reviews_not_caught(self):
+        """Reviews with low similarity/hotTerm should remain ambiguous."""
+        reviews = [
+            {'username': 'a', 'stars': 5, 'time': '2025-01-01', 'text': '今天第一次來，點了松露燉飯，味道超級棒，會再來！'},
+            {'username': 'b', 'stars': 5, 'time': '2025-02-15', 'text': '朋友推薦的咖啡廳，拿鐵很好喝，蛋糕也好吃。'},
+            {'username': 'c', 'stars': 5, 'time': '2025-03-10', 'text': '帶小孩來吃早午餐，兒童餐份量夠，環境乾淨。'},
+        ]
+        result = run_stage1_audit(reviews)
+        for r in result['auditedReviews']:
+            assert r['audit'].get('verdictBasis') != 'structural'
