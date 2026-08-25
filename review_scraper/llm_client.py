@@ -102,6 +102,7 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
                 config = {
                     'response_mime_type': 'application/json',
                     'http_options': {'timeout': 60_000},  # 60s per batch, well under gunicorn's 120s
+                    'thinking_config': {'thinking_budget': 0},  # Stage 2 is structured JSON, no need for thinking ($3.50/1M)
                 }
                 if gemini_config:
                     config.update(gemini_config)
