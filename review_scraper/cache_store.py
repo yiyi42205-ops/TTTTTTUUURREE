@@ -6,6 +6,7 @@ Implements a dual-layer lookup: search queries / URLs map to place_id,
 and place_id maps to the actual scraped reviews.
 """
 
+import hashlib
 import json
 import os
 import sqlite3
@@ -78,6 +79,18 @@ def _connect(db_path: str) -> sqlite3.Connection:
             answer_json TEXT NOT NULL,
             created_at REAL NOT NULL,
             PRIMARY KEY (place_id, question)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS stage2_cache (
+            place_id TEXT NOT NULL,
+            username TEXT NOT NULL,
+            review_hash TEXT NOT NULL,
+            result_json TEXT NOT NULL,
+            audited_at REAL NOT NULL,
+            PRIMARY KEY (place_id, username)
         )
         """
     )
@@ -303,6 +316,65 @@ def set_cached_qa(place_id: str, question: str, answer_json: dict, db_path: str 
             """,
             (place_id, question, json.dumps(answer_json, ensure_ascii=False), time.time())
         )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# ── Stage 2 (LLM) per-review cache ──────────────────────────────────────────
+
+
+def _review_hash(text: str) -> str:
+    return hashlib.sha256((text or '').encode('utf-8')).hexdigest()[:16]
+
+
+def get_cached_stage2(place_id: str, db_path: str = None) -> dict[str, dict]:
+    """Returns {username: {review_hash, ...verdict fields}} for all cached Stage 2 results."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        rows = conn.execute(
+            "SELECT username, review_hash, result_json FROM stage2_cache WHERE place_id = ?",
+            (place_id,)
+        ).fetchall()
+        result = {}
+        for username, review_hash, result_json in rows:
+            verdict = json.loads(result_json)
+            verdict['_review_hash'] = review_hash
+            result[username] = verdict
+        return result
+    finally:
+        conn.close()
+
+
+def set_cached_stage2_batch(place_id: str, results: list[dict], db_path: str = None) -> None:
+    """Upsert a batch of Stage 2 verdicts. Each dict must have 'username' and 'text'."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        now = time.time()
+        for r in results:
+            username = r.get('username', '')
+            text = r.get('_original_text', '')
+            verdict = {k: v for k, v in r.items() if k != '_original_text'}
+            conn.execute(
+                """
+                INSERT INTO stage2_cache (place_id, username, review_hash, result_json, audited_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(place_id, username) DO UPDATE SET
+                    review_hash = excluded.review_hash,
+                    result_json = excluded.result_json,
+                    audited_at = excluded.audited_at
+                """,
+                (place_id, username, _review_hash(text), json.dumps(verdict, ensure_ascii=False), now),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def invalidate_stage2_cache(place_id: str, db_path: str = None) -> None:
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute("DELETE FROM stage2_cache WHERE place_id = ?", (place_id,))
         conn.commit()
     finally:
         conn.close()

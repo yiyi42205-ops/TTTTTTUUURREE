@@ -15,9 +15,10 @@ from urllib.parse import urlparse
 from normalize import normalize_review
 from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES, call_llm_qa
 from cache_store import (
-    get_cached_reviews, set_cached_reviews, get_place_id_for_query, 
+    get_cached_reviews, set_cached_reviews, get_place_id_for_query,
     set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata,
-    check_and_increment_qa_limit, get_cached_qa, set_cached_qa
+    check_and_increment_qa_limit, get_cached_qa, set_cached_qa,
+    get_cached_stage2, set_cached_stage2_batch, _review_hash
 )
 from rule_engine import run_stage1_audit
 import re
@@ -407,6 +408,7 @@ def audit():
 
     data = request.get_json() or {}
     provider = data.get("provider", "gemini")
+    place_id = data.get("placeId")
 
     client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
     if err_resp:
@@ -435,28 +437,61 @@ def audit():
     if not normalized:
         return jsonify({"results": []})
 
-    batches = make_batches(normalized)
-    logger.info(f"Auditing {len(normalized)} reviews for '{store_name}' across {len(batches)} batch(es)...")
+    # ── Incremental Stage 2 cache ────────────────────────────────────────
+    cached_results = []
+    to_send = normalized
+    cached_count = 0
 
+    if place_id:
+        cached_s2 = get_cached_stage2(place_id)
+        if cached_s2:
+            to_send = []
+            for n in normalized:
+                username = n.get("username", "")
+                cached = cached_s2.get(username)
+                if cached and cached.get("_review_hash") == _review_hash(n.get("text", "")):
+                    verdict = {k: v for k, v in cached.items() if k != "_review_hash"}
+                    cached_results.append(verdict)
+                    cached_count += 1
+                else:
+                    to_send.append(n)
+
+    # ── Call LLM only for uncached reviews ───────────────────────────────
     results = []
     errors = []
-    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_BATCHES) as executor:
-        futures = {executor.submit(call_llm_batch, provider, client_to_use, store_name, batch): batch for batch in batches}
-        for future in as_completed(futures):
-            try:
-                results.extend(future.result())
-            except Exception as e:
-                logger.error(f"LLM ({provider}) batch audit failed: {e}")
-                logger.error(traceback.format_exc())
-                errors.append(str(e))
 
-    # Batches are independent LLM calls — one failing shouldn't discard results
-    # from the batches that succeeded. Only fail the whole request if nothing came back.
-    if errors and not results:
+    if to_send:
+        batches = make_batches(to_send)
+        logger.info(f"Auditing {len(to_send)} reviews for '{store_name}' across {len(batches)} batch(es) (cached: {cached_count})...")
+
+        with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_BATCHES) as executor:
+            futures = {executor.submit(call_llm_batch, provider, client_to_use, store_name, batch): batch for batch in batches}
+            for future in as_completed(futures):
+                try:
+                    batch_results = future.result()
+                    results.extend(batch_results)
+                except Exception as e:
+                    logger.error(f"LLM ({provider}) batch audit failed: {e}")
+                    logger.error(traceback.format_exc())
+                    errors.append(str(e))
+
+        # Write new results to cache
+        if place_id and results:
+            text_by_username = {n["username"]: n.get("text", "") for n in to_send}
+            cache_entries = []
+            for r in results:
+                entry = {**r, "_original_text": text_by_username.get(r.get("username", ""), "")}
+                cache_entries.append(entry)
+            set_cached_stage2_batch(place_id, cache_entries)
+    else:
+        logger.info(f"All {cached_count} reviews for '{store_name}' served from Stage 2 cache.")
+
+    if errors and not results and not cached_results:
         return jsonify({"error": f"LLM ({provider}) 語意審計全部批次皆失敗", "details": errors}), 502
 
-    logger.info(f"Audit completed: {len(results)} reviews classified, {len(errors)} batch failure(s), in {time.time() - start_time:.2f}s.")
-    response_body = {"results": results}
+    all_results = cached_results + results
+    logger.info(f"Audit completed: {len(all_results)} total ({cached_count} cached, {len(results)} new), {len(errors)} error(s), in {time.time() - start_time:.2f}s.")
+    response_body = {"results": all_results, "cached_count": cached_count, "new_count": len(results)}
     if errors:
         response_body["errors"] = errors
     return jsonify(response_body)

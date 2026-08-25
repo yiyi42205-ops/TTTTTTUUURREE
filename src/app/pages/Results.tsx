@@ -257,40 +257,10 @@ export function Results() {
 
         const allAmbiguous = reviews.filter(r => r.stars === 5 && r.audit.issueType === null);
 
-        // Audit mode: "evaluate" sends all ambiguous reviews (full coverage for
-        // offline evaluation); "production" (default) caps at 15 with stratified
-        // sampling to control Gemini API cost.
-        const auditMode = (import.meta.env.VITE_AUDIT_MODE || 'production').toLowerCase();
-        const STAGE2_CAP = 15;
-
-        let ambiguousReviews: typeof allAmbiguous;
-        if (auditMode === 'evaluate' || allAmbiguous.length <= STAGE2_CAP) {
-          ambiguousReviews = allAmbiguous;
-        } else {
-          // Stratified sampling: split by isSpikePeriod, proportionally sample
-          const isReviewInSpike = (r: Review & { audit: AuditResult }) => {
-            const month = r.time ? r.time.substring(0, 7) : '';
-            return spikeMonthsSet.has(month);
-          };
-          const spikePool = allAmbiguous.filter(r => isReviewInSpike(r));
-          const normalPool = allAmbiguous.filter(r => !isReviewInSpike(r));
-
-          const spikeRatio = spikePool.length / allAmbiguous.length;
-          const spikeCount = Math.round(STAGE2_CAP * spikeRatio);
-          const normalCount = STAGE2_CAP - spikeCount;
-
-          // Within each stratum, pick evenly spaced indices for temporal spread
-          const evenSample = (pool: typeof allAmbiguous, n: number) => {
-            if (n >= pool.length) return pool;
-            const step = pool.length / n;
-            return Array.from({ length: n }, (_, i) => pool[Math.floor(i * step)]);
-          };
-
-          ambiguousReviews = [
-            ...evenSample(spikePool, Math.min(spikeCount, spikePool.length)),
-            ...evenSample(normalPool, Math.min(normalCount, normalPool.length)),
-          ];
-        }
+        // All ambiguous reviews go to Stage 2 — the backend handles incremental
+        // caching (only new/edited reviews hit the LLM, the rest are served from
+        // the stage2_cache table).
+        const ambiguousReviews = allAmbiguous;
 
         const stage2Sent = ambiguousReviews.length;
 
@@ -342,6 +312,7 @@ export function Results() {
               ...(localApiKey ? { 'X-Gemini-API-Key': localApiKey } : {})
             },
             body: JSON.stringify({
+              placeId: storeIds[idx] || result.storeName,
               storeName: result.storeName,
               reviews: reviewsPayload
             })

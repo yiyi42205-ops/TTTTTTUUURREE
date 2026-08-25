@@ -33,7 +33,7 @@ Standard PR flow:
   - `eval/sample_fp.py` — samples false-positive stores and writes ready-to-paste Gemini prompts into `gemini_prompts/*.txt`
   - `eval/check_data.py` — checks CSV column consistency / `Time` field format across `restaurant_data/`
 
-**Audit mode** (`VITE_AUDIT_MODE` env var): `production` (default) caps Stage 2 at 15 reviews with stratified sampling; `evaluate` removes the cap for full-coverage offline evaluation. Always use `evaluate` mode when running evaluation scripts against the frontend pipeline.
+**Stage 2 caching**: The backend caches per-review Stage 2 (Gemini) verdicts in a `stage2_cache` SQLite table, keyed by `(place_id, username)` with a `review_hash` to detect edits. When the frontend sends `placeId` in the `/api/audit` payload, only new or edited reviews hit the LLM — cached results are served directly. There is no longer a 15-review cap; all ambiguous reviews go to Stage 2.
 
 **Testing:**
 - `npm test` — runs vitest (`src/app/utils/auditEngine.test.ts`): covers `aggregateAuditedReviews` weighting/Trust Score/Filtered Rating, `mergeStage2Results`, and `computeStage2Confidence` (structural vs. content routing).
