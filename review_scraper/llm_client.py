@@ -181,7 +181,10 @@ def call_llm_qa(provider: str, client, store_name: str, reviews: list, question:
                 response = client.models.generate_content(
                     model=MODEL_NAME_GEMINI,
                     contents=prompt,
-                    config={'response_mime_type': 'application/json'},
+                    config={
+                        'response_mime_type': 'application/json',
+                        'thinking_config': {'thinking_budget': 0},
+                    },
                 )
                 raw_text = getattr(response, 'text', None)
             elif provider == 'deepseek':
