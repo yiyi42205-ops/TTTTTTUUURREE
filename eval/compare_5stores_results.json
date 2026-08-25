@@ -1,0 +1,3196 @@
+{
+  "stores": {
+    "桂冠窩廚房": {
+      "store_name": "桂冠窩廚房 Joy' in Kitchen",
+      "trait": "高模糊低洗 (85%模糊 12%洗, 短評多)",
+      "total": 40,
+      "agreement": 37,
+      "agreement_pct": 92.5,
+      "flash_washed": 3,
+      "lite_washed": 0,
+      "flash_issue_dist": {
+        "template": 3
+      },
+      "lite_issue_dist": {},
+      "per_review": [
+        {
+          "username": "Lin Yuno",
+          "text": "老師很仔細講解😋 …",
+          "flash": {
+            "username": "Lin Yuno",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (老師) 且 A=4 (仔細講解😋)，不符合D≤2且A≤2。isSpikePeriod=true但D=3，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.09 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（老師）和正面體驗，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Lin Yuno",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.09, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論簡短但提及具體對象「老師」，情感自然，無明顯洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "江昭蓉",
+          "text": "好玩、好吃，很棒的烹飪和飲食體驗！",
+          "flash": {
+            "username": "江昭蓉",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=2 (烹飪、飲食體驗) 且 A=4 (很棒的)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.16 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論表達了具體感受，語氣自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "江昭蓉",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.16, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及具體體驗「烹飪和飲食體驗」，語氣正面自然，無灌水疑慮。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Miranda佩宜",
+          "text": "學習日式飯糰，環境乾淨明亮，老師親切。很棒的體驗~(≧▽≦)/",
+          "flash": {
+            "username": "Miranda佩宜",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=4 (日式飯糰、環境、老師) 且 A=4 (很棒的體驗~)，不符合D≤2且A≤2。isSpikePeriod=false。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.09 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "提及具體學習內容、環境和老師，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Miranda佩宜",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.09, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及具體學習內容「日式飯糰」、環境及老師，情感真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Fiona Wu",
+          "text": "今天學了馬鈴薯排骨湯和海鮮煎餅❤️\n場地和老師都很喜歡💕 …",
+          "flash": {
+            "username": "Fiona Wu",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=4 (馬鈴薯排骨湯、海鮮煎餅、場地、老師) 且 A=4 (很喜歡💕)，不符合D≤2且A≤2。isSpikePeriod=false。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.06 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體菜色、場地和老師，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Fiona Wu",
+            "reasoningPath": "規則1: I=1, D=4。不符。規則2: D=4, A=4。不符。規則3: A=4, D=4。不符。規則4: maxSimilarity=0.06, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及具體菜色，表達個人喜好，情感真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Daniel Cheng",
+          "text": "第一次參加烹飪課程，過程輕鬆簡單有趣，很舒壓推薦",
+          "flash": {
+            "username": "Daniel Cheng",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=4 (烹飪課程，過程輕鬆簡單有趣，很舒壓) 且 A=4 (推薦)，不符合D≤2且A≤2。isSpikePeriod=false。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.11 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "提及具體活動和個人感受，語氣自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Daniel Cheng",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.11, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論描述個人體驗「輕鬆簡單有趣，很舒壓」，表達真實感受。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Claire Shen",
+          "text": "課程很好玩、場地非常乾淨！",
+          "flash": {
+            "username": "Claire Shen",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=2 (課程、場地) 且 A=4 (很好玩、非常乾淨)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.17 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "提及具體對象（課程、場地）並表達個人感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Claire Shen",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.17, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「課程好玩」、「場地乾淨」，描述具體且語氣自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Miaofei Tseng",
+          "text": "環境優良，食物好吃",
+          "flash": {
+            "username": "Miaofei Tseng",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=2 (環境、食物) 且 A=3 (優良、好吃)，不符合D≤2且A≤2。isSpikePeriod=true但A=3，不符合D≤2。檢查規則3：A=3，不符合A≤1。檢查規則4：maxSimilarity=0.15 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（環境、食物），情感平鋪直敘。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Miaofei Tseng",
+            "reasoningPath": "規則1: I=1, D=2。不符。規則2: D=2, A=4。不符。規則3: A=4, D=2。不符。規則4: maxSimilarity=0.15, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「環境優良」、「食物好吃」，描述雖簡略但具體，情感正面。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Joy",
+          "text": "非常棒！老師帶領下我煮出來的超好吃",
+          "flash": {
+            "username": "Joy",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (老師、我煮出來的) 且 A=4 (非常棒！超好吃)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.1 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "提及具體對象（老師）並表達個人成果與感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Joy",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.1, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「老師帶領」、「煮出來的超好吃」，表達具體成果與個人感受。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Julie Lee",
+          "text": "聖誕🎄花圈蛋糕超漂亮～ …",
+          "flash": {
+            "username": "Julie Lee",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (聖誕花圈蛋糕) 且 A=3 (超漂亮)，不符合D≤2且A≤2。isSpikePeriod=true但A=3，不符合D≤2。檢查規則3：A=3，不符合A≤1。檢查規則4：maxSimilarity=0.0 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體品項（聖誕花圈蛋糕），情感平鋪直敘。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Julie Lee",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.0, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "提及具體品項「聖誕花圈蛋糕」，雖簡短但具體，情感正面。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Hun Lu",
+          "text": "好吃又好玩～大家人都很親切，會再來！",
+          "flash": {
+            "username": "Hun Lu",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (大家、人) 且 A=4 (好吃又好玩～很親切)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.15 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "提及具體對象（大家）並表達了綜合體驗與意願，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Hun Lu",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.15, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「好吃」、「好玩」、「人親切」，表達正面感受與經驗。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Olivia Lin",
+          "text": "超棒的體驗",
+          "flash": {
+            "username": "Olivia Lin",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=1 (體驗) 且 A=3 (超棒的)，不符合D≤2且A≤2。isSpikePeriod=true且D=1，符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容空洞且為高峰期評論。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Olivia Lin",
+            "reasoningPath": "規則1: I=1, D=1。不符。規則2: D=1, A=4。不符。規則3: A=4, D=1。不符。規則4: maxSimilarity=0.0, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論過於簡短，僅為讚美，無具體描述。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 1,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Adam Ku",
+          "text": "雪菜煨麵很好吃！",
+          "flash": {
+            "username": "Adam Ku",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (雪菜煨麵) 且 A=3 (很好吃)，不符合D≤2且A≤2。isSpikePeriod=true但A=3，不符合D≤2。檢查規則3：A=3，不符合A≤1。檢查規則4：maxSimilarity=0.09 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體餐點（雪菜煨麵），情感平鋪直敘。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Adam Ku",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.09, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "提及具體菜色「雪菜煨麵」，表達喜歡，有具體內容。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "李白",
+          "text": "簡單的料理課",
+          "flash": {
+            "username": "李白",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=2 (料理課) 且 A=3 (簡單的)，不符合D≤2且A≤2。isSpikePeriod=true但A=3，不符合D≤2。檢查規則3：A=3，不符合A≤1。檢查規則4：maxSimilarity=0.0 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體活動（料理課），情感平鋪直敘。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "李白",
+            "reasoningPath": "規則1: I=1, D=1。不符。規則2: D=1, A=4。不符。規則3: A=4, D=1。不符。規則4: maxSimilarity=0.0, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論過於簡短，僅為類別描述，無具體細節。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 1,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Mauricio Jaime",
+          "text": "非常有趣的課程，可以學習如何製作各種菜餚和甜點。老師和助教都非常有耐心和友善🙏 …",
+          "flash": {
+            "username": "Mauricio Jaime",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=4 (各種菜餚和甜點、老師、助教) 且 A=4 (非常有趣的課程、非常有耐心和友善🙏)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.07 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體學習內容、老師和助教的態度，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Mauricio Jaime",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.07, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論描述個人體驗「非常有趣的課程」，提及老師友善，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "林飛仔",
+          "text": "食材新鮮，老師教學認真",
+          "flash": {
+            "username": "林飛仔",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (食材、老師) 且 A=3 (新鮮、認真)，不符合D≤2且A≤2。isSpikePeriod=true但A=3，不符合D≤2。檢查規則3：A=3，不符合A≤1。檢查規則4：maxSimilarity=0.2 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（食材、老師），情感平鋪直敘。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "林飛仔",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.2, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「食材新鮮」、「老師教學認真」，有具體描述。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "吳多聞",
+          "text": "老師很帥 他做的看起來特別好吃",
+          "flash": {
+            "username": "吳多聞",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (老師) 且 A=4 (很帥、看起來特別好吃)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.11 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（老師）並帶有個人情感，語氣自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "吳多聞",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.11, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "提及「老師很帥」，有個人觀察，雖不直接評價食物，但有具體對象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "CINDY CHEN",
+          "text": "環境乾淨整潔。 活動輕鬆愉快",
+          "flash": {
+            "username": "CINDY CHEN",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=2 (環境、活動) 且 A=3 (乾淨整潔、輕鬆愉快)，不符合D≤2且A≤2。isSpikePeriod=false。檢查規則3：A=3，不符合A≤1。檢查規則4：maxSimilarity=0.12 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體類別（環境、活動），情感平鋪直敘。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "CINDY CHEN",
+            "reasoningPath": "規則1: I=1, D=2。不符。規則2: D=2, A=4。不符。規則3: A=4, D=2。不符。規則4: maxSimilarity=0.12, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「環境乾淨整潔」、「活動輕鬆愉快」，描述簡略但具體，情感正面。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "陳翊豪",
+          "text": "好吃又實用的韓式料理課程🥰 …",
+          "flash": {
+            "username": "陳翊豪",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (韓式料理課程) 且 A=4 (好吃又實用🥰)，不符合D≤2且A≤2。isSpikePeriod=false。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.11 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "提及具體課程類型並表達感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "陳翊豪",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.11, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「韓式料理課程」，有具體內容，表達正面感受。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Tay Eyre",
+          "text": "很療癒的烹飪地方～會常來上課唷～",
+          "flash": {
+            "username": "Tay Eyre",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=2 (烹飪地方) 且 A=4 (很療癒～會常來上課唷～)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.04 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "提及具體場所（烹飪地方）並表達個人感受與未來意願，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Tay Eyre",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.04, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論描述「療癒的烹飪地方」，表達個人感受，語氣自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "黃薏萍",
+          "text": "牛肉漢堡排（實作）&奶油和風燉菜（示範）\n好吃又好玩😁 …",
+          "flash": {
+            "username": "黃薏萍",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=4 (牛肉漢堡排、奶油和風燉菜) 且 A=4 (好吃又好玩😁)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.1 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體菜色，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "黃薏萍",
+            "reasoningPath": "規則1: I=1, D=4。不符。規則2: D=4, A=4。不符。規則3: A=4, D=4。不符。規則4: maxSimilarity=0.1, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及具體菜色「牛肉漢堡排」、「奶油和風燉菜」，表達「好吃又好玩」。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "annie lee",
+          "text": "自己動手做，好吃又好玩",
+          "flash": {
+            "username": "annie lee",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=2 (動手做) 且 A=4 (好吃又好玩)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.33 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體活動（動手做）並表達個人感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "annie lee",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.33, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「自己動手做」、「好吃又好玩」，表達具體體驗和感受。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "alex Liu",
+          "text": "非常有趣而用心的親子料理課程，手把手的一步一步帶小孩完成比薩🍕成品，值得帶小孩來體驗看看。\n20230225，布魯媽媽的親子料理，有吃又有玩，真的很棒！ …",
+          "flash": {
+            "username": "alex Liu",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=5 (親子料理課程、比薩🍕、布魯媽媽) 且 A=5 (非常有趣而用心、手把手、有吃又有玩，真的很棒！)，不符合D≤2且A≤2。isSpikePeriod=true但D=5，不符合D≤2。檢查規則3：A=5，不符合A≤1。檢查規則4：maxSimilarity=0.05 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論內容豐富，提及具體人物、菜品和體驗細節，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "alex Liu",
+            "reasoningPath": "規則1: I=1, D=5。不符。規則2: D=5, A=5。不符。規則3: A=5, D=5。不符。規則4: maxSimilarity=0.05, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論詳細描述親子課程體驗，提及具體成品「比薩」，情感真實且具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Coco Li",
+          "text": "老師很棒，重點說明的很清楚",
+          "flash": {
+            "username": "Coco Li",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (老師) 且 A=3 (很棒、說明的很清楚)，不符合D≤2且A≤2。isSpikePeriod=true但A=3，不符合D≤2。檢查規則3：A=3，不符合A≤1。檢查規則4：maxSimilarity=0.08 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（老師），情感平鋪直敘。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Coco Li",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.08, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「老師很棒」、「說明的很清楚」，有具體評價對象和內容。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "HENRY HUANG黃柏翰",
+          "text": "超水 讚讚",
+          "flash": {
+            "username": "HENRY HUANG黃柏翰",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=1 (超水) 且 A=1 (讚讚)，符合D≤2且A≤2，因此isWashed=true。",
+            "isWashed": true,
+            "reason": "評論空洞，僅使用通用讚美詞，情感表達公式化。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "HENRY HUANG黃柏翰",
+            "reasoningPath": "規則1: I=1, D=1。不符。規則2: D=1, A=4。不符。規則3: A=4, D=1。不符。規則4: maxSimilarity=0.0, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論過於簡短，僅為讚美，無具體描述。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 1,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Jyun-De Li",
+          "text": "場地很舒服，小幫手很親切，老師也很專業",
+          "flash": {
+            "username": "Jyun-De Li",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (場地、小幫手、老師) 且 A=4 (很舒服、很親切、很專業)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.16 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（場地、小幫手、老師）並表達感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Jyun-De Li",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.16, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「場地舒服」、「小幫手親切」、「老師專業」，有具體對象評價。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "IC Tu",
+          "text": "可以跟孩子一起體驗手作的樂趣，並訓練孩子的專注力跟記憶力，感覺很棒！",
+          "flash": {
+            "username": "IC Tu",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=4 (孩子、手作的樂趣、專注力、記憶力) 且 A=4 (很棒！)，不符合D≤2且A≤2。isSpikePeriod=true但D=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.05 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "提及具體體驗和學習效果，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "IC Tu",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.05, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論描述親子體驗，提及「手作樂趣」、「專注力跟記憶力」，有具體描述。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Vago",
+          "text": "超好玩的地方，小孩玩得很開心",
+          "flash": {
+            "username": "Vago",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=2 (地方) 且 A=4 (超好玩、很開心)，不符合D≤2且A≤2。isSpikePeriod=false。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.21 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體地點（地方）並表達個人強烈情感，語氣自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Vago",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.21, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「超好玩的地方」、「小孩玩得很開心」，表達正面感受與具體情況。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "馬令潔",
+          "text": "整體環境很舒服～老師人很親切！也很謝謝助教們協助",
+          "flash": {
+            "username": "馬令潔",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (環境、老師、助教) 且 A=4 (很舒服～很親切！也很謝謝)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.09 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（環境、老師、助教）並表達感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "馬令潔",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.09, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「整體環境舒服」、「老師親切」、「謝謝助教」，有具體對象評價。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Irene ZHENG",
+          "text": "很喜歡上課的氛圍\n老師和小幫手也非常貼心仔細抱不平",
+          "flash": {
+            "username": "Irene ZHENG",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (上課氛圍、老師、小幫手) 且 A=4 (很喜歡、非常貼心仔細)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.08 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（氛圍、老師、小幫手）並表達感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Irene ZHENG",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.08, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「上課氛圍」、「老師和小幫手貼心仔細」，表達正面感受與具體觀察。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "鄒采慈",
+          "text": "老師教得很仔細！煮出來的很好吃🤤 …",
+          "flash": {
+            "username": "鄒采慈",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (老師、煮出來的) 且 A=4 (教得很仔細！很好吃🤤)，不符合D≤2且A≤2。isSpikePeriod=false。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.12 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（老師）並表達個人成果與感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "鄒采慈",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.12, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「老師教得很仔細」、「煮出來的很好吃」，有具體評價和結果。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "林語柔",
+          "text": "第一次的親子料理，老師和工作人員的姐姐很細心的指導，小朋友吃的很開心🥳 …",
+          "flash": {
+            "username": "林語柔",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=4 (親子料理、老師、工作人員的姐姐、小朋友) 且 A=4 (很細心的指導、吃的很開心🥳)，不符合D≤2且A≤2。isSpikePeriod=true但D=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.11 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體活動、老師和工作人員的表現，以及小朋友的感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "林語柔",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.11, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論描述親子料理體驗，提及「細心指導」、「小朋友吃的很開心」，情感真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "07李煒",
+          "text": "充足的備料，詳細的步驟，容易上手成功！好吃",
+          "flash": {
+            "username": "07李煒",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=4 (備料、步驟) 且 A=4 (充足、詳細、容易上手成功！好吃)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.03 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體細節（備料、步驟）和結果，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "07李煒",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.03, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「充足備料」、「詳細步驟」、「容易上手成功」、「好吃」，描述具體且正面。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Fang Vk",
+          "text": "很棒的親子同樂",
+          "flash": {
+            "username": "Fang Vk",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=2 (親子同樂) 且 A=3 (很棒的)，不符合D≤2且A≤2。isSpikePeriod=true但A=3，不符合D≤2。檢查規則3：A=3，不符合A≤1。檢查規則4：maxSimilarity=0.1 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體活動（親子同樂），情感平鋪直敘。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Fang Vk",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.1, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「親子同樂」，表達正面感受，有具體體驗。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Hsuanmin Cheng",
+          "text": "老師與工作人員都很親切，上課愉快東西也好吃！",
+          "flash": {
+            "username": "Hsuanmin Cheng",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (老師、工作人員、東西) 且 A=4 (很親切、愉快、好吃！)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.16 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（老師、工作人員、食物）並表達感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Hsuanmin Cheng",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.16, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「老師與工作人員親切」、「上課愉快」、「東西也好吃」，情感真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "naomi huang",
+          "text": "帶孩子一起上料理課！非常有成就感又好玩🤍🌷已經來上過好多次了～ …",
+          "flash": {
+            "username": "naomi huang",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=4 (孩子、料理課、好多次) 且 A=4 (非常有成就感又好玩🤍🌷)，不符合D≤2且A≤2。isSpikePeriod=true但D=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.05 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "提及帶孩子上料理課的具體體驗和個人感受，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "naomi huang",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.05, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「孩子一起上料理課」、「有成就感」、「好玩」，表達具體體驗和感受。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "O L",
+          "text": "孩子們做菜玩得非常開心，很喜歡自己做的食物！強烈推薦！",
+          "flash": {
+            "username": "O L",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (孩子們、菜、食物) 且 A=4 (玩得非常開心、很喜歡、強烈推薦！)，不符合D≤2且A≤2。isSpikePeriod=false。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.07 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（孩子們、菜、食物）並表達強烈情感，語氣自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "O L",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.07, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「孩子們做菜玩得開心」、「喜歡自己做的食物」，表達具體情境和感受。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "mei Chiang",
+          "text": "非常適合大家的參與課程",
+          "flash": {
+            "username": "mei Chiang",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=2 (課程) 且 A=3 (非常適合大家的參與)，不符合D≤2且A≤2。isSpikePeriod=true但A=3，不符合D≤2。檢查規則3：A=3，不符合A≤1。檢查規則4：maxSimilarity=0.07 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（課程），情感平鋪直敘。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "mei Chiang",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.07, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「適合大家的參與課程」，評價廣泛但有具體對象「課程」。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Hsiang-Wei Huang",
+          "text": "西班牙海鮮飯，好吃又好玩！學到很多～",
+          "flash": {
+            "username": "Hsiang-Wei Huang",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=3 (西班牙海鮮飯) 且 A=4 (好吃又好玩！學到很多～)，不符合D≤2且A≤2。isSpikePeriod=true但A=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.2 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體菜色並表達個人感受與收穫，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Hsiang-Wei Huang",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.2, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及具體菜色「西班牙海鮮飯」，表達「好吃又好玩」、「學到很多」。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "gloria kao",
+          "text": "親子烹飪很好玩，布魯媽媽老師很細心地教小朋友每個步驟。主廚很認真專業的教學，有趣的烹飪體驗。",
+          "flash": {
+            "username": "gloria kao",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=4 (親子烹飪、布魯媽媽老師、主廚、小朋友) 且 A=4 (很好玩、很細心、很認真專業、有趣的烹飪體驗)，不符合D≤2且A≤2。isSpikePeriod=true但D=4，不符合D≤2。檢查規則3：A=4，不符合A≤1。檢查規則4：maxSimilarity=0.08 < 0.55，similarCount=0 < 2。hotTermCount=0 < 2。不觸發規則4。所有規則不符合。",
+            "isWashed": false,
+            "reason": "評論提及具體活動、老師和主廚的表現，以及小朋友的體驗，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "gloria kao",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.08, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論描述親子烹飪體驗，提及「布魯媽媽老師細心教」、「主廚認真專業」、「有趣的烹飪體驗」。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "YC Chen",
+          "text": "好玩、好吃、有料！",
+          "flash": {
+            "username": "YC Chen",
+            "reasoningPath": "檢查規則1：無利益誘因。檢查規則2：D=1 (有料) 且 A=3 (好玩、好吃)，不符合D≤2且A≤2。isSpikePeriod=true且D=1，符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容空洞且為高峰期評論。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "YC Chen",
+            "reasoningPath": "規則1: I=1, D=3。不符。規則2: D=3, A=4。不符。規則3: A=4, D=3。不符。規則4: maxSimilarity=0.16, similarCount=0。不符。結論：isWashed=false",
+            "isWashed": false,
+            "reason": "評論提及「好玩」、「好吃」、「有料」，評價簡短但具體，情感正面。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        }
+      ]
+    },
+    "Oneway CAFE": {
+      "store_name": "Oneway CAFE玩味咖啡",
+      "trait": "中洗+spike (76%模糊 20%洗, 2 spike月, 短評多)",
+      "total": 40,
+      "agreement": 30,
+      "agreement_pct": 75.0,
+      "flash_washed": 13,
+      "lite_washed": 11,
+      "flash_issue_dist": {
+        "template": 13
+      },
+      "lite_issue_dist": {
+        "template": 11
+      },
+      "per_review": [
+        {
+          "username": "F F",
+          "text": "舒服溫暖、像家一樣的店，老闆好親切，紅茶奶蓋必點，海鮮飯很香很家常，早午餐吐司烤得真香～",
+          "flash": {
+            "username": "F F",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.04, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容具體描述餐點與老闆互動，情感自然且描述細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "F F",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.04,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論內容具體，情感和描述度均佳，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "一大師",
+          "text": "讚👍",
+          "flash": {
+            "username": "一大師",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=1, A=1。符合D≤2 AND A≤2。符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容簡短且空泛，且在評論高峰期發表，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "一大師",
+            "reasoningPath": "檢查規則1→I=1,D=1→不符;檢查規則2→D=1,A=1→相符;結論",
+            "isWashed": true,
+            "reason": "評論過於簡短空泛，符合「罐頭評論」的模板特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "林小魯",
+          "text": "義式臘腸披薩+經典奶蓋紅茶",
+          "flash": {
+            "username": "林小魯",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=3, A=3。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=3, D=3。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.03, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論提及具體餐點，描述細緻度尚可，情感自然度中等。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "林小魯",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=3→不符;檢查規則3→A=3,D=3→不符;檢查規則4→simil=0.03,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及具體餐點，描述尚可，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Katrina Liao",
+          "text": "偉大的",
+          "flash": {
+            "username": "Katrina Liao",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=1, A=1。符合D≤2 AND A≤2。符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容簡短且空泛，且在評論高峰期發表，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Katrina Liao",
+            "reasoningPath": "檢查規則1→I=1,D=1→不符;檢查規則2→D=1,A=1→相符;結論",
+            "isWashed": true,
+            "reason": "評論僅為單詞「偉大的」，過於空泛，符合「罐頭評論」特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Oma Huang (制服)",
+          "text": "很久沒回母校，剛好找個地方坐一下\n是間小巧可愛的咖啡店，低消一杯飲料，價格十分親民，木瓜牛奶很好喝😊 很推薦\n\n自行到櫃檯點餐即可，有電子支付(LP街口等)",
+          "flash": {
+            "username": "Oma Huang (制服)",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.06, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容包含個人經驗、具體推薦飲品與支付方式，情感自然且描述細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Oma Huang (制服)",
+            "reasoningPath": "檢查規則1→I=1,D=4→不符;檢查規則2→D=4,A=4→不符;檢查規則3→A=4,D=4→不符;檢查規則4→simil=0.06,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及具體品項、價格、支付方式，描述詳實，情感自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "YTZ",
+          "text": "👍",
+          "flash": {
+            "username": "YTZ",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=1, A=1。符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容過於簡短，情感自然度與描述細緻度都為最低，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "YTZ",
+            "reasoningPath": "檢查規則1→I=1,D=1→不符;檢查規則2→D=1,A=1→相符;結論",
+            "isWashed": true,
+            "reason": "評論僅為表情符號，過於簡短空泛，符合「罐頭評論」特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Calista",
+          "text": "吃麵麵",
+          "flash": {
+            "username": "Calista",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=3, A=3。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=3, D=3。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.0, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論提及具體食物「麵麵」，描述細緻度達到中等，情感自然度中等。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Calista",
+            "reasoningPath": "檢查規則1→I=1,D=1→不符;檢查規則2→D=1,A=1→相符;結論",
+            "isWashed": true,
+            "reason": "評論僅為「吃麵麵」，過於簡短空泛，符合「罐頭評論」特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "黃薏文",
+          "text": "鮪魚雜糧帕里尼超讚的！\n平價有好吃，氣氛也很舒服！",
+          "flash": {
+            "username": "黃薏文",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.12, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論提及具體餐點並給予評價，語氣自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "黃薏文",
+            "reasoningPath": "檢查規則1→I=1,D=4→不符;檢查規則2→D=4,A=4→不符;檢查規則3→A=4,D=4→不符;檢查規則4→simil=0.12,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及具體餐點名稱並給予評價，描述細緻，情感真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Q",
+          "text": "很棒又平價",
+          "flash": {
+            "username": "Q",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=1, A=1。符合D≤2 AND A≤2。符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容簡短且空泛，且在評論高峰期發表，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Q",
+            "reasoningPath": "檢查規則1→I=1,D=2→相符;結論",
+            "isWashed": true,
+            "reason": "評論「很棒又平價」過於簡短空泛，描述細緻度低，符合「罐頭評論」特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "E mily",
+          "text": "復古ㄉ感覺",
+          "flash": {
+            "username": "E mily",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=3。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=3, D=2。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.0, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論描述店內氛圍，情感自然度中等，描述細緻度尚可。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "E mily",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=3→不符;檢查規則3→A=3,D=3→不符;檢查規則4→simil=0.0,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及具體感受「復古ㄉ感覺」，描述尚可，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "陳亮宇（亮亮）",
+          "text": "海鮮飯很好吃～～～",
+          "flash": {
+            "username": "陳亮宇（亮亮）",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=3, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=3。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.33, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論提及具體餐點並給予強調，語氣自然，描述細緻度中等。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "陳亮宇（亮亮）",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=3→不符;檢查規則3→A=3,D=3→不符;檢查規則4→simil=0.33,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及具體餐點「海鮮飯」，描述尚可，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Kathrin Braun",
+          "text": "我從德國搬到台灣後才發現這家咖啡館，立刻就愛上了它。我太想念歐洲菜了——在這裡我不僅能找到價格實惠的海鮮意麵，還能吃到非常美味的海鮮意麵。老闆人超好，店裡的氣氛也很棒。我在那裡用電腦工作了一整天。我一定會再來的！",
+          "flash": {
+            "username": "Kathrin Braun",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=5, A=5。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=5, D=5。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.04, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容包含詳細個人故事、具體餐點評價與體驗細節，情感自然且描述極為細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Kathrin Braun",
+            "reasoningPath": "檢查規則1→I=1,D=5→不符;檢查規則2→D=5,A=5→不符;檢查規則3→A=5,D=5→不符;檢查規則4→simil=0.04,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論包含個人經歷、具體餐點、價格、老闆態度及用餐體驗，內容豐富且真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "何欣芮",
+          "text": "牛排義大利麵很好吃！",
+          "flash": {
+            "username": "何欣芮",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=3, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=3。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.31, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論提及具體餐點並給予強調，語氣自然，描述細緻度中等。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "何欣芮",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=3→不符;檢查規則3→A=3,D=3→不符;檢查規則4→simil=0.31,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及具體餐點「牛排義大利麵」，描述尚可，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "陳品妤",
+          "text": "東西好吃👍",
+          "flash": {
+            "username": "陳品妤",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=3。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=3, D=2。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.0, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容雖然簡短但語氣自然，且提及具體對象「東西」，描述細緻度尚可。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "陳品妤",
+            "reasoningPath": "檢查規則1→I=1,D=2→相符;結論",
+            "isWashed": true,
+            "reason": "評論「東西好吃👍」過於簡短空泛，描述細緻度低，符合「罐頭評論」特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "天天",
+          "text": "好吃喔！",
+          "flash": {
+            "username": "天天",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=1, A=1。符合D≤2 AND A≤2。符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容簡短且空泛，且在評論高峰期發表，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "天天",
+            "reasoningPath": "檢查規則1→I=1,D=2→相符;結論",
+            "isWashed": true,
+            "reason": "評論「好吃喔！」過於簡短空泛，描述細緻度低，符合「罐頭評論」特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Liang",
+          "text": "價格合理，牛排很嫩，內用氣氛佳",
+          "flash": {
+            "username": "Liang",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.09, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論提及具體餐點特性與店內氣氛，語氣自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Liang",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=3→不符;檢查規則3→A=3,D=3→不符;檢查規則4→simil=0.09,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及價格、餐點「牛排」口感及用餐氣氛，描述尚可。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "王挺安",
+          "text": "店內氛圍很棒 餐點實惠美味 老闆人很好！",
+          "flash": {
+            "username": "王挺安",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.18, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容描述店內氛圍、餐點與老闆服務，情感自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "王挺安",
+            "reasoningPath": "檢查規則1→I=1,D=4→不符;檢查規則2→D=4,A=4→不符;檢查規則3→A=4,D=4→不符;檢查規則4→simil=0.18,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及環境氛圍、餐點實惠美味及老闆親切，描述正面且真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Scarlett W",
+          "text": "飲料好喝👍",
+          "flash": {
+            "username": "Scarlett W",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=3。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=3, D=2。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.0, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容雖然簡短但語氣自然，且提及具體對象「飲料」，描述細緻度尚可。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Scarlett W",
+            "reasoningPath": "檢查規則1→I=1,D=2→相符;結論",
+            "isWashed": true,
+            "reason": "評論「飲料好喝👍」過於簡短空泛，描述細緻度低，符合「罐頭評論」特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "陳婉婷",
+          "text": "因為躲雨找到的咖啡廳～\n老闆很親切\n今天點黑糖拿鐵 甜度可以調整\n咖啡跟黑糖融合的很好喝 苦苦甜甜的\n最上層還有一些奶泡 覺得很特別！",
+          "flash": {
+            "username": "陳婉婷",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=5, A=5。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=5, D=5。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.03, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容包含個人際遇、具體餐點評價與口感描述，情感自然且描述極為細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "陳婉婷",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.03,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論描述偶然發現店家、老闆親切、具體飲品調味細節，情感與描述度佳。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Nia Lin",
+          "text": "氣氛很休閒～可以外帶手沖咖啡",
+          "flash": {
+            "username": "Nia Lin",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=3, A=3。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=3, D=3。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.05, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論提及店內氣氛與特定商品，描述細緻度中等，情感自然度中等。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Nia Lin",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=3→不符;檢查規則3→A=3,D=3→不符;檢查規則4→simil=0.05,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及用餐氣氛及外帶品項，描述尚可，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "胖橘",
+          "text": "雖然小小間，但氣氛很好，也有廁所，餐點選擇也多樣，讚讚（還有可愛的鸚鵡！",
+          "flash": {
+            "username": "胖橘",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.1, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容描述店內空間、設施、餐點選擇與特色，情感自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "胖橘",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.1,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及空間大小、氣氛、設施、餐點多樣性，並加入趣味觀察（鸚鵡），描述真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "呂Иван",
+          "text": "氛圍極佳，特別有質感",
+          "flash": {
+            "username": "呂Иван",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=2。符合D≤2 AND A≤2。符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容堆疊形容詞，且在評論高峰期發表，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "呂Иван",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=3→不符;檢查規則3→A=3,D=3→不符;檢查規則4→simil=0.0,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及氛圍及質感，描述簡潔但具體，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "林鉦維",
+          "text": "朋友覺得很6",
+          "flash": {
+            "username": "林鉦維",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=1, A=3。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=3, D=1。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.0, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論雖然簡短但語氣具個人化感受，情感自然度中等，描述細緻度低。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 1,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "林鉦維",
+            "reasoningPath": "檢查規則1→I=1,D=1→不符;檢查規則2→D=1,A=2→相符;結論",
+            "isWashed": true,
+            "reason": "評論「朋友覺得很6」過於簡短空泛，無具體內容，符合「罐頭評論」特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "陳郁玲",
+          "text": "不錯！價格可以～",
+          "flash": {
+            "username": "陳郁玲",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=2。符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容僅類別描述且語氣平鋪直敘，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "陳郁玲",
+            "reasoningPath": "檢查規則1→I=1,D=2→相符;結論",
+            "isWashed": true,
+            "reason": "評論「不錯！價格可以～」過於簡短空泛，描述細緻度低，符合「罐頭評論」特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "彭菲",
+          "text": "因為朋友推薦而來，餐點的 cp 值非常高！\n店內空間不大，部分座位有插座，亦有 Wifi 與廁所。\n店內還有一隻可愛的鳥，得到老闆同意後很開心地跟他玩❤讀書讀累可以去摸摸他\n\n義式海鮮飯 $120\n有中卷、蛤蜊、蝦仁與起司\n\n伯爵鮮奶茶 $70\n用紙杯稍微可惜一些～\n\n水果鬆餅 $100\n水果非常多，蜂蜜也給很大方，鬆餅很好吃！",
+          "flash": {
+            "username": "彭菲",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=5, A=5。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=5, D=5。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.03, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容詳細描述各餐點品項、口感與店內設施，情感自然且描述極為細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "彭菲",
+            "reasoningPath": "檢查規則1→I=1,D=5→不符;檢查規則2→D=5,A=4→不符;檢查規則3→A=4,D=5→不符;檢查規則4→simil=0.03,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及推薦原因、CP值、設施、具體餐點名稱、內容、價格、飲品、鬆餅，描述詳盡。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "黃邦寧",
+          "text": "有鳥耶店裡！！",
+          "flash": {
+            "username": "黃邦寧",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=3。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=3, D=2。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.0, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容雖然簡短但語氣自然，且提及具體對象「鳥」，描述細緻度尚可。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "黃邦寧",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=3→不符;檢查規則3→A=3,D=3→不符;檢查規則4→simil=0.0,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及具體觀察「有鳥耶店裡！！」，描述真實，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "黃彥皓",
+          "text": "環境很舒服，東西蠻好吃的，飲品價格也都不貴，推推！",
+          "flash": {
+            "username": "黃彥皓",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.08, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容描述環境、餐點與飲品，語氣自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "黃彥皓",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.08,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及環境、餐點、飲品價格，描述正面且真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Piper Berge",
+          "text": "員工非常友善，食物也相當不錯，而且他們還有一隻可愛的鳥兒經常在窗邊玩耍！",
+          "flash": {
+            "username": "Piper Berge",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.09, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論內容描述員工服務、食物與店內特色，情感自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Piper Berge",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.09,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及員工友善、食物不錯，並具體提到店內有鳥，情感與描述真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "王甯",
+          "text": "氣氛很好、餐點好吃、服務親切",
+          "flash": {
+            "username": "王甯",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=2。符合D≤2 AND A≤2。符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容堆疊形容詞，且在評論高峰期發表，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "王甯",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.18,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及氣氛、餐點、服務，描述正面且真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "王墨",
+          "text": "海鮮飯很好吃～飲料也好喝（奶蓋紅茶）\n蠻推薦搭好的套餐，經濟實惠又美味😋😋\n也很適合來這裡讀書打報告，少數座位有插座！",
+          "flash": {
+            "username": "王墨",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.09, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論提及具體餐點並給予強調，且描述了店內適合讀書的環境，情感自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "王墨",
+            "reasoningPath": "檢查規則1→I=1,D=4→不符;檢查規則2→D=4,A=4→不符;檢查規則3→A=4,D=4→不符;檢查規則4→simil=0.09,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及具體餐點、飲料、套餐推薦、價格，並描述適合用途，描述真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "陳靜琦",
+          "text": "氣氛好 食物好吃 讚讚！",
+          "flash": {
+            "username": "陳靜琦",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=2。符合D≤2 AND A≤2。符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isSpikePeriod": true,
+            "isWashed": true,
+            "reason": "評論內容堆疊形容詞且在評論高峰期發表，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "陳靜琦",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=3→不符;檢查規則3→A=3,D=3→不符;檢查規則4→simil=0.15,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及氣氛、食物，描述簡潔正面，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Eddie Hsieh",
+          "text": "本來是想喝咖啡的，剛好座位客滿了，只好外帶老闆推薦的木瓜牛奶，意外的香濃好喝，推！",
+          "flash": {
+            "username": "Eddie Hsieh",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=5。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=5, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.04, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論包含個人經歷、具體飲品推薦與評價，情感自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Eddie Hsieh",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.04,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論描述意外嘗試飲品，並給予具體評價（香濃好喝），情感與描述度佳。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Genia R",
+          "text": "街角很棒的小咖啡館——咖啡很棒（我們沒吃東西），環境也很可愛！別錯過窗邊那隻可愛的小鸚鵡喔…😚",
+          "flash": {
+            "username": "Genia R",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.08, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論提及咖啡、環境與店內特色，情感自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Genia R",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.08,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及咖啡、環境、並具體提到鸚鵡，描述真實有趣。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Yueh",
+          "text": "餐點價格實惠～餐廳氣氛也很好！\n適合悠閒的下午來用餐🍴",
+          "flash": {
+            "username": "Yueh",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.09, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論描述餐點價格、餐廳氣氛與適合的用餐時機，情感自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Yueh",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.09,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及價格實惠、餐廳氣氛，並建議適合的用餐情境，描述真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "wei h",
+          "text": "飲料很好喝 氣氛好！",
+          "flash": {
+            "username": "wei h",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=2。符合D≤2 AND A≤2。符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容堆疊形容詞且在評論高峰期發表，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "wei h",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.25,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及飲料、氣氛，描述簡潔正面，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "薛伊芯",
+          "text": "鸚鵡可愛 氣氛好餐好吃",
+          "flash": {
+            "username": "薛伊芯",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=2。符合D≤2 AND A≤2。符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容堆疊形容詞且在評論高峰期發表，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "薛伊芯",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.12,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及鸚鵡、氣氛、餐點，描述正面且真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "ned tseng",
+          "text": "手沖咖啡好喝",
+          "flash": {
+            "username": "ned tseng",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=2。符合D≤2 AND A≤2。符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容過於簡短且語氣平鋪直敘，且在評論高峰期發表，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "ned tseng",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=3→不符;檢查規則3→A=3,D=3→不符;檢查規則4→simil=0.0,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及具體品項「手沖咖啡」，描述簡潔真實，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "張馨云（Evelyn）",
+          "text": "溫馨又舒適的小店，價格親民、態度親切，適合想放鬆的悠閒下午來訪。\n布朗尼超好吃！！",
+          "flash": {
+            "username": "張馨云（Evelyn）",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.09, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論描述店鋪氛圍、價格、服務與具體甜點評價，情感自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "張馨云（Evelyn）",
+            "reasoningPath": "檢查規則1→I=1,D=3→不符;檢查規則2→D=3,A=4→不符;檢查規則3→A=4,D=3→不符;檢查規則4→simil=0.09,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及店面感受、價格、適合情境，並具體稱讚「布朗尼超好吃」，描述真實。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "TC TC",
+          "text": "環境整潔\nCP值不錯👍\n值得來訪～ …",
+          "flash": {
+            "username": "TC TC",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=2, A=2。符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。結論：符合規則2【空洞模板】。",
+            "isWashed": true,
+            "reason": "評論內容堆疊形容詞且語氣平鋪直敘，符合空洞模板定義。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "TC TC",
+            "reasoningPath": "檢查規則1→I=1,D=2→相符;結論",
+            "isWashed": true,
+            "reason": "評論「環境整潔 CP值不錯👍 值得來訪～」過於簡短空泛，描述細緻度低，符合「罐頭評論」特徵。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "香蕉巧克力",
+          "text": "餐點很好吃！飲料也都很好喝！\n價格更超值～～～不過闆闆一人比較忙碌，比較適合悠哉悠哉的來用餐🫶🏻",
+          "flash": {
+            "username": "香蕉巧克力",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。檢查規則2：D=4, A=4。不符合D≤2 AND A≤2。不符合isSpikePeriod=true AND D≤2。檢查規則3：A=4, D=4。不符合A≤1 AND D≤2。檢查規則4：maxSimilarity=0.09, similarCount=0。不符合maxSimilarity≥0.55 AND similarCount≥2。不符合hotTermCount≥2 AND hotTermMaxRatio≥0.3。結論：不符合任何灌水規則。",
+            "isWashed": false,
+            "reason": "評論描述餐點、飲料與服務狀況，情感自然且描述細緻度良好。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "香蕉巧克力",
+            "reasoningPath": "檢查規則1→I=1,D=4→不符;檢查規則2→D=4,A=4→不符;檢查規則3→A=4,D=4→不符;檢查規則4→simil=0.09,simCnt=0,hotTermCount=0→不符;結論",
+            "isWashed": false,
+            "reason": "評論提及餐點、飲料、價格，並描述店內狀況（闆闆一人忙碌），情感真實，描述尚可。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        }
+      ]
+    },
+    "Pasta 2 Go": {
+      "store_name": "Pasta 2 Go",
+      "trait": "均衡 (83短 169中 57長, 3 spike月)",
+      "total": 0,
+      "agreement": 0,
+      "agreement_pct": 0,
+      "flash_washed": 0,
+      "lite_washed": 0,
+      "flash_issue_dist": {},
+      "lite_issue_dist": {},
+      "per_review": []
+    },
+    "一丁堂拉麵": {
+      "store_name": "一丁堂拉麵",
+      "trait": "高洗率邊緣 (66%模糊 29%洗)",
+      "total": 0,
+      "agreement": 0,
+      "agreement_pct": 0,
+      "flash_washed": 0,
+      "lite_washed": 0,
+      "flash_issue_dist": {},
+      "lite_issue_dist": {},
+      "per_review": []
+    },
+    "墨爾本布蕾斯": {
+      "store_name": "墨爾本布蕾斯咖啡廳 Melbourne Press Cafe Brunch Coffeeshop Breakfast Food",
+      "trait": "長評多 (56短 198中 95長, 3 spike月)",
+      "total": 40,
+      "agreement": 32,
+      "agreement_pct": 80.0,
+      "flash_washed": 8,
+      "lite_washed": 0,
+      "flash_issue_dist": {
+        "template": 8
+      },
+      "lite_issue_dist": {},
+      "per_review": [
+        {
+          "username": "CY Lee",
+          "text": "短髮店員聲音十分溫柔、態度很親切。今天點了波蛋酪梨布里歐、燻鮭魚班尼迪克蛋、肉派，和冰拿鐵、冰摩卡。\n\n布里歐又脆又軟，搭著酪梨和水波蛋，口感跟味道都很棒！\n\n燻鮭班尼蛋，點餐時店員還有特別告知燻鮭魚換供應商所以看起來會較小塊，但份量克數不變，降低客人的疑慮。\n\n肉派和朋友在澳洲生活時吃的口味相似，有喚起美好的回憶～圈圈薯條酥脆無油耗味👍🏻\n\n拿鐵跟摩卡都非常好喝，摩卡的可可味不會過濃，跟咖啡和牛奶的比例很適中。\n\n店內氣氛chill不擁擠嘈雜，吃完這餐感到非常滿足：）",
+          "flash": {
+            "username": "CY Lee",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=5，A=5，不符。檢查規則3：A=5，D=5，不符。檢查規則4：maxSimilarity=0.02, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，描述了多樣的餐點細節和用餐體驗，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "CY Lee",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=5, A=5，不符。檢查規則3→A=5, D=5，不符。檢查規則4→simil=0.02, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論具體描述了餐點的口感、味道，以及店員的服務態度，情感自然，描述細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Ch1453 Ch",
+          "text": "氣氛悠閒舒適，餐點也相當美味，老闆老闆娘和店員們的服務也相當用心，很適合在這度過一段悠閒放鬆的時光",
+          "flash": {
+            "username": "Ch1453 Ch",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=3，A=4，不符。檢查規則3：A=4，D=3，不符。檢查規則4：maxSimilarity=0.05, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容提及具體對象（老闆、老闆娘、店員），語氣自然，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Ch1453 Ch",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.05, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及了用餐氣氛、餐點美味及服務用心，語氣自然，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "楊子軒",
+          "text": "完全吃的出來用心。\n店的氛圍很讓人放鬆。\n老闆，老闆娘😀很有趣☺️ …",
+          "flash": {
+            "username": "楊子軒",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=3，A=4，不符。檢查規則3：A=4，D=3，不符。檢查規則4：maxSimilarity=0.04, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（老闆、老闆娘），情感自然，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "楊子軒",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.04, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及了用心的餐點、放鬆的氛圍以及老闆的趣味，語氣真實，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Lydia Lydia",
+          "text": "裝潢有點特別、服務親切、餐點不錯。座位不多。",
+          "flash": {
+            "username": "Lydia Lydia",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=3，A=3，不符。檢查規則3：A=3，D=3，不符。檢查規則4：maxSimilarity=0.08, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（裝潢、餐點、座位），雖簡短但有提及具體元素，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Lydia Lydia",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.08, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及了裝潢、服務和餐點，語氣自然，描述了具體面向。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Jason Chih-Hsuan Lu",
+          "text": "食物好吃 環境舒適",
+          "flash": {
+            "username": "Jason Chih-Hsuan Lu",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：isSpikePeriod=true 且 D=2，符合規則2。最終判斷：洗評。",
+            "isWashed": true,
+            "reason": "評論空洞，僅為類別描述，且發表於評論量高峰期。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Jason Chih-Hsuan Lu",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=2, A=4，不符。檢查規則3→A=4, D=2，不符。檢查規則4→simil=0.11, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論簡短但提及食物和環境，語氣正面自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "阿比",
+          "text": "餐點美味，環境舒適，狗狗友善，完全超出期待的手繪畫作，細膩的筆觸去呈現毛髮的樣貌還有Jumbo耳朵的角度，都讓我覺得老闆真的很用心繪製，滿滿驚喜之外也很感動💕",
+          "flash": {
+            "username": "阿比",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=4，不符。檢查規則3：A=4，D=4，不符。檢查規則4：maxSimilarity=0.09, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，提及手繪畫作細節，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "阿比",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=4, A=5，不符。檢查規則3→A=5, D=4，不符。檢查規則4→simil=0.09, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論具體描述了餐點美味、環境舒適，並詳細讚美手繪畫作的細膩，情感豐富，描述細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Wu Ryan",
+          "text": "非常有特色的咖啡店！\n牆上的畫是老闆親手油漆的，有立體感\n門外有個外星人會陪你喝咖啡🤭🤭\n餐點的質量也很高，我點雞排，熱度脆度都夠，而且多汁 🥰 …",
+          "flash": {
+            "username": "Wu Ryan",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=4，不符。檢查規則3：A=4，D=4，不符。檢查規則4：maxSimilarity=0.04, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，提及裝潢特色及餐點細節，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Wu Ryan",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=4, A=4，不符。檢查規則3→A=4, D=4，不符。檢查規則4→simil=0.04, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論描述了咖啡店的特色、老闆的畫作以及餐點品質，語氣自然，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Albee Chen",
+          "text": "非常用心的店家，餐點中吃的出細膩的美味💞非常的喜歡，和男友假日能在這，感覺到放鬆和安心",
+          "flash": {
+            "username": "Albee Chen",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=3，A=4，不符。檢查規則3：A=4，D=3，不符。檢查規則4：maxSimilarity=0.06, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（店家、餐點），情感自然，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Albee Chen",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=4, A=5，不符。檢查規則3→A=5, D=4，不符。檢查規則4→simil=0.06, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論表達了對店家用心的喜愛，並描述了放鬆和安心的感受，情感真實，描述較為具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "李懋韻",
+          "text": "今天我們在這兒慶生踐行😊\n非常適合包場或三兩好友聚會💯🤟",
+          "flash": {
+            "username": "李懋韻",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：isSpikePeriod=true 但 D=3，不符。檢查規則3：A=3，D=3，不符。檢查規則4：maxSimilarity=0.02, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論提及具體場景（慶生踐行），語氣自然，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "李懋韻",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.02, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及慶生和聚會場合，語氣正面，點出適合的場景。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Ying Hsuan Li",
+          "text": "餐廳的裝潢很特別，是老闆親自弄的，氛圍很不錯，員工、老闆、老闆娘都很親切，食物都很好吃，適合小型聚會，推薦鮭魚和布朗尼",
+          "flash": {
+            "username": "Ying Hsuan Li",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=4，不符。檢查規則3：A=4，D=4，不符。檢查規則4：maxSimilarity=0.11, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，提及裝潢、人員及推薦餐點，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Ying Hsuan Li",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.11, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論描述了裝潢、氛圍、員工親切及食物好吃，並推薦特定餐點，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "yake wen",
+          "text": "服務非常之好",
+          "flash": {
+            "username": "yake wen",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：isSpikePeriod=true 且 D=1，符合規則2。最終判斷：洗評。",
+            "isWashed": true,
+            "reason": "評論空洞，僅為套話，且發表於評論量高峰期。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 2,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "yake wen",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=1, A=4，不符。檢查規則3→A=4, D=1，不符。檢查規則4→simil=0.0, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論簡短但提及服務極好，語氣正面。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 1,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Pearl Chan",
+          "text": "有故事的老闆娘，很親切。食物調味好吃，不限時，超讚。",
+          "flash": {
+            "username": "Pearl Chan",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=3，A=4，不符。檢查規則3：A=4，D=3，不符。檢查規則4：maxSimilarity=0.08, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（老闆娘、食物、時間限制），語氣自然，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Pearl Chan",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.08, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及老闆娘親切、食物調味好吃及不限時，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "pipi chang",
+          "text": "台大新生南路巷弄咖啡館。裝潢有澳洲英式餐廳的風格。黑竹炭咖啡好特別。下次再來吃餐。",
+          "flash": {
+            "username": "pipi chang",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=3，不符。檢查規則3：A=3，D=4，不符。檢查規則4：maxSimilarity=0.07, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，提及地點、裝潢風格及餐點品項，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "pipi chang",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.07, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論描述了裝潢風格、特色咖啡及下次想嘗試的餐點，具體且有個人感受。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "張博涵",
+          "text": "非常非常好的用餐體驗。\n即使人手不足，仍然穩定出餐。餐點品質不在話下，新鮮沙拉佐油醋醬清爽不膩，適合夏天開胃；口感極佳的布里歐吐司與熟度正好的水波蛋，搭配入口令人驚艷！\n\n單就餐飲而言已足以推薦，而更值得推薦的是服務的溫暖用心。\n\n今天是小朋友的生日，厚著臉皮請店家能否在布朗尼蛋糕旁邊簡單寫下生日快樂作為小紀念，知道店裡忙碌本來還以為會被拒絕。\n\n沒想到，不僅一口答應，大廚特別多次從廚房走出來偷偷觀察，也偷偷詢問小孩名稱，最後端出了一盤溫馨完美的似顏全家福祝賀布朗尼！！還一起唱生日快樂歌祝福小朋友。這份用心遠遠出乎我們的想像，真的真的非常感謝，能夠選擇墨爾本布蕾斯作為今天的小慶生餐聚真的太好了。只可惜不能把似顏繪帶走🥹\n\n希望這麼好的店家，能夠生意興隆長長久久👍",
+          "flash": {
+            "username": "張博涵",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=5，A=5，不符。檢查規則3：A=5，D=5，不符。檢查規則4：maxSimilarity=0.02, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容非常具體，情感真實，描述了詳細的餐點細節和感人的服務體驗，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "張博涵",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=5, A=5，不符。檢查規則3→A=5, D=5，不符。檢查規則4→simil=0.02, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論詳細描述了用餐體驗，包含餐點的細節、服務的溫暖用心，以及特別的生日慶祝，情感豐富，描述細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Nina Chang",
+          "text": "這裡的食物很棒，水煮蛋恰到好處。負責食物的那位女士對起司非常了解，知道如何將起司與其他食材完美搭配。她還會做拉花，因為我對拉花只是略知一二，所以我問她是否可以觀摩一下。她欣然同意，也教了我一些技巧，也給了我一些改進的建議。\n\n我沒嘗試牛排，但強烈推薦早午餐和甜點。\n\n我非常喜歡這家店，強烈推薦大家來嚐嚐。",
+          "flash": {
+            "username": "Nina Chang",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=5，A=5，不符。檢查規則3：A=5，D=5，不符。檢查規則4：maxSimilarity=0.04, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容非常具體，情感真實，詳細描述了餐點品質及與店員互動的經驗，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Nina Chang",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=4, A=4，不符。檢查規則3→A=4, D=4，不符。檢查規則4→simil=0.04, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論詳細描述了食物的美味，特別是水煮蛋的熟度、起司的搭配，以及店員的專業指導，情感真摯，描述細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Eiffel",
+          "text": "餐點價格稍高，但是用餐環境很好，店內有精心裝潢，而且用餐沒有限時，非常適合朋友聚餐。\n最值得稱讚的地方是：店員在我們走之前送上的衣服，我們所有人的巧克力畫，超級貼心又暖心。",
+          "flash": {
+            "username": "Eiffel",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=5，不符。檢查規則3：A=5，D=4，不符。檢查規則4：maxSimilarity=0.05, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，提及用餐環境、無用餐限時及店員的暖心服務，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Eiffel",
+            "reasoningPath": "檢查規則1→不符，I=2。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.05, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及了餐點價格、用餐環境、無時間限制，並讚揚店員貼心送衣服和巧克力畫，情感真摯，描述具體。",
+            "incentiveIntensity": 2,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Giuseppe Belle",
+          "text": "食物很棒，員工超級友好，咖啡也非常好喝！",
+          "flash": {
+            "username": "Giuseppe Belle",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：isSpikePeriod=true 且 D=2，符合規則2。最終判斷：洗評。",
+            "isWashed": true,
+            "reason": "評論內容空洞，僅為類別描述，且發表於評論量高峰期。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Giuseppe Belle",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=2, A=4，不符。檢查規則3→A=4, D=2，不符。檢查規則4→simil=0.38, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論簡短但提及食物美味、員工友善及咖啡好喝，語氣正面自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "kongchieu",
+          "text": "老闆娘把她的咖啡館裝扮成了澳洲風格。一定要嚐嚐她自製的餡餅，有辣味和不辣的兩種口味。\n\n咖啡館的裝潢都是老闆娘親手打造的，很有品味。離開咖啡館前，別忘了和老闆娘親手繪製的大幅相框合照。",
+          "flash": {
+            "username": "kongchieu",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=3，不符。檢查規則3：A=3，D=4，不符。檢查規則4：maxSimilarity=0.04, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，提及裝潢風格及餐點品項（餡餅），無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "kongchieu",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.04, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論描述了老闆娘的裝扮風格、自製餡餅口味、裝潢品味及合照，具體且有個人觀點。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "吳小政",
+          "text": "服務員丁丁服務態度很親切，用完餐幫我開門站在門口對我說再見歡迎下次再來",
+          "flash": {
+            "username": "吳小政",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=4，不符。檢查規則3：A=4，D=4，不符。檢查規則4：maxSimilarity=0.06, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，提及服務人員姓名及互動細節，情感真實，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "吳小政",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.06, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論具體描述了服務員的親切態度和送客禮儀，情感真實，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Janet Yang",
+          "text": "東西好吃 老闆娘親切 值得再來",
+          "flash": {
+            "username": "Janet Yang",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：isSpikePeriod=true 且 D=2，符合規則2。最終判斷：洗評。",
+            "isWashed": true,
+            "reason": "評論空洞，僅為類別描述，且發表於評論量高峰期。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Janet Yang",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=2, A=4，不符。檢查規則3→A=4, D=2，不符。檢查規則4→simil=0.18, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論簡短但提及東西好吃、老闆娘親切，語氣正面。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 2,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Mark Chiang",
+          "text": "今天帶一位非常難搞的guest去吃brunch\n東西好吃 服務非常非常非常禮貌\n不過因為服務生拿延長線時從食物上方經過並觸碰到她的帽子 引發她歇斯底里的症狀並要求全額退款\n商家的處理方式非常有誠意 我的guest也很快平靜了下來\n但我其實對店家非常不好意思\n這是個絕對推薦的好店家",
+          "flash": {
+            "username": "Mark Chiang",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=5，A=5，不符。檢查規則3：A=5，D=5，不符。檢查規則4：maxSimilarity=0.05, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容非常具體，情感真實，描述了特定事件及店家處理方式，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Mark Chiang",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=5, A=4，不符。檢查規則3→A=4, D=5，不符。檢查規則4→simil=0.05, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論詳細描述了餐點、服務，並包含一個特殊事件及商家的處理方式，內容豐富且有個人觀點。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "劉宜欣",
+          "text": "服務蠻好～\n菜點滿好吃❤️\n老闆最後特別給我們驚喜\n太用心😍😍",
+          "flash": {
+            "username": "劉宜欣",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=3，A=3，不符。檢查規則3：A=3，D=3，不符。檢查規則4：maxSimilarity=0.02, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（服務、菜、老闆），語氣自然，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "劉宜欣",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.02, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及服務好、菜好吃，並因老闆的驚喜感到用心，情感正面，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Bill Lin",
+          "text": "Melbourne Press Cafe 墨爾本布蕾斯咖啡廳的味道很深遠\n\n就在台大旁知名的女巫店邊上，整間店都是“畫”出來的，會這麼說的原因是整間店不僅牆面，連同牆上的畫跟一部分家具都有畫筆的痕跡\n\n從門口走進來大致分成三區，每區的 tone 不一樣，卻又巧妙地融合在一起，給你一個有點夢幻卻又不會失真的美感\n\n最重要的是他們家的餐點，我會用“清爽的豐富”來形容，我們點了“酪梨布裡歐吐司”與“熏鮭魚班尼迪克蛋”，吃進去嘴巴的每一口都不是那種濃郁醇厚的味道，但是所有食材跟醬汁的搭配，最後會給你更高一個層次的交響\n\n布里歐上面的班尼迪克蛋，切開後的蛋黃佈滿酪梨與吐司，那種恰恰好的 balance 真的很引人入勝\n\n一定要提一下他們家的沙拉醬，絕對是我整個台北吃遍連同五星級餐廳後的最佳，果汁底加上一點點胡椒跟芥末，還有老闆自己的配方，下次來一定要單點沙拉才會滿足",
+          "flash": {
+            "username": "Bill Lin",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=5，A=5，不符。檢查規則3：A=5，D=5，不符。檢查規則4：maxSimilarity=0.02, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容非常具體，情感真實，詳細描述了裝潢、餐點細節及醬汁特色，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Bill Lin",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=5, A=5，不符。檢查規則3→A=5, D=5，不符。檢查規則4→simil=0.02, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論非常詳細，描繪了店內裝潢、氛圍、餐點的味覺體驗（清爽的豐富、交響），並特別讚揚沙拉醬，情感豐富，描述細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Shinyi Chen",
+          "text": "雖然是小巧的店，餐點確非常用心，\n點了布里歐，麵包非常香\n烤雞腿很軟嫩\n蛋和沙拉也非常棒，\n紅石榴水果茶很解膩，彩虹蛋糕好吃\n老闆娘非常親切\n下次要再嘗試其它的餐和甜點\n一定會再回訪\n非常推薦",
+          "flash": {
+            "username": "Shinyi Chen",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=4，不符。檢查規則3：A=4，D=4，不符。檢查規則4：maxSimilarity=0.05, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，提及多樣餐點品項及老闆娘，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Shinyi Chen",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=4, A=5，不符。檢查規則3→A=5, D=4，不符。檢查規則4→simil=0.05, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論具體描述了布里歐麵包的香、烤雞腿的嫩、蛋和沙拉的優點，以及水果茶和蛋糕的口味，老闆娘親切，表達了回訪意願。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "阿約",
+          "text": "在巷弄中的一個小小咖啡廳！！\n餐點非常的好吃！老闆娘非常可愛非常親切！！\n謝謝您們讓我有一個美好的下午( ´▽` )ﾉ",
+          "flash": {
+            "username": "阿約",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=3，A=4，不符。檢查規則3：A=4，D=3，不符。檢查規則4：maxSimilarity=0.05, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（餐點、老闆娘），情感自然，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "阿約",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.05, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及巷弄中的咖啡廳、餐點好吃、老闆娘可愛親切，語氣正面自然。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Peko Chang",
+          "text": "意外踏進店裡用餐，氛圍很放鬆、餐點很好吃，老闆服務人員非常Nice、很親切、服務讓人感到很舒服、很溫暖，用完餐還有驚喜，幫我們在盤子上畫了人像，超級可愛！很期待下次再來光顧～～～",
+          "flash": {
+            "username": "Peko Chang",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=5，A=5，不符。檢查規則3：A=5，D=5，不符。檢查規則4：maxSimilarity=0.04, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，詳細描述了用餐體驗及店家提供的驚喜，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Peko Chang",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=4, A=5，不符。檢查規則3→A=5, D=4，不符。檢查規則4→simil=0.04, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論描述了放鬆的氛圍、好吃的餐點、Nice親切的老闆及服務人員，並提到用餐後的驚喜（人像畫），情感真摯，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Erica Lu",
+          "text": "路過進來坐坐聊天，店裡不大但氣氛不錯，茶品順口，杯具有特色，最驚喜的是老闆針對我跟朋友，送了自己繪盤的小甜點，可愛～",
+          "flash": {
+            "username": "Erica Lu",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=4，不符。檢查規則3：A=4，D=4，不符。檢查規則4：maxSimilarity=0.03, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，提及茶品、杯具特色及老闆繪盤小甜點，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Erica Lu",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.03, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及店裡氣氛不錯、茶品順口、杯具特色，並對老闆繪盤的小甜點感到驚喜，情感正面，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Patrick Lin",
+          "text": "是一個會想要再回訪和支持的店！老闆很熱情，不是那種做生意的熱情，是那種打從心底想好好款待你的熱情。我們在那裡度過了很幸福的一個上午！\n\n餐廳的裝潢是老闆自己在疫情間慢慢整理出來的，你可以感受到他的用心和情感。餐點也是一樣有用心的感受。但我不是美食家，我覺得不錯就是了。我對燕麥奶拿鐵和鮭魚泡芙都覺得很棒！\n\n最後要特別提醒趕時間的人、快節奏的人、想要有很多服務的人要多考慮，餐廳的服務不多，有的時候只有是老闆的外籍太太在服務，雖然懂中文也可以說，但可以感覺老闆娘比較憨厚單純、溝通也比較慢，出餐也不快。所以推薦給有時間在這裡感受氛圍，享受聚會時光的朋友。",
+          "flash": {
+            "username": "Patrick Lin",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=5，A=5，不符。檢查規則3：A=5，D=5，不符。檢查規則4：maxSimilarity=0.02, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容非常具體，情感真實，詳細描述了店家氛圍、餐點及服務的優缺點，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Patrick Lin",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=4, A=5，不符。檢查規則3→A=5, D=4，不符。檢查規則4→simil=0.02, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論表達了強烈回訪意願，讚揚老闆的熱情、裝潢的用心及餐點（燕麥奶拿鐵、鮭魚泡芙），並提供了對節奏較慢服務的提醒，情感真實，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "李熙橙",
+          "text": "好吃，好喝，讚",
+          "flash": {
+            "username": "李熙橙",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=1，A=1，符合規則2。最終判斷：洗評。",
+            "isWashed": true,
+            "reason": "評論空洞，僅為套話，情感無明顯起伏，屬模板評論。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "李熙橙",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=1, A=4，不符。檢查規則3→A=4, D=1，不符。檢查規則4→simil=0.09, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論簡短但表達了好吃、好喝、讚，語氣正面。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 1,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Audrey FU",
+          "text": "不限時的好所在，闆娘對待每一道菜、飲品都很認真細心，也很有耐心講解每道菜的特色與做法，個人點了熱美式咖啡，超香醇順口，特別覺得黑鬆餅好紮實脆口，不甜不膩，只是非常可惜沒有鹹蛋黃口味的，因為很特別別家應該也吃不到！\n餐點班尼迪克蛋也可以為我們調整為全熟蛋，好貼心喔，餐點都好吃，室內裝修也很藝術別具特色！💪💪",
+          "flash": {
+            "username": "Audrey FU",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=5，A=5，不符。檢查規則3：A=5，D=5，不符。檢查規則4：maxSimilarity=0.02, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容非常具體，情感真實，詳細描述了餐點特色、客製化服務及裝潢，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 5,
+            "descriptionGranularity": 5,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Audrey FU",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=4, A=4，不符。檢查規則3→A=4, D=4，不符。檢查規則4→simil=0.02, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及不限時、老闆娘認真細心講解、咖啡香醇、黑鬆餅紮實脆口，並提到班尼迪克蛋可調整全熟，室內裝修有特色，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "TARK HCW",
+          "text": "老闆跟闆娘態度很親切，食材有用心，價格也合理。彩虹蛋糕不只是很美，口味也很好吃。",
+          "flash": {
+            "username": "TARK HCW",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=3，不符。檢查規則3：A=3，D=4，不符。檢查規則4：maxSimilarity=0.09, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，提及老闆、老闆娘態度，食材用心及彩虹蛋糕，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "TARK HCW",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.09, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及老闆娘親切、食材用心、價格合理，以及彩虹蛋糕的美麗與美味，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Ping Chen Huang",
+          "text": "欽佩",
+          "flash": {
+            "username": "Ping Chen Huang",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=1，A=1，符合規則2。最終判斷：洗評。",
+            "isWashed": true,
+            "reason": "評論空洞，僅為套話，情感無明顯起伏，屬模板評論。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Ping Chen Huang",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=1, A=4，不符。檢查規則3→A=4, D=1，不符。檢查規則4→simil=0.0, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論簡短但表達了欽佩之意，語氣正面。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 1,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "吳柏佑",
+          "text": "一個舒適的環境下搭配美味的餐點，很適合午後時光或朋友聚餐，加上老闆和老闆娘都很親切，喜歡舒服用餐環境和美食的朋友一定不能錯過",
+          "flash": {
+            "username": "吳柏佑",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=3，不符。檢查規則3：A=3，D=4，不符。檢查規則4：maxSimilarity=0.07, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，提及環境、餐點、老闆老闆娘及適合對象，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "吳柏佑",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.07, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論描述了舒適的環境、美味的餐點、適合的場合，以及老闆娘的親切，語氣正面，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "JOG Kong",
+          "text": "本來想說單點雞腿排380不太便宜，結果一上來是兩大塊雞腿排，肉質超嫩，很好吃，還附一個烤蛋，太值得了。",
+          "flash": {
+            "username": "JOG Kong",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=4，不符。檢查規則3：A=4，D=4，不符。檢查規則4：maxSimilarity=0.03, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，提及雞腿排份量、口感及烤蛋，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "JOG Kong",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=4, A=4，不符。檢查規則3→A=4, D=4，不符。檢查規則4→simil=0.03, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論具體描述了雞腿排的份量、肉質的嫩度，以及附餐的烤蛋，認為物有所值，描述細緻。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Simon Yeo",
+          "text": "這家餐廳環境不錯，食物也很美味。老闆很友善，服務很好。如果你想找一家價格實惠又環境優雅的餐廳，這裡絕對是你的不二之選。如果我再去台北，一定還會去光顧。",
+          "flash": {
+            "username": "Simon Yeo",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=4，不符。檢查規則3：A=4，D=4，不符。檢查規則4：maxSimilarity=0.06, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，提及環境、食物、老闆及未來回訪意願，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Simon Yeo",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.06, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及環境、食物美味、老闆友善、服務好，並推薦為價格實惠又優雅的餐廳，表達了再次光顧的意願。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Kai Philip",
+          "text": "這家小店很可愛，西式早餐/早午餐選擇非常美味，服務也很有創意且友善！謝謝。",
+          "flash": {
+            "username": "Kai Philip",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=3，A=4，不符。檢查規則3：A=4，D=3，不符。檢查規則4：maxSimilarity=0.06, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（小店、西式早餐/早午餐），情感自然，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Kai Philip",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.06, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及小店可愛、西式早餐/早午餐美味、服務有創意且友善，語氣正面，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "GN Wu",
+          "text": "雞腿排只有天上有",
+          "flash": {
+            "username": "GN Wu",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：isSpikePeriod=true 但 D=1，符合規則2。最終判斷：洗評。",
+            "isWashed": true,
+            "reason": "評論空洞，僅為套話，情感無明顯起伏，且發表於評論量高峰期。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 1,
+            "descriptionGranularity": 1,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "GN Wu",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=1, A=4，不符。檢查規則3→A=4, D=1，不符。檢查規則4→simil=0.02, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論以非常簡潔的方式讚美雞腿排，雖短但語氣生動。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 1,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "Doris Chin",
+          "text": "東西很好吃，每一個擺上桌的料理，都是有用心對待。\n服務人員的態度也很好，會主動告知餐點等待時間，還可以雙語溝通～\n\n整體價格偏高🤣不過還是很值得一試！",
+          "flash": {
+            "username": "Doris Chin",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：D=4，A=4，不符。檢查規則3：A=4，D=4，不符。檢查規則4：maxSimilarity=0.04, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論內容具體，情感真實，提及料理用心、服務態度及雙語溝通，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "Doris Chin",
+            "reasoningPath": "檢查規則1→不符，I=2。檢查規則2→D=4, A=4，不符。檢查規則3→A=4, D=4，不符。檢查規則4→simil=0.04, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及餐點好吃且用心，服務人員態度好並可雙語溝通，雖然價格偏高但認為值得一試，情感正面，描述具體。",
+            "incentiveIntensity": 2,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 4,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "ZY “Eater” W.",
+          "text": "來訪數次，很喜歡老闆營造與呈現出來的澳洲風...",
+          "flash": {
+            "username": "ZY “Eater” W.",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：isSpikePeriod=true 但 D=3，不符。檢查規則3：A=3，D=3，不符。檢查規則4：maxSimilarity=0.04, similarCount=0, hotTermCount=0, hotTermMaxRatio=0.0，不符。最終判斷：非洗評。",
+            "isWashed": false,
+            "reason": "評論提及具體對象（老闆、澳洲風），語氣自然，無洗評跡象。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "ZY “Eater” W.",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.04, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及喜歡老闆營造的澳洲風，表達了對風格的認同。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        },
+        {
+          "username": "吳承豪",
+          "text": "很棒的早午餐；東西好吃\n服務很親切；最後送了布朗尼",
+          "flash": {
+            "username": "吳承豪",
+            "reasoningPath": "檢查規則1：無利益交換跡象，I=1。例外：不適用。檢查規則2：isSpikePeriod=true 且 D=2，符合規則2。最終判斷：洗評。",
+            "isWashed": true,
+            "reason": "評論空洞，僅為類別描述，且發表於評論量高峰期。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 3,
+            "descriptionGranularity": 2,
+            "issueType": "template",
+            "verdictBasis": "content"
+          },
+          "lite": {
+            "username": "吳承豪",
+            "reasoningPath": "檢查規則1→不符，I=1。檢查規則2→D=3, A=4，不符。檢查規則3→A=4, D=3，不符。檢查規則4→simil=0.1, simCnt=0，不符。檢查規則4→hotTermCount=0，不符。故為 false",
+            "isWashed": false,
+            "reason": "評論提及早午餐很棒、東西好吃、服務親切，並有贈送布朗尼的驚喜，情感正面，描述具體。",
+            "incentiveIntensity": 1,
+            "sentimentAuthenticity": 4,
+            "descriptionGranularity": 3,
+            "issueType": "none",
+            "verdictBasis": "content"
+          }
+        }
+      ]
+    }
+  }
+}

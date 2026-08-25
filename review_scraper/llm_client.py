@@ -11,7 +11,7 @@ import random
 
 from prompt_builder import build_prompt, build_qa_prompt
 
-MODEL_NAME_GEMINI = 'gemini-2.5-flash'
+MODEL_NAME_GEMINI = 'gemini-2.5-flash-lite'
 MODEL_NAME_DEEPSEEK = 'deepseek-chat'
 
 # Target ~40 reviews per batch (within the 30-50 range asked for); batches are
@@ -102,7 +102,7 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
                 config = {
                     'response_mime_type': 'application/json',
                     'http_options': {'timeout': 60_000},  # 60s per batch, well under gunicorn's 120s
-                    'thinking_config': {'thinking_budget': 0},  # Stage 2 is structured JSON, no need for thinking ($3.50/1M)
+                    # Flash-Lite has no thinking support; no thinking_config needed
                 }
                 if gemini_config:
                     config.update(gemini_config)
@@ -183,7 +183,6 @@ def call_llm_qa(provider: str, client, store_name: str, reviews: list, question:
                     contents=prompt,
                     config={
                         'response_mime_type': 'application/json',
-                        'thinking_config': {'thinking_budget': 0},
                     },
                 )
                 raw_text = getattr(response, 'text', None)
