@@ -41,6 +41,10 @@ from cache_store import (
 from rule_engine import run_stage1_audit
 from llm_client import make_batches, call_llm_batch
 
+# Disable thinking tokens to save cost — Stage 2 is structured JSON extraction,
+# not deep reasoning. Thinking tokens cost $3.50/1M vs output $0.60/1M.
+NO_THINKING = {'thinking_config': {'thinking_budget': 0}}
+
 # Cost constant (Gemini 2.5 Flash: $0.15/1M input + $0.60/1M output tokens)
 # ~6200 input + ~3200 output tokens per 40-review batch → ~$0.003/batch → ~$0.0001/review
 COST_PER_REVIEW_USD = 0.0001
@@ -131,7 +135,7 @@ def main():
             for i in range(batch_size)
         ]
         try:
-            result = call_llm_batch('gemini', client, 'API測試店家', test_reviews, max_retries=0)
+            result = call_llm_batch('gemini', client, 'API測試店家', test_reviews, max_retries=0, gemini_config=NO_THINKING)
             print(f'✅ Gemini API 正常！{batch_size} 則 batch 成功回傳 {len(result)} 筆結果')
             sys.exit(0)
         except Exception as e:
@@ -224,7 +228,7 @@ def main():
             batch_saved = 0
             for bi, batch in enumerate(batches):
                 try:
-                    batch_results = call_llm_batch('gemini', client, store_name, batch, max_retries=0)
+                    batch_results = call_llm_batch('gemini', client, store_name, batch, max_retries=0, gemini_config=NO_THINKING)
                     # Save immediately
                     cache_entries = [
                         {**r, '_original_text': text_by_username.get(r.get('username', ''), '')}

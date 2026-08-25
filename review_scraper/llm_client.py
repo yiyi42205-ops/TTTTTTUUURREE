@@ -86,10 +86,12 @@ def parse_llm_json(raw_text: str) -> list:
     raise ValueError('LLM 回傳的內容不是有效的評論審查 JSON 陣列')
 
 
-def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retries: int = 2) -> list:
+def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retries: int = 2, gemini_config: dict = None) -> list:
     """Sends one batch of normalized reviews to the LLM and returns the parsed
     per-review audit results. Automatically retries on transient errors/JSON decode failures.
-    Raises ValueError/RuntimeError on failure after exhausting retries."""
+    Raises ValueError/RuntimeError on failure after exhausting retries.
+
+    gemini_config: extra keys merged into the Gemini config dict (e.g. thinking_config)."""
     prompt = build_prompt(store_name, batch)
     if provider not in ('gemini', 'deepseek'):
         raise ValueError(f"Unknown LLM provider: {provider}")
@@ -97,13 +99,16 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
     for attempt in range(max_retries + 1):
         try:
             if provider == 'gemini':
+                config = {
+                    'response_mime_type': 'application/json',
+                    'http_options': {'timeout': 60_000},  # 60s per batch, well under gunicorn's 120s
+                }
+                if gemini_config:
+                    config.update(gemini_config)
                 response = client.models.generate_content(
                     model=MODEL_NAME_GEMINI,
                     contents=prompt,
-                    config={
-                        'response_mime_type': 'application/json',
-                        'http_options': {'timeout': 60_000},  # 60s per batch, well under gunicorn's 120s
-                    },
+                    config=config,
                 )
                 raw_text = getattr(response, 'text', None)
             elif provider == 'deepseek':
