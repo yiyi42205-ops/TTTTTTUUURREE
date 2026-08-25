@@ -115,21 +115,28 @@ def main():
         http_options={'retry_options': {'attempts': 1}},
     ) if api_key else None
 
-    # --test: send 1 dummy review to check if Gemini is responding
+    # --test: send a realistic 20-review batch to check if Gemini can handle it.
+    # A 1-review test is meaningless — 504s only happen with full-size prompts.
     if args.test:
-        print('🔍 Testing Gemini API...')
-        test_review = [{
-            'username': 'test', 'text': '好吃推薦', 'stars': 5, 'images': [],
-            'daysElapsed': 10, 'isSpikePeriod': False,
-            'maxSimilarity': 0, 'similarCount': 0,
-            'hotTermCount': 0, 'hotTermMaxRatio': 0, 'nearbyLongReviewCount': 0,
-        }]
+        batch_size = args.batch_size
+        print(f'🔍 Testing Gemini API with {batch_size}-review batch...')
+        test_reviews = [
+            {
+                'username': f'user_{i}', 'stars': 5, 'images': [],
+                'text': f'第{i}次來，餐點品質穩定，服務態度也很好，環境乾淨整潔，會再回訪。',
+                'daysElapsed': i * 10, 'isSpikePeriod': False,
+                'maxSimilarity': 0, 'similarCount': 0,
+                'hotTermCount': 0, 'hotTermMaxRatio': 0, 'nearbyLongReviewCount': 0,
+            }
+            for i in range(batch_size)
+        ]
         try:
-            result = call_llm_batch('gemini', client, 'API測試', test_review, max_retries=0)
-            print(f'✅ Gemini API 正常！回傳 {len(result)} 筆結果')
+            result = call_llm_batch('gemini', client, 'API測試店家', test_reviews, max_retries=0)
+            print(f'✅ Gemini API 正常！{batch_size} 則 batch 成功回傳 {len(result)} 筆結果')
             sys.exit(0)
         except Exception as e:
             print(f'❌ Gemini API 失敗: {e}')
+            print(f'   Gemini 目前無法處理 {batch_size} 則的 batch，請稍後再試')
             sys.exit(1)
 
     # Collect all stores
@@ -146,6 +153,7 @@ def main():
     success = 0
     failed = 0
     skipped = 0
+    consecutive_failures = 0
     start = time.time()
     now = datetime.now()
 
@@ -210,16 +218,27 @@ def main():
             # burning money on 503/504 errors. Failed batches are skipped.
             batches = make_batches(to_send, target_size=args.batch_size, max_size=args.batch_size + 10)
             results = []
+            batch_failures = 0
             for bi, batch in enumerate(batches):
                 try:
                     batch_results = call_llm_batch('gemini', client, store_name, batch, max_retries=0)
                     results.extend(batch_results)
                 except Exception as e:
                     print(f'  ⚠️  Batch {bi+1}/{len(batches)} failed for {place_id[:40]}: {e}')
+                    batch_failures += 1
                     if args.verbose:
                         traceback.print_exc()
                 if bi < len(batches) - 1:
                     time.sleep(args.delay)
+
+            # If ALL batches failed, count as store failure for fail-fast
+            if batch_failures == len(batches):
+                failed += 1
+                consecutive_failures += 1
+                if consecutive_failures >= 3:
+                    print(f'\n🛑 連續 {consecutive_failures} 家全部 batch 失敗，停止執行')
+                    break
+                continue
 
             # Write results to stage2_cache
             if results:
@@ -237,6 +256,7 @@ def main():
                       f'cost~${cost_so_far:.2f} ({elapsed:.0f}s)')
 
             success += 1
+            consecutive_failures = 0
 
             # Pause between stores to respect rate limits
             time.sleep(args.delay)
@@ -246,6 +266,10 @@ def main():
             if args.verbose:
                 traceback.print_exc()
             failed += 1
+            consecutive_failures += 1
+            if consecutive_failures >= 3:
+                print(f'\n🛑 連續 {consecutive_failures} 家失敗，停止執行（Gemini 可能不穩定）')
+                break
 
     elapsed = time.time() - start
     est_cost = total_to_send * COST_PER_REVIEW_USD
