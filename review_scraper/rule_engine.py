@@ -567,6 +567,8 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
                 'spikeMonths': [],
                 'noTextRatio': 0.0,
                 'foreignLanguageRatio': 0.0,
+                'whistleblowerCount': 0,
+                'whistleblowerReviews': [],
             },
         }
 
@@ -609,6 +611,21 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
     for i, is_short in enumerate(is_short_positive):
         if is_short:
             short_exact_counts[i] = short_text_freq[cleaned_texts[i]] - 1  # exclude self
+
+    # Whistleblower detection: ≤3-star reviews mentioning incentive keywords
+    # are customers exposing wash behavior, not participants.  Count them as a
+    # store-level signal (Issue #77).
+    whistleblower_indices = set()
+    for i, review in enumerate(reviews):
+        text = (review.get('text', '') or '').strip()
+        if not text:
+            continue
+        try:
+            stars = int(review.get('stars') or 0)
+        except (ValueError, TypeError):
+            stars = 0
+        if stars <= 3 and _check_incentive_semantic(text):
+            whistleblower_indices.add(i)
 
     # Per-review audit
     audited = []
@@ -689,6 +706,16 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
         for i in range(len(reviews))
     ]
 
+    # Build whistleblower details list
+    whistleblower_reviews = []
+    for i in sorted(whistleblower_indices):
+        r = reviews[i]
+        whistleblower_reviews.append({
+            'username': r.get('username', ''),
+            'text': r.get('text', ''),
+            'stars': int(r.get('stars') or 0),
+        })
+
     return {
         'auditedReviews': audited,
         'signals': {
@@ -698,5 +725,7 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
             'spikeMonths': sorted(spike_months),
             'noTextRatio': no_text_ratio,
             'foreignLanguageRatio': foreign_language_ratio,
+            'whistleblowerCount': len(whistleblower_indices),
+            'whistleblowerReviews': whistleblower_reviews,
         },
     }
