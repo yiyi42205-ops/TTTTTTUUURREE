@@ -570,13 +570,16 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
     no_text_ratio = detect_no_text_ratio(reviews)
     foreign_language_ratio = detect_language_ratio(reviews)
 
-    # Exact-match counting for generic short reviews.
+    # Exact-match counting for short positive reviews.
     # These are too short for n-gram Jaccard (len <= min_template_chars) so
     # detect_similarity_signals always returns similarCount=0 for them.
     # Count how many other reviews share the exact same cleaned text instead.
+    # Applied to ALL short positive reviews (stars >= 4), not just those in
+    # EMPTY_WORDS — closes the blind spot where bot rings spam a short phrase
+    # not in the dictionary (e.g. "服務態度超好" × 50). See Issue #53.
     short_exact_counts = [0] * len(reviews)
     cleaned_texts = []
-    is_generic_short = []
+    is_short_positive = []
     for r in reviews:
         text = r.get('text', '') or ''
         try:
@@ -584,16 +587,17 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
         except (ValueError, TypeError):
             stars = 0
         cleaned = STRIP_PUNCT_RE.sub('', text)
-        is_short = is_generic_short_review(text, stars)
         cleaned_texts.append(cleaned)
-        is_generic_short.append(is_short)
+        is_short_positive.append(
+            stars >= 4 and 0 < len(cleaned) <= config.min_template_chars
+        )
 
-    # Build frequency map of cleaned texts among generic short reviews
+    # Build frequency map of cleaned texts among short positive reviews
     short_text_freq = defaultdict(int)
-    for i, is_short in enumerate(is_generic_short):
+    for i, is_short in enumerate(is_short_positive):
         if is_short:
             short_text_freq[cleaned_texts[i]] += 1
-    for i, is_short in enumerate(is_generic_short):
+    for i, is_short in enumerate(is_short_positive):
         if is_short:
             short_exact_counts[i] = short_text_freq[cleaned_texts[i]] - 1  # exclude self
 
