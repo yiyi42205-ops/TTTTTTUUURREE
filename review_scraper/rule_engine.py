@@ -33,6 +33,10 @@ class RuleConfig:
     low_info_escalation_similar_count: int = 2
     spike_multiplier: float = 3.0
     spike_min_count: int = 10
+    structural_min_similarity: float = 0.55
+    structural_min_similar_count: int = 2
+    structural_min_hot_term_count: int = 2
+    structural_min_hot_term_ratio: float = 0.3
     wash_verdict_threshold: float = 0.03       # evaluation-only (store-level binary)
 
 
@@ -83,8 +87,22 @@ HOT_TERM_MIN_COVERAGE_RATIO = 0.2
 NEARBY_WINDOW_SECONDS = 30 * 60
 LONG_REVIEW_MIN_LENGTH = 50
 
+# Structural confidence constants (ported from auditEngine.ts)
+STRUCTURAL_SIMILAR_COUNT_CAP = 5
+STRUCTURAL_NEARBY_LONG_REVIEW_CAP = 5
+STRUCTURAL_CONFIDENCE_MIN = 60
+STRUCTURAL_CONFIDENCE_MAX = 95
+
 
 # ─── Helper functions ────────────────────────────────────────
+
+HASHTAG_RE = re.compile(r'#\S+')
+
+
+def _strip_hashtags(text: str) -> str:
+    """Remove #hashtag tokens before computing structural signals."""
+    return HASHTAG_RE.sub('', text)
+
 
 def get_ngram(text, n=2):
     text = re.sub(r'\s+', '', text or '')
@@ -122,6 +140,28 @@ def is_generic_short_review(text, stars):
     return cleaned in EMPTY_WORDS or bool(REPEATING_PRAISE_RE.match(cleaned))
 
 
+# ─── Structural template detection (rule 2.6) ────────────────
+
+def hits_structural_template(sig: dict, config: RuleConfig = None) -> bool:
+    """Rule 2.6: structural homogeneity template. Thresholds from prompt v2, provisional."""
+    if config is None:
+        config = RuleConfig()
+    a = sig['maxSimilarity'] >= config.structural_min_similarity and sig['similarCount'] >= config.structural_min_similar_count
+    b = sig['hotTermCount'] >= config.structural_min_hot_term_count and sig['hotTermMaxRatio'] >= config.structural_min_hot_term_ratio
+    return a or b
+
+
+def compute_structural_confidence(similar_count: int, hot_term_max_ratio: float, nearby_long_review_count: int) -> int:
+    """Structural confidence from signal strength, mapped to 60-95.
+    Ported from auditEngine.ts computeStage2Confidence structural branch."""
+    similar_component = min(similar_count / STRUCTURAL_SIMILAR_COUNT_CAP, 1)
+    hot_term_component = min(hot_term_max_ratio, 1)
+    nearby_component = min(nearby_long_review_count / STRUCTURAL_NEARBY_LONG_REVIEW_CAP, 1)
+    composite = 0.4 * similar_component + 0.4 * hot_term_component + 0.2 * nearby_component
+    confidence = STRUCTURAL_CONFIDENCE_MIN + composite * (STRUCTURAL_CONFIDENCE_MAX - STRUCTURAL_CONFIDENCE_MIN)
+    return round(max(STRUCTURAL_CONFIDENCE_MIN, min(STRUCTURAL_CONFIDENCE_MAX, confidence)))
+
+
 # ─── Signal detection functions ──────────────────────────────
 
 def detect_templates(reviews, config: RuleConfig = None):
@@ -130,7 +170,7 @@ def detect_templates(reviews, config: RuleConfig = None):
         config = RuleConfig()
     grams = []
     for r in reviews:
-        text = r.get('text', '') or ''
+        text = _strip_hashtags(r.get('text', '') or '')
         cleaned = re.sub(r'\s+', '', text)
         grams.append(get_ngram(text, 2) if len(cleaned) > config.min_template_chars else None)
     flags = [False] * len(reviews)
@@ -151,7 +191,7 @@ def detect_similarity_signals(reviews, config: RuleConfig = None):
         config = RuleConfig()
     grams = []
     for r in reviews:
-        text = r.get('text', '') or ''
+        text = _strip_hashtags(r.get('text', '') or '')
         cleaned = re.sub(r'\s+', '', text)
         grams.append(get_ngram(text, config.similarity_ngram) if len(cleaned) > config.min_template_chars else None)
 
@@ -184,7 +224,7 @@ def detect_hot_term_signals(reviews):
 
     term_review_count = defaultdict(int)
     for r in five_star_reviews:
-        for term in _extract_candidate_terms(r.get('text', '')):
+        for term in _extract_candidate_terms(_strip_hashtags(r.get('text', ''))):
             term_review_count[term] += 1
 
     min_count = max(HOT_TERM_MIN_REVIEW_COUNT, math.ceil(total_five_star * HOT_TERM_MIN_COVERAGE_RATIO))
@@ -207,7 +247,7 @@ def detect_hot_term_signals(reviews):
             hot_term_counts.append(0)
             hot_term_max_ratios.append(0.0)
             continue
-        terms = _extract_candidate_terms(r.get('text', ''))
+        terms = _extract_candidate_terms(_strip_hashtags(r.get('text', '')))
         count = 0
         max_ratio = 0.0
         for term, ratio in hot_terms.items():
@@ -494,6 +534,31 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
                 'confidenceScore': 65,
                 'issueType': 'no_text',
             }
+
+        # Rule 2.6: structural template — only for ambiguous reviews (issueType=null)
+        if audit['issueType'] is None:
+            struct_sig = {
+                'maxSimilarity': max_similarity[i],
+                'similarCount': sim_count,
+                'hotTermCount': hot_term_counts[i],
+                'hotTermMaxRatio': hot_term_max_ratios[i],
+            }
+            if hits_structural_template(struct_sig, config):
+                confidence = compute_structural_confidence(
+                    sim_count, hot_term_max_ratios[i], nearby_long_review_counts[i],
+                )
+                reasons = []
+                if max_similarity[i] >= config.structural_min_similarity and sim_count >= config.structural_min_similar_count:
+                    reasons.append(f'與店內 {sim_count} 則評論結構相似（最高相似度 {max_similarity[i]:.0%}）')
+                if hot_term_counts[i] >= config.structural_min_hot_term_count and hot_term_max_ratios[i] >= config.structural_min_hot_term_ratio:
+                    reasons.append(f'反覆使用全店高頻詞組（占比 {hot_term_max_ratios[i]:.0%}）')
+                audit = {
+                    'isWashed': True,
+                    'reason': '⚠️ ' + '；'.join(reasons),
+                    'confidenceScore': confidence,
+                    'issueType': 'template',
+                    'verdictBasis': 'structural',
+                }
 
         audited.append({
             **review,
