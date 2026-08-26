@@ -81,6 +81,21 @@ def _connect(db_path: str) -> sqlite3.Connection:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS stage2_scores (
+            review_id TEXT NOT NULL,
+            model TEXT NOT NULL,
+            prompt_version TEXT NOT NULL,
+            I INTEGER NOT NULL,
+            A INTEGER NOT NULL,
+            D INTEGER NOT NULL,
+            reasoning TEXT NOT NULL,
+            created_at REAL NOT NULL,
+            PRIMARY KEY (review_id, model, prompt_version)
+        )
+        """
+    )
     return conn
 
 
@@ -302,6 +317,63 @@ def set_cached_qa(place_id: str, question: str, answer_json: dict, db_path: str 
                 created_at = excluded.created_at
             """,
             (place_id, question, json.dumps(answer_json, ensure_ascii=False), time.time())
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# ── Stage 2 score cache ─────────────────────────────────────────
+
+def get_cached_scores(review_ids: list, model: str, prompt_version: str,
+                      db_path: str = None) -> dict:
+    """Return {review_id: {I, A, D, reasoning}} for any cached scores."""
+    if not review_ids:
+        return {}
+    conn = _connect(db_path or DB_PATH)
+    try:
+        placeholders = ",".join("?" for _ in review_ids)
+        rows = conn.execute(
+            f"""
+            SELECT review_id, I, A, D, reasoning
+            FROM stage2_scores
+            WHERE review_id IN ({placeholders})
+              AND model = ? AND prompt_version = ?
+            """,
+            [*review_ids, model, prompt_version],
+        ).fetchall()
+        return {
+            row[0]: {"I": row[1], "A": row[2], "D": row[3], "reasoning": row[4]}
+            for row in rows
+        }
+    finally:
+        conn.close()
+
+
+def set_cached_scores(scores: list, model: str, prompt_version: str,
+                      db_path: str = None) -> None:
+    """Bulk-insert score rows. Each item: {review_id, I, A, D, reasoning}."""
+    if not scores:
+        return
+    conn = _connect(db_path or DB_PATH)
+    try:
+        now = time.time()
+        conn.executemany(
+            """
+            INSERT INTO stage2_scores (review_id, model, prompt_version, I, A, D, reasoning, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(review_id, model, prompt_version) DO UPDATE SET
+                I = excluded.I,
+                A = excluded.A,
+                D = excluded.D,
+                reasoning = excluded.reasoning,
+                created_at = excluded.created_at
+            """,
+            [
+                (s["review_id"], model, prompt_version,
+                 s["I"], s["A"], s["D"], s["reasoning"], now)
+                for s in scores
+            ],
         )
         conn.commit()
     finally:

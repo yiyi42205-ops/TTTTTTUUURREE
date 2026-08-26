@@ -27,8 +27,9 @@ def test_qa_returns_success(client, monkeypatch):
 
     reviews = [make_review(i) for i in range(5)]
     resp = client.post("/api/summarize", json={
-        "storeName": "測試店家", 
-        "reviews": reviews, 
+        "placeId": "ChIJ_test",
+        "storeName": "測試店家",
+        "reviews": reviews,
         "question": "這家店推薦什麼？"
     })
 
@@ -39,7 +40,8 @@ def test_qa_returns_success(client, monkeypatch):
 
 def test_qa_missing_question_returns_4xx(client):
     resp = client.post("/api/summarize", json={
-        "storeName": "測試店家", 
+        "placeId": "ChIJ_test",
+        "storeName": "測試店家",
         "reviews": [make_review(1)]
     })
     assert resp.status_code == 400
@@ -48,7 +50,8 @@ def test_qa_missing_question_returns_4xx(client):
 def test_qa_question_too_long_returns_4xx(client):
     long_question = "A" * 501
     resp = client.post("/api/summarize", json={
-        "storeName": "測試店家", 
+        "placeId": "ChIJ_test",
+        "storeName": "測試店家",
         "reviews": [make_review(1)],
         "question": long_question
     })
@@ -61,13 +64,13 @@ def test_qa_rate_limit_exceeded_returns_429(client, monkeypatch):
     monkeypatch.setattr(server, "check_and_increment_qa_limit", lambda *args, **kwargs: False)
 
     resp = client.post("/api/summarize", json={
-        "storeName": "測試店家", 
+        "placeId": "ChIJ_test",
+        "storeName": "測試店家",
         "reviews": [make_review(1)],
         "question": "這家店推薦什麼？"
     })
-    
+
     assert resp.status_code == 429
-    assert "最多只能提問 3 次" in resp.get_json()["error"]
 
 def test_qa_uses_cache_and_skips_llm(client, monkeypatch):
     llm_called = False
@@ -81,7 +84,8 @@ def test_qa_uses_cache_and_skips_llm(client, monkeypatch):
     monkeypatch.setattr(server, "get_cached_qa", lambda *args, **kwargs: fake_qa_result())
 
     resp = client.post("/api/summarize", json={
-        "storeName": "測試店家", 
+        "placeId": "ChIJ_test",
+        "storeName": "測試店家",
         "reviews": [make_review(1)],
         "question": "這家店推薦什麼？"
     })

@@ -9,17 +9,17 @@
 ```mermaid
 flowchart TD
     A["輸入商家評論資料庫 / CSV"] --> B["階段一：本地啟發式規則引擎"]
-    B --> C{"是否匹配顯性關鍵字或重複模板？"}
-    C -- 是 --> D["標記為洗評 (信心指數: 90% - 100%)"]
-    C -- 否 --> E["預計算時間特徵信號 (isSpikePeriod / daysElapsed)"]
-    
+    B --> C{"匹配顯性關鍵字／重複模板／結構同質？"}
+    C -- 是 --> D["標記為洗評 (信心指數: 60% - 100%)"]
+    C -- 否 --> E["預計算時間特徵信號 (isSpikePeriod)"]
+
     E --> F["分層抽樣 (生產模式最多 15 則 / 評估模式全送)"]
-    F --> G["階段二：Gemini 2.5 語意複審"]
-    G --> H["思維鏈推理與細分維度評分 (1-5 分)"]
-    H --> I["動態加權信心指數計算 (50% - 99%)"]
-    
-    D & I --> J["本地加權計分引擎"]
-    J --> K["計算商家真實信譽評分 (Trust Score) 與過濾後真實星等 (Filtered Rating)"]
+    F --> G["階段二：Gemini 2.5 → I/A/D 三維度打分"]
+    G --> H["後端規則函式判定 isWashed + issueType"]
+    H --> I["冪次曲線信心指數 (0% - 100%)"]
+
+    D & I --> J["加權計分引擎"]
+    J --> K["計算 Trust Score 與 Filtered Rating"]
 ```
 
 ---
@@ -42,6 +42,18 @@ flowchart TD
 *   **門檻**：若兩則評論的字數大於 6，且 **Jaccard 相似度 > 75%**：
 *   **判定結果**：直接判定 `isWashed: true`、`issueType: 'template'`、`信心指數 (confidenceScore): 90%`。
 
+### 2.6 結構同質模板檢測 (Structural Template Detection)
+在 Stage 1 預計算信號之後、收集模糊評論送 Stage 2 之前，對原本會送 Stage 2 的模糊評論套用此規則。命中的評論不再送 LLM，直接在 Stage 1 判定。
+
+*   **觸發條件**（符合任一即命中）：
+    * `maxSimilarity ≥ 0.55` 且 `similarCount ≥ 2`
+    * `hotTermCount ≥ 2` 且 `hotTermMaxRatio ≥ 0.3`
+*   **判定結果**：`isWashed: true`、`issueType: 'template'`、`verdictBasis: 'structural'`
+*   **信心指數**：加權複合公式，映射至 60–95 範圍：
+    $$composite = 0.4 \times \frac{similarCount}{5} + 0.4 \times hotTermMaxRatio + 0.2 \times \frac{nearbyLongReviewCount}{5}$$
+    $$confidence = 60 + composite \times 35$$
+*   **門檻為暫定值**，待 PR 2 上線後以標註店家校準。
+
 ---
 
 ## 3. 輔助特徵：時間特徵信號預計算 (Temporal Signals)
@@ -63,20 +75,26 @@ flowchart TD
 *   **生產模式 (`production`，預設)**：最多抽樣 15 則，按 `isSpikePeriod` 分層等距取樣，控制 Gemini API 成本。
 *   **評估模式 (`evaluate`)**：全數送出，不設上限，確保離線評估的全覆蓋數字不失真。
 
-### 4.1 思維鏈模式 (Chain-of-Thought, CoT)
-Gemini 被強制作答輸出 `reasoningPath` 欄位，在給出結論前必須一步步推導以下要素：
-*   評論字數與情感是否誇張、敷衍、空洞？
-*   是否包含具體的餐點、環境特色或排隊客觀感受？
-*   結合 `isSpikePeriod`（是否在暴增期）與 `daysElapsed`（歷史時間）綜合研判。
+### 4.1 LLM 輸出：I／A／D 三個分數
+LLM **只輸出**每則評論的三個維度分數（1–5 整數）和一句 40 字內的 reasoning。是否為洗評（`isWashed`）、問題類型（`issueType`）、判定原因（`reason`）全部由後端程式碼根據分數產生。Prompt 不包含任何信號欄位（`stars`、`daysElapsed`、`isSpikePeriod`、`maxSimilarity` 等），LLM 只看 `{id, text}`。
 
-### 4.2 指標評分細分化 (1 - 5 分)
-Gemini 針對三個獨立維度進行打分：
+三個維度：
 *   **利益交換強度 (`incentiveIntensity`, $I$)**：是否有為獲得折扣/贈禮而寫的好評痕跡（1 分最弱，5 分最強）。
 *   **情感真實度 (`sentimentAuthenticity`, $A$)**：情感表達是否真誠自然（1 分最假，5 分最真）。
 *   **描述細緻度 (`descriptionGranularity`, $D$)**：對餐點、服務、細節描述的具體程度（1 分最空洞，5 分最細緻）。
 
+### 4.2 規則函式（後端 `stage2_rules.py`）
+LLM 回傳的 I／A／D 分數由以下規則函式判定是否洗評（門檻沿用 prompt v2，全部暫定）：
+
+| 規則 | 條件 | 判定 |
+|------|------|------|
+| 規則 1：利益交換 | `I ≥ 3` 且 `D ≤ 2`；或 `I = 5` 且非（`D ≥ 4` 且 `A ≥ 4`） | `isWashed: true`、`issueType: "incentive"` |
+| 規則 2：空洞模板 | `D ≤ 2` 且（`A ≤ 2` 或 `isSpikePeriod`） | `isWashed: true`、`issueType: "template"` |
+
+`isSpikePeriod` 從 Stage 1 信號取，不經 LLM。`verdictBasis` 一律為 `"content"`（structural 已由 Stage 1 規則 2.6 在 PR 1 產生）。原 prompt 的規則 3（`A ≤ 1` 且 `D ≤ 2`）為規則 2 的子集，已併入。`discrepancy` issueType 從此不再產生。
+
 ### 4.3 冪次曲線信心指數 (Power-Curve Confidence Score)
-本機接收到評分後，根據以下公式動態計算該則評論的信心指數。信心指數的下游語意是**過濾權重**（而非判定正確率），因此採用 0–100% 全範圍，並以冪次曲線壓低中間模糊地帶、拉開兩端區分度。
+後端收到 I／A／D 分數後，根據以下公式計算信心指數（公式不變）：
 
 1.  **計算偏差總分 (Score Deviation)**：
     $$S_{val} = (I - 1) + (5 - A) + (5 - D)$$
@@ -84,14 +102,16 @@ Gemini 針對三個獨立維度進行打分：
 
 2.  **計算一致性 (Agreement)**：
     $$washRatio = \frac{S_{val}}{12}$$
-    *   若 AI 判定為洗評 (`isWashed = true`)：$agreement = washRatio$
-    *   若 AI 判定為真實 (`isWashed = false`)：$agreement = 1 - washRatio$
+    *   若判定為洗評 (`isWashed = true`)：$agreement = washRatio$
+    *   若判定為真實 (`isWashed = false`)：$agreement = 1 - washRatio$
 
 3.  **冪次曲線信心指數**：
     $$Confidence\% = \mathrm{round}\!\left( agreement^{1.5} \times 100 \right),\quad \text{clamp to } [0, 100]$$
-    *（冪次 1.5 將模糊中間點從 50% 壓至約 35%，使得維度評分與二元判定不一致時信心明顯降低。）*
 
-4.  **UI 分級門檻**：當 `isWashed = true` 且 $Confidence < 50\%$ 時，前端以琥珀色「疑似洗評」標籤取代紅色「判定：灌水洗評」，提示此判定仍具不確定性。
+4.  **UI 分級門檻**：當 `isWashed = true` 且 $Confidence < 50\%$ 時，前端以琥珀色「疑似洗評」標籤取代紅色「判定：灌水洗評」。
+
+### 4.4 Stage 2 分數快取
+I／A／D 分數寫入 SQLite `stage2_scores` 表（主鍵：`review_id, model, prompt_version`），之後調門檻只重跑規則函式，不需重打 API。`prompt_version` 為 `audit_prompt.txt` 的 sha256 前 8 碼，確保新舊分數不混用。
 
 ---
 

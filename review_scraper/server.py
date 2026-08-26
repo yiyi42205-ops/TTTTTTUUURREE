@@ -13,12 +13,15 @@ import urllib.request
 from urllib.parse import urlparse
 
 from normalize import normalize_review
-from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES, call_llm_qa
+from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES, call_llm_qa, MODEL_NAME_GEMINI, MODEL_NAME_DEEPSEEK
 from cache_store import (
-    get_cached_reviews, set_cached_reviews, get_place_id_for_query, 
+    get_cached_reviews, set_cached_reviews, get_place_id_for_query,
     set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata,
-    check_and_increment_qa_limit, get_cached_qa, set_cached_qa
+    check_and_increment_qa_limit, get_cached_qa, set_cached_qa,
+    get_cached_scores, set_cached_scores,
 )
+from prompt_builder import get_prompt_version
+from stage2_rules import build_stage2_result
 from rule_engine import run_stage1_audit
 import re
 
@@ -413,49 +416,137 @@ def audit():
         return jsonify(err_resp[0]), err_resp[1]
 
     store_name = data.get("storeName") or "待審查店家"
+    place_id = data.get("placeId") or ""
     raw_reviews = data.get("reviews")
     if not raw_reviews or not isinstance(raw_reviews, list):
         logger.error(f"Audit request from {ip} failed validation: Missing or invalid required field 'reviews'")
         return jsonify({"error": "Missing or invalid required field: reviews"}), 400
 
-    normalized = []
+    # Build per-review metadata (username, isSpikePeriod, daysElapsed for batching)
+    reviews_meta = []
     for r in raw_reviews:
         if not isinstance(r, dict):
             continue
-        n = normalize_review(r)
-        n["daysElapsed"] = r.get("daysElapsed", 0)
-        n["isSpikePeriod"] = bool(r.get("isSpikePeriod", False))
-        n["maxSimilarity"] = r.get("maxSimilarity", 0)
-        n["similarCount"] = r.get("similarCount", 0)
-        n["hotTermCount"] = r.get("hotTermCount", 0)
-        n["hotTermMaxRatio"] = r.get("hotTermMaxRatio", 0)
-        n["nearbyLongReviewCount"] = r.get("nearbyLongReviewCount", 0)
-        normalized.append(n)
+        reviews_meta.append({
+            "username": r.get("username", ""),
+            "text": r.get("text", "") or "",
+            "isSpikePeriod": bool(r.get("isSpikePeriod", False)),
+            "daysElapsed": r.get("daysElapsed", 0),
+        })
 
-    if not normalized:
+    if not reviews_meta:
         return jsonify({"results": []})
 
-    batches = make_batches(normalized)
-    logger.info(f"Auditing {len(normalized)} reviews for '{store_name}' across {len(batches)} batch(es)...")
+    model_name = MODEL_NAME_GEMINI if provider == "gemini" else MODEL_NAME_DEEPSEEK
+    prompt_version = get_prompt_version()
 
-    results = []
+    # ── 1. Cache lookup ──────────────────────────────────────────
+    review_ids = [f"{place_id}:{rm['username']}" for rm in reviews_meta]
+    cached = get_cached_scores(review_ids, model_name, prompt_version) if place_id else {}
+    cache_hits = len(cached)
+
+    # Separate cached vs uncached reviews (preserve original indices)
+    uncached_indices = [i for i, rid in enumerate(review_ids) if rid not in cached]
+    uncached_reviews = [reviews_meta[i] for i in uncached_indices]
+
+    logger.info(
+        f"Auditing {len(reviews_meta)} reviews for '{store_name}': "
+        f"{cache_hits} cached, {len(uncached_reviews)} to score"
+    )
+
+    # ── 2. Call LLM for uncached reviews ─────────────────────────
+    llm_scores = {}  # index-in-uncached → score dict
     errors = []
-    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_BATCHES) as executor:
-        futures = {executor.submit(call_llm_batch, provider, client_to_use, store_name, batch): batch for batch in batches}
-        for future in as_completed(futures):
-            try:
-                results.extend(future.result())
-            except Exception as e:
-                logger.error(f"LLM ({provider}) batch audit failed: {e}")
-                logger.error(traceback.format_exc())
-                errors.append(str(e))
+    if uncached_reviews:
+        batches = make_batches(uncached_reviews)
+        logger.info(f"Sending {len(uncached_reviews)} reviews across {len(batches)} batch(es)...")
 
-    # Batches are independent LLM calls — one failing shouldn't discard results
-    # from the batches that succeeded. Only fail the whole request if nothing came back.
-    if errors and not results:
+        flat_results = []
+        with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_BATCHES) as executor:
+            futures = {
+                executor.submit(call_llm_batch, provider, client_to_use, store_name, batch): (batch_idx, batch)
+                for batch_idx, batch in enumerate(batches)
+            }
+            # Collect results, tracking which batch each came from
+            batch_results = {}
+            for future in as_completed(futures):
+                batch_idx, batch = futures[future]
+                try:
+                    batch_results[batch_idx] = future.result()
+                except Exception as e:
+                    logger.error(f"LLM ({provider}) batch audit failed: {e}")
+                    logger.error(traceback.format_exc())
+                    errors.append(str(e))
+                    batch_results[batch_idx] = []
+
+            # Flatten in original batch order, remapping ids to global uncached indices
+            offset = 0
+            for batch_idx in range(len(batches)):
+                batch_size = len(batches[batch_idx])
+                for item in batch_results.get(batch_idx, []):
+                    global_idx = offset + item['id']
+                    llm_scores[global_idx] = item
+                offset += batch_size
+
+        # Cache newly scored reviews
+        if place_id:
+            to_cache = []
+            for local_idx, item in llm_scores.items():
+                orig_idx = uncached_indices[local_idx]
+                to_cache.append({
+                    "review_id": review_ids[orig_idx],
+                    "I": item["incentiveIntensity"],
+                    "A": item["sentimentAuthenticity"],
+                    "D": item["descriptionGranularity"],
+                    "reasoning": item.get("reasoning", ""),
+                })
+            set_cached_scores(to_cache, model_name, prompt_version)
+
+    if errors and not llm_scores and not cached:
         return jsonify({"error": f"LLM ({provider}) 語意審計全部批次皆失敗", "details": errors}), 502
 
-    logger.info(f"Audit completed: {len(results)} reviews classified, {len(errors)} batch failure(s), in {time.time() - start_time:.2f}s.")
+    # ── 3. Apply rules + compose results ─────────────────────────
+    # Build a map from original index → scores for uncached reviews
+    uncached_scores = {}
+    for local_idx, item in llm_scores.items():
+        orig_idx = uncached_indices[local_idx]
+        uncached_scores[orig_idx] = {
+            "I": item["incentiveIntensity"],
+            "A": item["sentimentAuthenticity"],
+            "D": item["descriptionGranularity"],
+            "reasoning": item.get("reasoning", ""),
+        }
+
+    results = []
+    for i, rm in enumerate(reviews_meta):
+        rid = review_ids[i]
+        if rid in cached:
+            scores = cached[rid]
+        elif i in uncached_scores:
+            scores = uncached_scores[i]
+        else:
+            # Unscored — maintain Stage 1 ambiguous default
+            results.append({
+                "username": rm["username"],
+                "stage2": "unscored",
+            })
+            continue
+
+        result = build_stage2_result(
+            username=rm["username"],
+            I=scores["I"],
+            A=scores["A"],
+            D=scores["D"],
+            reasoning=scores.get("reasoning", ""),
+            is_spike=rm["isSpikePeriod"],
+        )
+        results.append(result)
+
+    logger.info(
+        f"Audit completed: {len(results)} reviews, {cache_hits} from cache, "
+        f"{len(llm_scores)} newly scored, {len(errors)} batch failure(s), "
+        f"in {time.time() - start_time:.2f}s."
+    )
     response_body = {"results": results}
     if errors:
         response_body["errors"] = errors

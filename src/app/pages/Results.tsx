@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { RESTAURANTS_DATA } from '../data/restaurantsData';
 import { parseReviews, Review } from '../utils/csvParser';
-import { aggregateAuditedReviews, mergeStage2Results, computeStage2Confidence, ShopStats, AuditResult, SimilaritySignal, HotTermSignal } from '../utils/auditEngine';
+import { aggregateAuditedReviews, mergeStage2Results, ShopStats, AuditResult, SimilaritySignal, HotTermSignal } from '../utils/auditEngine';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
 import { useIsPWA } from '../hooks/useIsPWA';
 
@@ -244,9 +244,6 @@ export function Results() {
         // Use precomputed signals from the backend /api/audit-rules response
         const signals = shopSignals[id];
         const spikeMonthsSet = new Set(signals?.spikeMonths || []);
-        const similaritySignals = signals?.similarity || [];
-        const hotTermSignals = signals?.hotTerm || [];
-        const nearbyLongReviewCounts = signals?.nearbyLongReviewCounts || [];
 
         // Stage 1 already reached a confident verdict (incentive/template/
         // no_text/low_info) for anything with a non-null issueType — re-litigating
@@ -298,12 +295,11 @@ export function Results() {
         let stage2Passed = 0;
         const storeMap: { [username: string]: AuditResult } = {};
 
-        // Looked up by username when processing Gemini's response, so the
-        // structural confidence formula has the same signal values the model saw.
-        const signalContextByUsername: { [username: string]: { similarCount: number; hotTermMaxRatio: number; nearbyLongReviewCount: number } } = {};
-
         if (stage2Sent > 0) {
           const now = new Date();
+          // Simplified payload: LLM only sees id + text now; signals stay
+          // server-side. We still send isSpikePeriod so the rule engine can
+          // use it, and daysElapsed for batch ordering.
           const reviewsPayload = ambiguousReviews.map(r => {
             const month = r.time ? r.time.substring(0, 7) : '';
             const isSpikePeriod = spikeMonthsSet.has(month);
@@ -314,26 +310,15 @@ export function Results() {
                 daysElapsed = Math.max(0, Math.floor((now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24)));
               }
             }
-            const idx = reviews.indexOf(r);
-            const { maxSimilarity = 0, similarCount = 0 } = similaritySignals[idx] || {};
-            const { hotTermCount = 0, hotTermMaxRatio = 0 } = hotTermSignals[idx] || {};
-            const nearbyLongReviewCount = nearbyLongReviewCounts[idx] || 0;
-            signalContextByUsername[r.username] = { similarCount, hotTermMaxRatio, nearbyLongReviewCount };
             return {
               username: r.username,
               text: r.text,
-              stars: r.stars,
-              images: r.images,
-              daysElapsed,
               isSpikePeriod,
-              maxSimilarity,
-              similarCount,
-              hotTermCount,
-              hotTermMaxRatio,
-              nearbyLongReviewCount
+              daysElapsed,
             };
           });
 
+          const placeId = storeIds[idx] || '';
           const localApiKey = sessionStorage.getItem('truerating_gemini_api_key') || '';
           const response = await fetch('/api/audit', {
             method: 'POST',
@@ -343,7 +328,8 @@ export function Results() {
             },
             body: JSON.stringify({
               storeName: result.storeName,
-              reviews: reviewsPayload
+              placeId,
+              reviews: reviewsPayload,
             })
           });
 
@@ -356,34 +342,26 @@ export function Results() {
           const items: any[] = responseJson.results || [];
 
           items.forEach(item => {
+            // Skip unscored items (LLM failed for this review)
+            if (item.stage2 === 'unscored') return;
+
             if (item.isWashed) {
               stage2Flagged++;
             } else {
               stage2Passed++;
             }
 
-            const inc = item.incentiveIntensity || 3;
-            const aut = item.sentimentAuthenticity || 3;
-            const gra = item.descriptionGranularity || 3;
-
-            // Confidence is routed by what actually triggered the verdict — a
-            // structural "template" call (review-homogeneity/recurring-dish/
-            // clustered-posting evidence) is scored from that signal strength,
-            // not from I/A/D (a well-written ghost review "disagreeing" with
-            // its own washed verdict on content dimensions previously produced
-            // ~2% confidence and a near-1.0 weight — no real filtering effect).
-            const confidence = computeStage2Confidence(item, signalContextByUsername[item.username]);
-
+            // Server now returns complete results with confidence computed
             storeMap[item.username] = {
               isWashed: item.isWashed,
               reason: item.reason,
-              confidenceScore: confidence,
+              confidenceScore: item.confidenceScore,
               issueType: item.issueType === 'none' ? null : (item.issueType as any),
               reasoningPath: item.reasoningPath,
-              incentiveIntensity: inc,
-              sentimentAuthenticity: aut,
-              descriptionGranularity: gra,
-              verdictBasis: item.verdictBasis
+              incentiveIntensity: item.incentiveIntensity || 3,
+              sentimentAuthenticity: item.sentimentAuthenticity || 3,
+              descriptionGranularity: item.descriptionGranularity || 3,
+              verdictBasis: item.verdictBasis,
             };
           });
         }
