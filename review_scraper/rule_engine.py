@@ -490,9 +490,18 @@ def audit_review(review, context=None, config: RuleConfig = None):
         }
 
     # 1. Semantic incentive check (Issue #87: three-factor approach)
+    # Stars ≤ 3: the reviewer is reporting/complaining about wash campaigns,
+    # not participating in them (e.g. "洗評論送紅茶，給一星剛好"). Issue #59.
     incentive_result = _check_incentive_semantic(text)
     if incentive_result:
         level, matched_desc = incentive_result
+        if stars <= 3:
+            return {
+                'isWashed': False,
+                'reason': f'評論提及促銷關鍵字『{matched_desc}』，但星等僅 {stars} 星，判定為揭發/抱怨而非參與洗評。',
+                'confidenceScore': 80,
+                'issueType': None,
+            }
         if level == 'high':
             return {
                 'isWashed': True,
