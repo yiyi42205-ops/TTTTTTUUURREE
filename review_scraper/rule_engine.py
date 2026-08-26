@@ -11,7 +11,9 @@ Previously, this logic lived in two mirrored implementations:
 Now it lives here only.
 """
 import math
+import random
 import re
+import zlib
 from collections import defaultdict
 
 from langdetect import detect, LangDetectException, DetectorFactory
@@ -206,26 +208,66 @@ def compute_structural_confidence(similar_count: int, hot_term_max_ratio: float,
     return round(max(STRUCTURAL_CONFIDENCE_MIN, min(STRUCTURAL_CONFIDENCE_MAX, confidence)))
 
 
+# ─── MinHash LSH for O(N) template detection ──────────────────
+
+_NUM_PERM = 10
+_MINHASH_PRIME = 4294967311
+_rng = random.Random(42)
+_MINHASH_FUNCS = [(_rng.randint(1, _MINHASH_PRIME - 1), _rng.randint(0, _MINHASH_PRIME - 1)) for _ in range(_NUM_PERM)]
+
+
+def _minhash(ngrams):
+    """Compute MinHash signature for a set of n-grams."""
+    if not ngrams:
+        return None
+    hashed_grams = [zlib.crc32(g.encode('utf-8')) & 0xFFFFFFFF for g in ngrams]
+    signature = []
+    for a, b in _MINHASH_FUNCS:
+        signature.append(min((a * x + b) % _MINHASH_PRIME for x in hashed_grams))
+    return signature
+
+
 # ─── Signal detection functions ──────────────────────────────
 
 def detect_templates(reviews, config: RuleConfig = None):
-    """Hard duplicate detection via 2-gram Jaccard."""
+    """Hard duplicate detection via MinHash LSH with exact Jaccard fallback."""
     if config is None:
         config = RuleConfig()
-    grams = []
+
+    grams_list = []
+    signatures = []
     for r in reviews:
         text = _strip_hashtags(r.get('text', '') or '')
         cleaned = re.sub(r'\s+', '', text)
-        grams.append(get_ngram(text, 2) if len(cleaned) > config.min_template_chars else None)
+        if len(cleaned) > config.min_template_chars:
+            grams = get_ngram(text, 2)
+            grams_list.append(grams)
+            signatures.append(_minhash(grams))
+        else:
+            grams_list.append(None)
+            signatures.append(None)
+
     flags = [False] * len(reviews)
-    for i in range(len(reviews)):
-        if grams[i] is None:
+
+    # LSH bucketing (b=5 bands, r=2 rows per band)
+    b = 5
+    r = 2
+    buckets = defaultdict(list)
+
+    for i, sig in enumerate(signatures):
+        if sig is None:
             continue
-        for j in range(i + 1, len(reviews)):
-            if grams[j] is None:
-                continue
-            if jaccard(grams[i], grams[j]) > config.jaccard_threshold:
-                flags[i] = flags[j] = True
+        for band_idx in range(b):
+            band = tuple(sig[band_idx * r : (band_idx + 1) * r])
+            bucket_key = (band_idx, zlib.crc32(str(band).encode()) & 0xFFFFFFFF)
+
+            for j in buckets[bucket_key]:
+                if not flags[i] or not flags[j]:
+                    if jaccard(grams_list[i], grams_list[j]) > config.jaccard_threshold:
+                        flags[i] = flags[j] = True
+
+            buckets[bucket_key].append(i)
+
     return flags
 
 
