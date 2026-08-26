@@ -1,0 +1,1532 @@
+{
+  "created": "2026-08-24 01:03",
+  "seed": 67,
+  "n_stores": 100,
+  "per_store": 20,
+  "total_reviews": 1973,
+  "strata": {
+    "high": 30,
+    "mid": 40,
+    "low": 30
+  },
+  "stores": [
+    {
+      "store_name": "惜物．蒠寤古道具︱日本百元選物、昭和選物、黒膠卡帶視聽所 ︱師大夜市內",
+      "place_id": "ChIJ0yQ_sL-pQjQRdX0lxQ7EH7c",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%83%9C%E7%89%A9%EF%BC%8E%E8%92%A0%E5%AF%A4%E5%8F%A4%E9%81%93%E5%85%B7%EF%B8%B1%E6%97%A5%E6%9C%AC%E7%99%BE%E5%85%83%E9%81%B8%E7%89%A9%E3%80%81%E6%98%AD%E5%92%8C%E9%81%B8%E7%89%A9%E3%80%81%E9%BB%92%E8%86%A0%E5%8D%A1%E5%B8%B6%E8%A6%96%E8%81%BD%E6%89%80%20%EF%B8%B1%E5%B8%AB%E5%A4%A7%E5%A4%9C%E5%B8%82%E5%85%A7&query_place_id=ChIJ0yQ_sL-pQjQRdX0lxQ7EH7c",
+      "n_total": 42,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 42
+      },
+      "n_sampled": 18,
+      "n_washed_in_sample": 0,
+      "csv_file": "001_惜物．蒠寤古道具︱日本百元選物、昭和選物、黒膠卡帶視聽所 ︱師大夜市內.csv"
+    },
+    {
+      "store_name": "隱家拉麵 公館店",
+      "place_id": "ChIJFSLuzdqpQjQRcm_HPL78SiE",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%9A%B1%E5%AE%B6%E6%8B%89%E9%BA%B5%20%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJFSLuzdqpQjQRcm_HPL78SiE",
+      "n_total": 500,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 500
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 0,
+      "csv_file": "002_隱家拉麵 公館店.csv"
+    },
+    {
+      "store_name": "一番茶 古亭店",
+      "place_id": "ChIJEyF0Y1CpQjQRCeQm13CnZzs",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E4%B8%80%E7%95%AA%E8%8C%B6%20%E5%8F%A4%E4%BA%AD%E5%BA%97&query_place_id=ChIJEyF0Y1CpQjQRCeQm13CnZzs",
+      "n_total": 18,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 15,
+        "no_text": 3
+      },
+      "n_sampled": 18,
+      "n_washed_in_sample": 0,
+      "csv_file": "003_一番茶 古亭店.csv"
+    },
+    {
+      "store_name": "峨嵋川菜餐廳",
+      "place_id": "ChIJDzOZn4upQjQRj3uewI9Rsks",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%B3%A8%E5%B5%8B%E5%B7%9D%E8%8F%9C%E9%A4%90%E5%BB%B3&query_place_id=ChIJDzOZn4upQjQRj3uewI9Rsks",
+      "n_total": 500,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 500
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 0,
+      "csv_file": "004_峨嵋川菜餐廳.csv"
+    },
+    {
+      "store_name": "ONES caf’e",
+      "place_id": "ChIJB1NnUQCpQjQRK3hY6IvD9AU",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=ONES%20caf%E2%80%99e&query_place_id=ChIJB1NnUQCpQjQRK3hY6IvD9AU",
+      "n_total": 85,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 74,
+        "no_text": 11
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 0,
+      "csv_file": "005_ONES caf’e.csv"
+    },
+    {
+      "store_name": "鮮堡漢堡",
+      "place_id": "ChIJe0kzNIypQjQRGXruur3uJUA",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%AE%AE%E5%A0%A1%E6%BC%A2%E5%A0%A1&query_place_id=ChIJe0kzNIypQjQRGXruur3uJUA",
+      "n_total": 72,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 40,
+        "no_text": 32
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 0,
+      "csv_file": "006_鮮堡漢堡.csv"
+    },
+    {
+      "store_name": "妙妙鑄鐵燒 包好吃台式漢堡 刈包",
+      "place_id": "ChIJc-RNxourQjQRxowb5C8svAs",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%A6%99%E5%A6%99%E9%91%84%E9%90%B5%E7%87%92%2B%E5%8C%85%E5%A5%BD%E5%90%83%E5%8F%B0%E5%BC%8F%E6%BC%A2%E5%A0%A1%20%E5%88%88%E5%8C%85&query_place_id=ChIJc-RNxourQjQRxowb5C8svAs",
+      "n_total": 23,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 18,
+        "low_info": 1,
+        "no_text": 4
+      },
+      "n_sampled": 17,
+      "n_washed_in_sample": 0,
+      "csv_file": "007_妙妙鑄鐵燒 包好吃台式漢堡 刈包.csv"
+    },
+    {
+      "store_name": "京都日式料理",
+      "place_id": "ChIJi6BGYYWrQjQRWjQNfZXe5es",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E4%BA%AC%E9%83%BD%E6%97%A5%E5%BC%8F%E6%96%99%E7%90%86&query_place_id=ChIJi6BGYYWrQjQRWjQNfZXe5es",
+      "n_total": 31,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 23,
+        "no_text": 8
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 0,
+      "csv_file": "008_京都日式料理.csv"
+    },
+    {
+      "store_name": "春泉茶食",
+      "place_id": "ChIJK8iOCxipQjQRF4BcwabLAM8",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%98%A5%E6%B3%89%E8%8C%B6%E9%A3%9F&query_place_id=ChIJK8iOCxipQjQRF4BcwabLAM8",
+      "n_total": 29,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 23,
+        "no_text": 5,
+        "low_info": 1
+      },
+      "n_sampled": 17,
+      "n_washed_in_sample": 0,
+      "csv_file": "009_春泉茶食.csv"
+    },
+    {
+      "store_name": "龍潭豆花",
+      "place_id": "ChIJndYG4oqpQjQRaaIRSvBxb3A",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%BE%8D%E6%BD%AD%E8%B1%86%E8%8A%B1&query_place_id=ChIJndYG4oqpQjQRaaIRSvBxb3A",
+      "n_total": 500,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 500
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 0,
+      "csv_file": "010_龍潭豆花.csv"
+    },
+    {
+      "store_name": "波町弁當@和平店",
+      "place_id": "ChIJl-p2k_arQjQRrWRDLxRGq08",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%B3%A2%E7%94%BA%E5%BC%81%E7%95%B6%40%E5%92%8C%E5%B9%B3%E5%BA%97&query_place_id=ChIJl-p2k_arQjQRrWRDLxRGq08",
+      "n_total": 22,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 18,
+        "no_text": 4
+      },
+      "n_sampled": 18,
+      "n_washed_in_sample": 0,
+      "csv_file": "011_波町弁當@和平店.csv"
+    },
+    {
+      "store_name": "HWC 黑沃咖啡 科技店",
+      "place_id": "ChIJz-_Etc2rQjQR9qMJAw5gPKQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=HWC%20%E9%BB%91%E6%B2%83%E5%92%96%E5%95%A1%20%E7%A7%91%E6%8A%80%E5%BA%97&query_place_id=ChIJz-_Etc2rQjQR9qMJAw5gPKQ",
+      "n_total": 15,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 10,
+        "no_text": 5
+      },
+      "n_sampled": 15,
+      "n_washed_in_sample": 0,
+      "csv_file": "012_HWC 黑沃咖啡 科技店.csv"
+    },
+    {
+      "store_name": "麵屋一朗",
+      "place_id": "ChIJxSuOwMKrQjQRNCX9ReCAVJU",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%BA%B5%E5%B1%8B%E4%B8%80%E6%9C%97&query_place_id=ChIJxSuOwMKrQjQRNCX9ReCAVJU",
+      "n_total": 125,
+      "wash_rate_s1": 0.0,
+      "type_counts": {
+        "null": 103,
+        "no_text": 22
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 0,
+      "csv_file": "013_麵屋一朗.csv"
+    },
+    {
+      "store_name": "鳳城燒臘粵菜 (百合店)",
+      "place_id": "ChIJcWUPVompQjQRNZdMhTI2ve4",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%B3%B3%E5%9F%8E%E7%87%92%E8%87%98%E7%B2%B5%E8%8F%9C%20(%E7%99%BE%E5%90%88%E5%BA%97)&query_place_id=ChIJcWUPVompQjQRNZdMhTI2ve4",
+      "n_total": 500,
+      "wash_rate_s1": 0.002,
+      "type_counts": {
+        "null": 499,
+        "incentive": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 1,
+      "csv_file": "014_鳳城燒臘粵菜 (百合店).csv"
+    },
+    {
+      "store_name": "すき家公館",
+      "place_id": "ChIJPSsG8IupQjQR6O6iXekaFRM",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E3%81%99%E3%81%8D%E5%AE%B6%E5%85%AC%E9%A4%A8&query_place_id=ChIJPSsG8IupQjQR6O6iXekaFRM",
+      "n_total": 500,
+      "wash_rate_s1": 0.004,
+      "type_counts": {
+        "null": 498,
+        "incentive": 2
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 2,
+      "csv_file": "015_すき家公館.csv"
+    },
+    {
+      "store_name": "小李子清粥小菜",
+      "place_id": "ChIJ4yt0hyyqQjQRA905QCvA3O4",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E6%9D%8E%E5%AD%90%E6%B8%85%E7%B2%A5%E5%B0%8F%E8%8F%9C&query_place_id=ChIJ4yt0hyyqQjQRA905QCvA3O4",
+      "n_total": 500,
+      "wash_rate_s1": 0.004,
+      "type_counts": {
+        "null": 498,
+        "incentive": 2
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 2,
+      "csv_file": "016_小李子清粥小菜.csv"
+    },
+    {
+      "store_name": "祝您行運",
+      "place_id": "ChIJP8lDl92rQjQRzFgaIEFuifw",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E7%A5%9D%E6%82%A8%E8%A1%8C%E9%81%8B&query_place_id=ChIJP8lDl92rQjQRzFgaIEFuifw",
+      "n_total": 500,
+      "wash_rate_s1": 0.006,
+      "type_counts": {
+        "null": 497,
+        "incentive": 3
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 3,
+      "csv_file": "017_祝您行運.csv"
+    },
+    {
+      "store_name": "卡帛素食烘培‧義式廚房‧港式餐點 總店",
+      "place_id": "ChIJuWw81C6qQjQRD7lOTyFReqs",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%8D%A1%E5%B8%9B%E7%B4%A0%E9%A3%9F%E7%83%98%E5%9F%B9%E2%80%A7%E7%BE%A9%E5%BC%8F%E5%BB%9A%E6%88%BF%E2%80%A7%E6%B8%AF%E5%BC%8F%E9%A4%90%E9%BB%9E%20%E7%B8%BD%E5%BA%97&query_place_id=ChIJuWw81C6qQjQRD7lOTyFReqs",
+      "n_total": 500,
+      "wash_rate_s1": 0.006,
+      "type_counts": {
+        "null": 496,
+        "incentive": 3,
+        "no_text": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 3,
+      "csv_file": "018_卡帛素食烘培‧義式廚房‧港式餐點 總店.csv"
+    },
+    {
+      "store_name": "極簡咖啡館",
+      "place_id": "ChIJT7RMuYWpQjQReKLqtP2lOuw",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%A5%B5%E7%B0%A1%E5%92%96%E5%95%A1%E9%A4%A8&query_place_id=ChIJT7RMuYWpQjQReKLqtP2lOuw",
+      "n_total": 500,
+      "wash_rate_s1": 0.006,
+      "type_counts": {
+        "null": 497,
+        "incentive": 3
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 3,
+      "csv_file": "019_極簡咖啡館.csv"
+    },
+    {
+      "store_name": "公館家鄉滷味",
+      "place_id": "ChIJq8sfdQypQjQRk9lcou2B5ew",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%85%AC%E9%A4%A8%E5%AE%B6%E9%84%89%E6%BB%B7%E5%91%B3&query_place_id=ChIJq8sfdQypQjQRk9lcou2B5ew",
+      "n_total": 111,
+      "wash_rate_s1": 0.009,
+      "type_counts": {
+        "null": 102,
+        "no_text": 9
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 1,
+      "csv_file": "020_公館家鄉滷味.csv"
+    },
+    {
+      "store_name": "深夜未歸-公館店",
+      "place_id": "ChIJB-8Lr-epQjQR74lrOmFCbVU",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%B7%B1%E5%A4%9C%E6%9C%AA%E6%AD%B8-%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJB-8Lr-epQjQR74lrOmFCbVU",
+      "n_total": 500,
+      "wash_rate_s1": 0.01,
+      "type_counts": {
+        "null": 495,
+        "incentive": 5
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 5,
+      "csv_file": "021_深夜未歸-公館店.csv"
+    },
+    {
+      "store_name": "丼wa壽ga-創意日本料理",
+      "place_id": "ChIJlwlFceKrQjQRJ1BcoPLdfzY",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E4%B8%BCwa%E5%A3%BDga-%E5%89%B5%E6%84%8F%E6%97%A5%E6%9C%AC%E6%96%99%E7%90%86&query_place_id=ChIJlwlFceKrQjQRJ1BcoPLdfzY",
+      "n_total": 332,
+      "wash_rate_s1": 0.012,
+      "type_counts": {
+        "null": 276,
+        "incentive": 2,
+        "template": 2,
+        "low_info": 6,
+        "no_text": 46
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 4,
+      "csv_file": "022_丼wa壽ga-創意日本料理.csv"
+    },
+    {
+      "store_name": "清心福全師大店-珍珠奶茶手搖飲料專賣店",
+      "place_id": "ChIJj21mffmpQjQRvRhsP61PmE8",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%B8%85%E5%BF%83%E7%A6%8F%E5%85%A8%E5%B8%AB%E5%A4%A7%E5%BA%97-%E7%8F%8D%E7%8F%A0%E5%A5%B6%E8%8C%B6%E6%89%8B%E6%90%96%E9%A3%B2%E6%96%99%E5%B0%88%E8%B3%A3%E5%BA%97&query_place_id=ChIJj21mffmpQjQRvRhsP61PmE8",
+      "n_total": 145,
+      "wash_rate_s1": 0.0138,
+      "type_counts": {
+        "null": 116,
+        "low_info": 3,
+        "no_text": 26
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 2,
+      "csv_file": "023_清心福全師大店-珍珠奶茶手搖飲料專賣店.csv"
+    },
+    {
+      "store_name": "麥味登 太順饗食大亨店",
+      "place_id": "ChIJg5ZXGQCpQjQRzUMJhmRFdHE",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%BA%A5%E5%91%B3%E7%99%BB%20%E5%A4%AA%E9%A0%86%E9%A5%97%E9%A3%9F%E5%A4%A7%E4%BA%A8%E5%BA%97&query_place_id=ChIJg5ZXGQCpQjQRzUMJhmRFdHE",
+      "n_total": 189,
+      "wash_rate_s1": 0.0159,
+      "type_counts": {
+        "null": 127,
+        "incentive": 3,
+        "low_info": 7,
+        "no_text": 52
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 3,
+      "csv_file": "024_麥味登 太順饗食大亨店.csv"
+    },
+    {
+      "store_name": "魷魚羹店",
+      "place_id": "ChIJ36Zcfh2qQjQRafW5eR2F70Q",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%AD%B7%E9%AD%9A%E7%BE%B9%E5%BA%97&query_place_id=ChIJ36Zcfh2qQjQRafW5eR2F70Q",
+      "n_total": 212,
+      "wash_rate_s1": 0.0189,
+      "type_counts": {
+        "null": 181,
+        "no_text": 29,
+        "template": 2
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 4,
+      "csv_file": "025_魷魚羹店.csv"
+    },
+    {
+      "store_name": "清奈媽媽印度廚房",
+      "place_id": "ChIJNbJ7SI6pQjQRGRP1np3P5Po",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%B8%85%E5%A5%88%E5%AA%BD%E5%AA%BD%E5%8D%B0%E5%BA%A6%E5%BB%9A%E6%88%BF&query_place_id=ChIJNbJ7SI6pQjQRGRP1np3P5Po",
+      "n_total": 500,
+      "wash_rate_s1": 0.022,
+      "type_counts": {
+        "null": 488,
+        "incentive": 8,
+        "template": 3,
+        "no_text": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "026_清奈媽媽印度廚房.csv"
+    },
+    {
+      "store_name": "鴉天狗平價日式串燒",
+      "place_id": "ChIJzb0AMHypQjQR3VhJTbAgdCs",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%B4%89%E5%A4%A9%E7%8B%97%E5%B9%B3%E5%83%B9%E6%97%A5%E5%BC%8F%E4%B8%B2%E7%87%92&query_place_id=ChIJzb0AMHypQjQR3VhJTbAgdCs",
+      "n_total": 225,
+      "wash_rate_s1": 0.0267,
+      "type_counts": {
+        "null": 178,
+        "incentive": 1,
+        "low_info": 3,
+        "no_text": 41,
+        "template": 2
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 6,
+      "csv_file": "027_鴉天狗平價日式串燒.csv"
+    },
+    {
+      "store_name": "La Whale阿崴烘焙工坊",
+      "place_id": "ChIJeV9xFyyqQjQRIZLZU_c0IJQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=La%20Whale%E9%98%BF%E5%B4%B4%E7%83%98%E7%84%99%E5%B7%A5%E5%9D%8A&query_place_id=ChIJeV9xFyyqQjQRIZLZU_c0IJQ",
+      "n_total": 143,
+      "wash_rate_s1": 0.028,
+      "type_counts": {
+        "null": 114,
+        "incentive": 1,
+        "template": 1,
+        "no_text": 27
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 4,
+      "csv_file": "028_La Whale阿崴烘焙工坊.csv"
+    },
+    {
+      "store_name": "純愛小吃部 Pure Love Diner Bar",
+      "place_id": "ChIJsR1Rj0upQjQRCgAyeTzSgss",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E7%B4%94%E6%84%9B%E5%B0%8F%E5%90%83%E9%83%A8%20Pure%20Love%20Diner%20Bar&query_place_id=ChIJsR1Rj0upQjQRCgAyeTzSgss",
+      "n_total": 500,
+      "wash_rate_s1": 0.028,
+      "type_counts": {
+        "null": 486,
+        "incentive": 14
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "029_純愛小吃部 Pure Love Diner Bar.csv"
+    },
+    {
+      "store_name": "廣聯烘焙坊 | 台北伴手禮 台北牛軋糖 台北麵包餐盒 台北點心餐盒 台北會議餐盒 台北蛋糕餐盒 附近麵包店 美食推薦",
+      "place_id": "ChIJh5o51YWpQjQRWftH4rSAgf8",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%BB%A3%E8%81%AF%E7%83%98%E7%84%99%E5%9D%8A%20%7C%20%E5%8F%B0%E5%8C%97%E4%BC%B4%E6%89%8B%E7%A6%AE%20%E5%8F%B0%E5%8C%97%E7%89%9B%E8%BB%8B%E7%B3%96%20%E5%8F%B0%E5%8C%97%E9%BA%B5%E5%8C%85%E9%A4%90%E7%9B%92%20%E5%8F%B0%E5%8C%97%E9%BB%9E%E5%BF%83%E9%A4%90%E7%9B%92%20%E5%8F%B0%E5%8C%97%E6%9C%83%E8%AD%B0%E9%A4%90%E7%9B%92%20%E5%8F%B0%E5%8C%97%E8%9B%8B%E7%B3%95%E9%A4%90%E7%9B%92%20%E9%99%84%E8%BF%91%E9%BA%B5%E5%8C%85%E5%BA%97%20%E7%BE%8E%E9%A3%9F%E6%8E%A8%E8%96%A6&query_place_id=ChIJh5o51YWpQjQRWftH4rSAgf8",
+      "n_total": 71,
+      "wash_rate_s1": 0.0282,
+      "type_counts": {
+        "null": 48,
+        "low_info": 1,
+        "no_text": 22
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 2,
+      "csv_file": "030_廣聯烘焙坊 _ 台北伴手禮 台北牛軋糖 台北麵包餐盒 台北點心餐盒 台北會議餐盒 台北蛋糕餐盒 附近.csv"
+    },
+    {
+      "store_name": "有飲 Youin 創意飲品-台北公館店",
+      "place_id": "ChIJkfUo-lqpQjQR8J_PeQA94EA",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%9C%89%E9%A3%B2%20Youin%20%E5%89%B5%E6%84%8F%E9%A3%B2%E5%93%81-%E5%8F%B0%E5%8C%97%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJkfUo-lqpQjQR8J_PeQA94EA",
+      "n_total": 381,
+      "wash_rate_s1": 0.0341,
+      "type_counts": {
+        "null": 344,
+        "incentive": 6,
+        "no_text": 27,
+        "template": 3,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "031_有飲 Youin 創意飲品-台北公館店.csv"
+    },
+    {
+      "store_name": "美而美早餐店",
+      "place_id": "ChIJTeVyR5qpQjQRw9nUUJtKR-M",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E7%BE%8E%E8%80%8C%E7%BE%8E%E6%97%A9%E9%A4%90%E5%BA%97&query_place_id=ChIJTeVyR5qpQjQRw9nUUJtKR-M",
+      "n_total": 103,
+      "wash_rate_s1": 0.0388,
+      "type_counts": {
+        "null": 73,
+        "low_info": 1,
+        "no_text": 29
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 4,
+      "csv_file": "032_美而美早餐店.csv"
+    },
+    {
+      "store_name": "路易．莎咖啡(和平新生店)",
+      "place_id": "ChIJUaS8iYapQjQRg6aAmL7CTdk",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%B7%AF%E6%98%93%EF%BC%8E%E8%8E%8E%E5%92%96%E5%95%A1(%E5%92%8C%E5%B9%B3%E6%96%B0%E7%94%9F%E5%BA%97)&query_place_id=ChIJUaS8iYapQjQRg6aAmL7CTdk",
+      "n_total": 231,
+      "wash_rate_s1": 0.039,
+      "type_counts": {
+        "null": 191,
+        "no_text": 39,
+        "template": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 9,
+      "csv_file": "033_路易．莎咖啡(和平新生店).csv"
+    },
+    {
+      "store_name": "小姐姐麻辣食堂",
+      "place_id": "ChIJhxQZX8GrQjQRIX1Sd5u9e3c",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E5%A7%90%E5%A7%90%E9%BA%BB%E8%BE%A3%E9%A3%9F%E5%A0%82&query_place_id=ChIJhxQZX8GrQjQRIX1Sd5u9e3c",
+      "n_total": 500,
+      "wash_rate_s1": 0.04,
+      "type_counts": {
+        "null": 480,
+        "incentive": 20
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "034_小姐姐麻辣食堂.csv"
+    },
+    {
+      "store_name": "SHALLOT 紅蔥二號店",
+      "place_id": "ChIJPZg_0R-qQjQRUvCyzhrK238",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=SHALLOT%20%E7%B4%85%E8%94%A5%E4%BA%8C%E8%99%9F%E5%BA%97&query_place_id=ChIJPZg_0R-qQjQRUvCyzhrK238",
+      "n_total": 261,
+      "wash_rate_s1": 0.046,
+      "type_counts": {
+        "null": 231,
+        "incentive": 1,
+        "low_info": 2,
+        "no_text": 26,
+        "template": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "035_SHALLOT 紅蔥二號店.csv"
+    },
+    {
+      "store_name": "詹記麻辣火鍋 敦南店",
+      "place_id": "ChIJU17RsmGpQjQRcy0N9M5XixY",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%A9%B9%E8%A8%98%E9%BA%BB%E8%BE%A3%E7%81%AB%E9%8D%8B%20%E6%95%A6%E5%8D%97%E5%BA%97&query_place_id=ChIJU17RsmGpQjQRcy0N9M5XixY",
+      "n_total": 500,
+      "wash_rate_s1": 0.046,
+      "type_counts": {
+        "null": 477,
+        "incentive": 23
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "036_詹記麻辣火鍋 敦南店.csv"
+    },
+    {
+      "store_name": "虎噗食多健康餐盒",
+      "place_id": "ChIJBaEtq5upQjQRVdOdvCRMJm8",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%99%8E%E5%99%97%E9%A3%9F%E5%A4%9A%E5%81%A5%E5%BA%B7%E9%A4%90%E7%9B%92&query_place_id=ChIJBaEtq5upQjQRVdOdvCRMJm8",
+      "n_total": 301,
+      "wash_rate_s1": 0.0465,
+      "type_counts": {
+        "null": 264,
+        "incentive": 3,
+        "template": 2,
+        "no_text": 31,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "037_虎噗食多健康餐盒.csv"
+    },
+    {
+      "store_name": "享食匯",
+      "place_id": "ChIJa7MkNQCpQjQRWlM_fJEFkQ0",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E4%BA%AB%E9%A3%9F%E5%8C%AF&query_place_id=ChIJa7MkNQCpQjQRWlM_fJEFkQ0",
+      "n_total": 42,
+      "wash_rate_s1": 0.0476,
+      "type_counts": {
+        "null": 34,
+        "no_text": 8
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 2,
+      "csv_file": "038_享食匯.csv"
+    },
+    {
+      "store_name": "新馬辣經典麻辣鍋-公館店",
+      "place_id": "ChIJp4DmtIqpQjQRMc1gEd_aAS4",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%96%B0%E9%A6%AC%E8%BE%A3%E7%B6%93%E5%85%B8%E9%BA%BB%E8%BE%A3%E9%8D%8B-%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJp4DmtIqpQjQRMc1gEd_aAS4",
+      "n_total": 500,
+      "wash_rate_s1": 0.052,
+      "type_counts": {
+        "null": 474,
+        "incentive": 26
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "039_新馬辣經典麻辣鍋-公館店.csv"
+    },
+    {
+      "store_name": "王品牛排 台北羅斯福店",
+      "place_id": "ChIJwXTajYapQjQRiiVNmhlyrNk",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E7%8E%8B%E5%93%81%E7%89%9B%E6%8E%92%20%E5%8F%B0%E5%8C%97%E7%BE%85%E6%96%AF%E7%A6%8F%E5%BA%97&query_place_id=ChIJwXTajYapQjQRiiVNmhlyrNk",
+      "n_total": 500,
+      "wash_rate_s1": 0.054,
+      "type_counts": {
+        "null": 473,
+        "incentive": 27
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "040_王品牛排 台北羅斯福店.csv"
+    },
+    {
+      "store_name": "牧方MooCubed x 師大",
+      "place_id": "ChIJmYy2WX2pQjQRq1Jmh1lfEsI",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E7%89%A7%E6%96%B9MooCubed%20x%20%E5%B8%AB%E5%A4%A7&query_place_id=ChIJmYy2WX2pQjQRq1Jmh1lfEsI",
+      "n_total": 128,
+      "wash_rate_s1": 0.0547,
+      "type_counts": {
+        "null": 112,
+        "template": 2,
+        "no_text": 14
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 7,
+      "csv_file": "041_牧方MooCubed x 師大.csv"
+    },
+    {
+      "store_name": "梁社漢排骨-台大店",
+      "place_id": "ChIJV62dndepQjQRMIPj5D0tzOY",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%A2%81%E7%A4%BE%E6%BC%A2%E6%8E%92%E9%AA%A8-%E5%8F%B0%E5%A4%A7%E5%BA%97&query_place_id=ChIJV62dndepQjQRMIPj5D0tzOY",
+      "n_total": 126,
+      "wash_rate_s1": 0.0556,
+      "type_counts": {
+        "null": 97,
+        "incentive": 1,
+        "no_text": 28
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 7,
+      "csv_file": "042_梁社漢排骨-台大店.csv"
+    },
+    {
+      "store_name": "金福園",
+      "place_id": "ChIJic5MeIapQjQRXFCJIv-I8jQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%87%91%E7%A6%8F%E5%9C%92&query_place_id=ChIJic5MeIapQjQRXFCJIv-I8jQ",
+      "n_total": 108,
+      "wash_rate_s1": 0.0556,
+      "type_counts": {
+        "null": 76,
+        "no_text": 31,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 6,
+      "csv_file": "043_金福園.csv"
+    },
+    {
+      "store_name": "巧味快餐",
+      "place_id": "ChIJZ9JoLC-qQjQRJ67HgUK2Lq8",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%B7%A7%E5%91%B3%E5%BF%AB%E9%A4%90&query_place_id=ChIJZ9JoLC-qQjQRJ67HgUK2Lq8",
+      "n_total": 303,
+      "wash_rate_s1": 0.0561,
+      "type_counts": {
+        "null": 248,
+        "incentive": 1,
+        "template": 1,
+        "low_info": 5,
+        "no_text": 48
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "044_巧味快餐.csv"
+    },
+    {
+      "store_name": "丸吉咖啡-溫州店",
+      "place_id": "ChIJTRQGjnWpQjQRAyMJSWQ1GsQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E4%B8%B8%E5%90%89%E5%92%96%E5%95%A1-%E6%BA%AB%E5%B7%9E%E5%BA%97&query_place_id=ChIJTRQGjnWpQjQRAyMJSWQ1GsQ",
+      "n_total": 205,
+      "wash_rate_s1": 0.0585,
+      "type_counts": {
+        "null": 166,
+        "incentive": 1,
+        "no_text": 37,
+        "template": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "045_丸吉咖啡-溫州店.csv"
+    },
+    {
+      "store_name": "義美台北和平東路三段門市",
+      "place_id": "ChIJNYAeBS6qQjQRGxLyaBqKmUo",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E7%BE%A9%E7%BE%8E%E5%8F%B0%E5%8C%97%E5%92%8C%E5%B9%B3%E6%9D%B1%E8%B7%AF%E4%B8%89%E6%AE%B5%E9%96%80%E5%B8%82&query_place_id=ChIJNYAeBS6qQjQRGxLyaBqKmUo",
+      "n_total": 151,
+      "wash_rate_s1": 0.0596,
+      "type_counts": {
+        "null": 129,
+        "no_text": 22
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 9,
+      "csv_file": "046_義美台北和平東路三段門市.csv"
+    },
+    {
+      "store_name": "UFO車輪餅 樂業店",
+      "place_id": "ChIJ86b-5zCqQjQRPpyG_9qbWOc",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=UFO%E8%BB%8A%E8%BC%AA%E9%A4%85%20%E6%A8%82%E6%A5%AD%E5%BA%97&query_place_id=ChIJ86b-5zCqQjQRPpyG_9qbWOc",
+      "n_total": 50,
+      "wash_rate_s1": 0.06,
+      "type_counts": {
+        "null": 31,
+        "incentive": 1,
+        "no_text": 17,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 3,
+      "csv_file": "047_UFO車輪餅 樂業店.csv"
+    },
+    {
+      "store_name": "Eatfoodie udon 好好吃餐房(烏龍麵 鍋燒意麵)",
+      "place_id": "ChIJ8e0GqUarQjQRbY1LowVZNN4",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=Eatfoodie%20udon%20%E5%A5%BD%E5%A5%BD%E5%90%83%E9%A4%90%E6%88%BF(%E7%83%8F%E9%BE%8D%E9%BA%B5%20%E9%8D%8B%E7%87%92%E6%84%8F%E9%BA%B5)&query_place_id=ChIJ8e0GqUarQjQRbY1LowVZNN4",
+      "n_total": 500,
+      "wash_rate_s1": 0.062,
+      "type_counts": {
+        "null": 465,
+        "incentive": 31,
+        "low_info": 4
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "048_Eatfoodie udon 好好吃餐房(烏龍麵 鍋燒意麵).csv"
+    },
+    {
+      "store_name": "I Want It Café (王的咖啡)",
+      "place_id": "ChIJmye4ujKrQjQROAZLsW1RN20",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=I%20Want%20It%20Caf%C3%A9%20(%E7%8E%8B%E7%9A%84%E5%92%96%E5%95%A1)&query_place_id=ChIJmye4ujKrQjQROAZLsW1RN20",
+      "n_total": 16,
+      "wash_rate_s1": 0.0625,
+      "type_counts": {
+        "null": 15,
+        "incentive": 1
+      },
+      "n_sampled": 16,
+      "n_washed_in_sample": 1,
+      "csv_file": "049_I Want It Café (王的咖啡).csv"
+    },
+    {
+      "store_name": "公館水岸廣場",
+      "place_id": "ChIJGzuErySqQjQRLhtP_MzBbD8",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%85%AC%E9%A4%A8%E6%B0%B4%E5%B2%B8%E5%BB%A3%E5%A0%B4&query_place_id=ChIJGzuErySqQjQRLhtP_MzBbD8",
+      "n_total": 500,
+      "wash_rate_s1": 0.064,
+      "type_counts": {
+        "incentive": 30,
+        "null": 468,
+        "template": 2
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "050_公館水岸廣場.csv"
+    },
+    {
+      "store_name": "土貓商號 Turkish Kedi",
+      "place_id": "ChIJx2O5FoupQjQRCqdnxJaNZzQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%9C%9F%E8%B2%93%E5%95%86%E8%99%9F%20Turkish%20Kedi&query_place_id=ChIJx2O5FoupQjQRCqdnxJaNZzQ",
+      "n_total": 231,
+      "wash_rate_s1": 0.0649,
+      "type_counts": {
+        "null": 199,
+        "incentive": 2,
+        "no_text": 30
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "051_土貓商號 Turkish Kedi.csv"
+    },
+    {
+      "store_name": "小南風咖啡",
+      "place_id": "ChIJufENh4-pQjQR97xj6L-J9eo",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E5%8D%97%E9%A2%A8%E5%92%96%E5%95%A1&query_place_id=ChIJufENh4-pQjQR97xj6L-J9eo",
+      "n_total": 384,
+      "wash_rate_s1": 0.0651,
+      "type_counts": {
+        "null": 333,
+        "incentive": 3,
+        "template": 1,
+        "no_text": 47
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "052_小南風咖啡.csv"
+    },
+    {
+      "store_name": "屋台料理 滿載",
+      "place_id": "ChIJlXi5uXupQjQR_m8FVokTT5s",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%B1%8B%E5%8F%B0%E6%96%99%E7%90%86%20%E6%BB%BF%E8%BC%89&query_place_id=ChIJlXi5uXupQjQR_m8FVokTT5s",
+      "n_total": 60,
+      "wash_rate_s1": 0.0667,
+      "type_counts": {
+        "null": 37,
+        "no_text": 23
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 4,
+      "csv_file": "053_屋台料理 滿載.csv"
+    },
+    {
+      "store_name": "序壹咖啡（一人作業不定時公休，售完提早打烊）",
+      "place_id": "ChIJ6SyeDbapQjQRVyzUngcU5rQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%BA%8F%E5%A3%B9%E5%92%96%E5%95%A1%EF%BC%88%E4%B8%80%E4%BA%BA%E4%BD%9C%E6%A5%AD%E4%B8%8D%E5%AE%9A%E6%99%82%E5%85%AC%E4%BC%91%EF%BC%8C%E5%94%AE%E5%AE%8C%E6%8F%90%E6%97%A9%E6%89%93%E7%83%8A%EF%BC%89&query_place_id=ChIJ6SyeDbapQjQRVyzUngcU5rQ",
+      "n_total": 133,
+      "wash_rate_s1": 0.0677,
+      "type_counts": {
+        "null": 107,
+        "incentive": 1,
+        "low_info": 1,
+        "no_text": 24
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 9,
+      "csv_file": "054_序壹咖啡（一人作業不定時公休，售完提早打烊）.csv"
+    },
+    {
+      "store_name": "YoYo韓式飯捲",
+      "place_id": "ChIJD166-9ypQjQRy6gOjOMOuSY",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=YoYo%E9%9F%93%E5%BC%8F%E9%A3%AF%E6%8D%B2&query_place_id=ChIJD166-9ypQjQRy6gOjOMOuSY",
+      "n_total": 447,
+      "wash_rate_s1": 0.0694,
+      "type_counts": {
+        "null": 378,
+        "incentive": 2,
+        "low_info": 4,
+        "no_text": 63
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "055_YoYo韓式飯捲.csv"
+    },
+    {
+      "store_name": "森林跑咖 Runbase café",
+      "place_id": "ChIJ7z3SBVWpQjQRrZERxdvdM6g",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%A3%AE%E6%9E%97%E8%B7%91%E5%92%96%20Runbase%20caf%C3%A9&query_place_id=ChIJ7z3SBVWpQjQRrZERxdvdM6g",
+      "n_total": 14,
+      "wash_rate_s1": 0.0714,
+      "type_counts": {
+        "null": 11,
+        "incentive": 1,
+        "no_text": 2
+      },
+      "n_sampled": 14,
+      "n_washed_in_sample": 1,
+      "csv_file": "056_森林跑咖 Runbase café.csv"
+    },
+    {
+      "store_name": "爐子煮賣所 Forno",
+      "place_id": "ChIJP8T_FPapQjQROFmvlR8zt9g",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E7%88%90%E5%AD%90%E7%85%AE%E8%B3%A3%E6%89%80%20Forno%20%26%20Stufa&query_place_id=ChIJP8T_FPapQjQROFmvlR8zt9g",
+      "n_total": 312,
+      "wash_rate_s1": 0.0737,
+      "type_counts": {
+        "null": 266,
+        "template": 2,
+        "no_text": 44
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "057_爐子煮賣所 Forno.csv"
+    },
+    {
+      "store_name": "御喜自助餐",
+      "place_id": "ChIJNxem_CaqQjQRWBiRwrPJIKk",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%BE%A1%E5%96%9C%E8%87%AA%E5%8A%A9%E9%A4%90&query_place_id=ChIJNxem_CaqQjQRWBiRwrPJIKk",
+      "n_total": 108,
+      "wash_rate_s1": 0.0741,
+      "type_counts": {
+        "null": 78,
+        "no_text": 29,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 8,
+      "csv_file": "058_御喜自助餐.csv"
+    },
+    {
+      "store_name": "第一樓",
+      "place_id": "ChIJ4fW2NJqpQjQR8l8V6RzXQ3o",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E7%AC%AC%E4%B8%80%E6%A8%93&query_place_id=ChIJ4fW2NJqpQjQR8l8V6RzXQ3o",
+      "n_total": 295,
+      "wash_rate_s1": 0.078,
+      "type_counts": {
+        "null": 244,
+        "no_text": 47,
+        "template": 3,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "059_第一樓.csv"
+    },
+    {
+      "store_name": "路希女僕學院",
+      "place_id": "ChIJCTGr5FmrQjQR6_nHLbEf5DU",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%B7%AF%E5%B8%8C%E5%A5%B3%E5%83%95%E5%AD%B8%E9%99%A2&query_place_id=ChIJCTGr5FmrQjQR6_nHLbEf5DU",
+      "n_total": 25,
+      "wash_rate_s1": 0.08,
+      "type_counts": {
+        "incentive": 2,
+        "null": 15,
+        "no_text": 8
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 2,
+      "csv_file": "060_路希女僕學院.csv"
+    },
+    {
+      "store_name": "Staff Only Club",
+      "place_id": "ChIJ7-dflrepQjQRvbhR9lp6C2s",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=Staff%20Only%20Club&query_place_id=ChIJ7-dflrepQjQRvbhR9lp6C2s",
+      "n_total": 438,
+      "wash_rate_s1": 0.0822,
+      "type_counts": {
+        "null": 361,
+        "incentive": 15,
+        "no_text": 62
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "061_Staff Only Club.csv"
+    },
+    {
+      "store_name": "人从众厚切牛排 台北科技大樓",
+      "place_id": "ChIJcSJ-RgCrQjQR2YuHjwCIm_w",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E4%BA%BA%E4%BB%8E%E4%BC%97%E5%8E%9A%E5%88%87%E7%89%9B%E6%8E%92%20%E5%8F%B0%E5%8C%97%E7%A7%91%E6%8A%80%E5%A4%A7%E6%A8%93&query_place_id=ChIJcSJ-RgCrQjQR2YuHjwCIm_w",
+      "n_total": 68,
+      "wash_rate_s1": 0.0882,
+      "type_counts": {
+        "null": 52,
+        "incentive": 2,
+        "template": 1,
+        "no_text": 13
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 6,
+      "csv_file": "062_人从众厚切牛排 台北科技大樓.csv"
+    },
+    {
+      "store_name": "神秘花園",
+      "place_id": "ChIJY_Yd1h-qQjQRJ3IgwZh3Y8U",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E7%A5%9E%E7%A7%98%E8%8A%B1%E5%9C%92&query_place_id=ChIJY_Yd1h-qQjQRJ3IgwZh3Y8U",
+      "n_total": 283,
+      "wash_rate_s1": 0.1025,
+      "type_counts": {
+        "null": 223,
+        "incentive": 4,
+        "low_info": 3,
+        "no_text": 53
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "063_神秘花園.csv"
+    },
+    {
+      "store_name": "寶島玉山胡椒餅",
+      "place_id": "ChIJRSw-gpepQjQRCIVc8rddATw",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%AF%B6%E5%B3%B6%E7%8E%89%E5%B1%B1%E8%83%A1%E6%A4%92%E9%A4%85&query_place_id=ChIJRSw-gpepQjQRCIVc8rddATw",
+      "n_total": 107,
+      "wash_rate_s1": 0.1028,
+      "type_counts": {
+        "null": 86,
+        "no_text": 19,
+        "template": 2
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "064_寶島玉山胡椒餅.csv"
+    },
+    {
+      "store_name": "隅咖啡Aroundtheblock",
+      "place_id": "ChIJU5sK7vypQjQRxC00sY0q-80",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%9A%85%E5%92%96%E5%95%A1Aroundtheblock&query_place_id=ChIJU5sK7vypQjQRxC00sY0q-80",
+      "n_total": 155,
+      "wash_rate_s1": 0.1032,
+      "type_counts": {
+        "null": 121,
+        "incentive": 1,
+        "no_text": 33
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "065_隅咖啡Aroundtheblock.csv"
+    },
+    {
+      "store_name": "小慢",
+      "place_id": "ChIJx4HEvYWpQjQR0MH4_AVphHo",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%B0%8F%E6%85%A2&query_place_id=ChIJx4HEvYWpQjQR0MH4_AVphHo",
+      "n_total": 116,
+      "wash_rate_s1": 0.1034,
+      "type_counts": {
+        "null": 87,
+        "incentive": 1,
+        "no_text": 28
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "066_小慢.csv"
+    },
+    {
+      "store_name": "Delight Café 日光咖啡 | 早午餐",
+      "place_id": "ChIJMaLOKW-pQjQRkCc5w7R3Sho",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=Delight%20Caf%C3%A9%20%E6%97%A5%E5%85%89%E5%92%96%E5%95%A1%20%7C%20%E6%97%A9%E5%8D%88%E9%A4%90&query_place_id=ChIJMaLOKW-pQjQRkCc5w7R3Sho",
+      "n_total": 199,
+      "wash_rate_s1": 0.1055,
+      "type_counts": {
+        "null": 163,
+        "incentive": 2,
+        "template": 1,
+        "low_info": 2,
+        "no_text": 31
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "067_Delight Café 日光咖啡 _ 早午餐.csv"
+    },
+    {
+      "store_name": "Namaste Taiwan",
+      "place_id": "ChIJlx5SI0OpQjQRXvMfs8VmCjM",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=Namaste%20Taiwan&query_place_id=ChIJlx5SI0OpQjQRXvMfs8VmCjM",
+      "n_total": 342,
+      "wash_rate_s1": 0.117,
+      "type_counts": {
+        "null": 285,
+        "incentive": 1,
+        "no_text": 56
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "068_Namaste Taiwan.csv"
+    },
+    {
+      "store_name": "食香園素食館",
+      "place_id": "ChIJefszjImpQjQRqZJVCqfXrhM",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%A3%9F%E9%A6%99%E5%9C%92%E7%B4%A0%E9%A3%9F%E9%A4%A8&query_place_id=ChIJefszjImpQjQRqZJVCqfXrhM",
+      "n_total": 194,
+      "wash_rate_s1": 0.1237,
+      "type_counts": {
+        "null": 152,
+        "incentive": 1,
+        "no_text": 41
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "069_食香園素食館.csv"
+    },
+    {
+      "store_name": "觀音山蓄水池",
+      "place_id": "ChIJgdNW3fSpQjQRElD9XtifvbQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%A7%80%E9%9F%B3%E5%B1%B1%E8%93%84%E6%B0%B4%E6%B1%A0&query_place_id=ChIJgdNW3fSpQjQRElD9XtifvbQ",
+      "n_total": 137,
+      "wash_rate_s1": 0.1314,
+      "type_counts": {
+        "null": 89,
+        "incentive": 6,
+        "no_text": 41,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "070_觀音山蓄水池.csv"
+    },
+    {
+      "store_name": "馬克早餐屋",
+      "place_id": "ChIJ0fuGWwOpQjQRasS5PGJhSqk",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%A6%AC%E5%85%8B%E6%97%A9%E9%A4%90%E5%B1%8B&query_place_id=ChIJ0fuGWwOpQjQRasS5PGJhSqk",
+      "n_total": 193,
+      "wash_rate_s1": 0.1503,
+      "type_counts": {
+        "null": 139,
+        "low_info": 3,
+        "no_text": 49,
+        "template": 2
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "071_馬克早餐屋.csv"
+    },
+    {
+      "store_name": "輝室 pān-toh",
+      "place_id": "ChIJb0WIIIapQjQROPsAf_O0Px0",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%BC%9D%E5%AE%A4%20p%C4%81n-toh&query_place_id=ChIJb0WIIIapQjQROPsAf_O0Px0",
+      "n_total": 178,
+      "wash_rate_s1": 0.1517,
+      "type_counts": {
+        "null": 127,
+        "no_text": 51
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "072_輝室 pān-toh.csv"
+    },
+    {
+      "store_name": "Morning Love",
+      "place_id": "ChIJgzGaspGpQjQRFGy1wbG9YWQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=Morning%20Love&query_place_id=ChIJgzGaspGpQjQRFGy1wbG9YWQ",
+      "n_total": 125,
+      "wash_rate_s1": 0.152,
+      "type_counts": {
+        "null": 90,
+        "low_info": 1,
+        "no_text": 33,
+        "template": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "073_Morning Love.csv"
+    },
+    {
+      "store_name": "蛋白盒子-科技大樓店",
+      "place_id": "ChIJ8aKMDQCrQjQRVdP7M-Nbf0Q",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%9B%8B%E7%99%BD%E7%9B%92%E5%AD%90-%E7%A7%91%E6%8A%80%E5%A4%A7%E6%A8%93%E5%BA%97&query_place_id=ChIJ8aKMDQCrQjQRVdP7M-Nbf0Q",
+      "n_total": 46,
+      "wash_rate_s1": 0.1522,
+      "type_counts": {
+        "null": 36,
+        "incentive": 1,
+        "template": 1,
+        "no_text": 8
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 7,
+      "csv_file": "074_蛋白盒子-科技大樓店.csv"
+    },
+    {
+      "store_name": "彼得好咖啡 金門街店",
+      "place_id": "ChIJf0EcSz-pQjQRx3Z918LoACw",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%BD%BC%E5%BE%97%E5%A5%BD%E5%92%96%E5%95%A1%20%E9%87%91%E9%96%80%E8%A1%97%E5%BA%97&query_place_id=ChIJf0EcSz-pQjQRx3Z918LoACw",
+      "n_total": 190,
+      "wash_rate_s1": 0.1526,
+      "type_counts": {
+        "null": 143,
+        "incentive": 2,
+        "template": 2,
+        "no_text": 43
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "075_彼得好咖啡 金門街店.csv"
+    },
+    {
+      "store_name": "Pizza Rock 古亭店",
+      "place_id": "ChIJ_RJ5-aypQjQR8C2beKXJ7fw",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=Pizza%20Rock%20%E5%8F%A4%E4%BA%AD%E5%BA%97&query_place_id=ChIJ_RJ5-aypQjQR8C2beKXJ7fw",
+      "n_total": 187,
+      "wash_rate_s1": 0.1551,
+      "type_counts": {
+        "null": 126,
+        "no_text": 60,
+        "template": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "076_Pizza Rock 古亭店.csv"
+    },
+    {
+      "store_name": "可不可熟成茶行 科技大樓店",
+      "place_id": "ChIJv4yKCAOrQjQRpMQnAUmOgZQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%8F%AF%E4%B8%8D%E5%8F%AF%E7%86%9F%E6%88%90%E8%8C%B6%E8%A1%8C%20%E7%A7%91%E6%8A%80%E5%A4%A7%E6%A8%93%E5%BA%97&query_place_id=ChIJv4yKCAOrQjQRpMQnAUmOgZQ",
+      "n_total": 133,
+      "wash_rate_s1": 0.1579,
+      "type_counts": {
+        "null": 101,
+        "incentive": 3,
+        "no_text": 29
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "077_可不可熟成茶行 科技大樓店.csv"
+    },
+    {
+      "store_name": "蒙藏文化館",
+      "place_id": "ChIJ9_lfoIapQjQRkk9MwUBKqGc",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%92%99%E8%97%8F%E6%96%87%E5%8C%96%E9%A4%A8&query_place_id=ChIJ9_lfoIapQjQRkk9MwUBKqGc",
+      "n_total": 355,
+      "wash_rate_s1": 0.1606,
+      "type_counts": {
+        "null": 272,
+        "incentive": 27,
+        "no_text": 56
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "078_蒙藏文化館.csv"
+    },
+    {
+      "store_name": "風尚咖啡廳",
+      "place_id": "ChIJs5Z904epQjQRn0VaAJORFKw",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%A2%A8%E5%B0%9A%E5%92%96%E5%95%A1%E5%BB%B3&query_place_id=ChIJs5Z904epQjQRn0VaAJORFKw",
+      "n_total": 145,
+      "wash_rate_s1": 0.1655,
+      "type_counts": {
+        "null": 95,
+        "incentive": 2,
+        "template": 1,
+        "no_text": 46,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "079_風尚咖啡廳.csv"
+    },
+    {
+      "store_name": "麗陽商場 台科大第二教學大樓餐廳",
+      "place_id": "ChIJB37n1iOqQjQR42nDCTKP_gw",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%BA%97%E9%99%BD%E5%95%86%E5%A0%B4%20%E5%8F%B0%E7%A7%91%E5%A4%A7%E7%AC%AC%E4%BA%8C%E6%95%99%E5%AD%B8%E5%A4%A7%E6%A8%93%E9%A4%90%E5%BB%B3&query_place_id=ChIJB37n1iOqQjQR42nDCTKP_gw",
+      "n_total": 264,
+      "wash_rate_s1": 0.1705,
+      "type_counts": {
+        "null": 173,
+        "incentive": 1,
+        "template": 5,
+        "no_text": 84,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "080_麗陽商場 台科大第二教學大樓餐廳.csv"
+    },
+    {
+      "store_name": "COMEBUY 台北古亭店",
+      "place_id": "ChIJo_DTHqipQjQR47UPZtAxYHM",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=COMEBUY%20%E5%8F%B0%E5%8C%97%E5%8F%A4%E4%BA%AD%E5%BA%97&query_place_id=ChIJo_DTHqipQjQR47UPZtAxYHM",
+      "n_total": 58,
+      "wash_rate_s1": 0.1724,
+      "type_counts": {
+        "null": 46,
+        "incentive": 2,
+        "no_text": 10
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "081_COMEBUY 台北古亭店.csv"
+    },
+    {
+      "store_name": "池上木片便當汀州店",
+      "place_id": "ChIJ07UkvaypQjQR7aFFX5LI134",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%B1%A0%E4%B8%8A%E6%9C%A8%E7%89%87%E4%BE%BF%E7%95%B6%E6%B1%80%E5%B7%9E%E5%BA%97&query_place_id=ChIJ07UkvaypQjQR7aFFX5LI134",
+      "n_total": 335,
+      "wash_rate_s1": 0.1791,
+      "type_counts": {
+        "null": 241,
+        "incentive": 1,
+        "template": 11,
+        "no_text": 82
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "082_池上木片便當汀州店.csv"
+    },
+    {
+      "store_name": "貳饌 健康餐盒",
+      "place_id": "ChIJYTvumi2pQjQRtiKzuelmO7E",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%B2%B3%E9%A5%8C%20%E5%81%A5%E5%BA%B7%E9%A4%90%E7%9B%92&query_place_id=ChIJYTvumi2pQjQRtiKzuelmO7E",
+      "n_total": 293,
+      "wash_rate_s1": 0.1877,
+      "type_counts": {
+        "null": 215,
+        "incentive": 4,
+        "template": 12,
+        "no_text": 61,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "083_貳饌 健康餐盒.csv"
+    },
+    {
+      "store_name": "每日韓式飯捲",
+      "place_id": "ChIJLSnoGACpQjQRYwsilNyyNhI",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%AF%8F%E6%97%A5%E9%9F%93%E5%BC%8F%E9%A3%AF%E6%8D%B2&query_place_id=ChIJLSnoGACpQjQRYwsilNyyNhI",
+      "n_total": 183,
+      "wash_rate_s1": 0.1913,
+      "type_counts": {
+        "null": 141,
+        "no_text": 40,
+        "template": 2
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "084_每日韓式飯捲.csv"
+    },
+    {
+      "store_name": "何佳佳蔥油餅-公館店",
+      "place_id": "ChIJe_0qMQCpQjQRSuc38Jc9gBM",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E4%BD%95%E4%BD%B3%E4%BD%B3%E8%94%A5%E6%B2%B9%E9%A4%85-%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJe_0qMQCpQjQRSuc38Jc9gBM",
+      "n_total": 57,
+      "wash_rate_s1": 0.193,
+      "type_counts": {
+        "null": 43,
+        "no_text": 13,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "085_何佳佳蔥油餅-公館店.csv"
+    },
+    {
+      "store_name": "買酒網 古亭門市",
+      "place_id": "ChIJ6SH8JcqpQjQRuND2fDLpgWE",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%B2%B7%E9%85%92%E7%B6%B2%20%E5%8F%A4%E4%BA%AD%E9%96%80%E5%B8%82&query_place_id=ChIJ6SH8JcqpQjQRuND2fDLpgWE",
+      "n_total": 114,
+      "wash_rate_s1": 0.193,
+      "type_counts": {
+        "null": 89,
+        "no_text": 25
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "086_買酒網 古亭門市.csv"
+    },
+    {
+      "store_name": "貳號基地Cafe",
+      "place_id": "ChIJ5wQY_0qpQjQRuBmSdkXSA9E",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%B2%B3%E8%99%9F%E5%9F%BA%E5%9C%B0Cafe&query_place_id=ChIJ5wQY_0qpQjQRuBmSdkXSA9E",
+      "n_total": 256,
+      "wash_rate_s1": 0.1953,
+      "type_counts": {
+        "null": 183,
+        "incentive": 3,
+        "template": 5,
+        "no_text": 65
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "087_貳號基地Cafe.csv"
+    },
+    {
+      "store_name": "徐會計師-甜點-烘焙-義大利食物",
+      "place_id": "ChIJucCY9I6pQjQRybGLuzYPcII",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%BE%90%E6%9C%83%E8%A8%88%E5%B8%AB-%E7%94%9C%E9%BB%9E-%E7%83%98%E7%84%99-%E7%BE%A9%E5%A4%A7%E5%88%A9%E9%A3%9F%E7%89%A9&query_place_id=ChIJucCY9I6pQjQRybGLuzYPcII",
+      "n_total": 93,
+      "wash_rate_s1": 0.2043,
+      "type_counts": {
+        "null": 71,
+        "incentive": 2,
+        "no_text": 20
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "088_徐會計師-甜點-烘焙-義大利食物.csv"
+    },
+    {
+      "store_name": "自彈自唱 Dolce far Niemte",
+      "place_id": "ChIJCYvjW5-pQjQR-Ie6cd7DPA0",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%87%AA%E5%BD%88%E8%87%AA%E5%94%B1%20Dolce%20far%20Niemte&query_place_id=ChIJCYvjW5-pQjQR-Ie6cd7DPA0",
+      "n_total": 237,
+      "wash_rate_s1": 0.2068,
+      "type_counts": {
+        "null": 175,
+        "incentive": 4,
+        "no_text": 56,
+        "template": 2
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "089_自彈自唱 Dolce far Niemte.csv"
+    },
+    {
+      "store_name": "米克斯咖啡",
+      "place_id": "ChIJFXLauH2rQjQR0hzXwPjvnNI",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E7%B1%B3%E5%85%8B%E6%96%AF%E5%92%96%E5%95%A1&query_place_id=ChIJFXLauH2rQjQR0hzXwPjvnNI",
+      "n_total": 91,
+      "wash_rate_s1": 0.2088,
+      "type_counts": {
+        "null": 56,
+        "low_info": 1,
+        "no_text": 34
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "090_米克斯咖啡.csv"
+    },
+    {
+      "store_name": "水花園有機農夫市集",
+      "place_id": "ChIJq6qqqoupQjQR4nn9EjQa0M4",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E6%B0%B4%E8%8A%B1%E5%9C%92%E6%9C%89%E6%A9%9F%E8%BE%B2%E5%A4%AB%E5%B8%82%E9%9B%86&query_place_id=ChIJq6qqqoupQjQR4nn9EjQa0M4",
+      "n_total": 33,
+      "wash_rate_s1": 0.2121,
+      "type_counts": {
+        "null": 18,
+        "incentive": 1,
+        "no_text": 14
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 7,
+      "csv_file": "091_水花園有機農夫市集.csv"
+    },
+    {
+      "store_name": "Pasta à Pepe 佩佩奶奶大份量義大利麵 樂智師大店",
+      "place_id": "ChIJ-cDY_6GpQjQRtOvCFCcO8lQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=Pasta%20%C3%A0%20Pepe%20%E4%BD%A9%E4%BD%A9%E5%A5%B6%E5%A5%B6%E5%A4%A7%E4%BB%BD%E9%87%8F%E7%BE%A9%E5%A4%A7%E5%88%A9%E9%BA%B5%20%E6%A8%82%E6%99%BA%E5%B8%AB%E5%A4%A7%E5%BA%97&query_place_id=ChIJ-cDY_6GpQjQRtOvCFCcO8lQ",
+      "n_total": 276,
+      "wash_rate_s1": 0.2319,
+      "type_counts": {
+        "null": 191,
+        "incentive": 2,
+        "template": 6,
+        "no_text": 76,
+        "low_info": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "092_Pasta à Pepe 佩佩奶奶大份量義大利麵 樂智師大店.csv"
+    },
+    {
+      "store_name": "青山-青茶專業製作 台大公館店",
+      "place_id": "ChIJPelzwGmpQjQRKsGsDufQA34",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%9D%92%E5%B1%B1-%E9%9D%92%E8%8C%B6%E5%B0%88%E6%A5%AD%E8%A3%BD%E4%BD%9C%20%E5%8F%B0%E5%A4%A7%E5%85%AC%E9%A4%A8%E5%BA%97&query_place_id=ChIJPelzwGmpQjQRKsGsDufQA34",
+      "n_total": 412,
+      "wash_rate_s1": 0.2549,
+      "type_counts": {
+        "null": 225,
+        "incentive": 5,
+        "template": 17,
+        "low_info": 15,
+        "no_text": 150
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "093_青山-青茶專業製作 台大公館店.csv"
+    },
+    {
+      "store_name": "餡煮食（小籠湯包.麵食.麵點）",
+      "place_id": "ChIJY0S8dwCpQjQRI8KSO6Idwdg",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E9%A4%A1%E7%85%AE%E9%A3%9F%EF%BC%88%E5%B0%8F%E7%B1%A0%E6%B9%AF%E5%8C%85.%E9%BA%B5%E9%A3%9F.%E9%BA%B5%E9%BB%9E%EF%BC%89&query_place_id=ChIJY0S8dwCpQjQRI8KSO6Idwdg",
+      "n_total": 456,
+      "wash_rate_s1": 0.2632,
+      "type_counts": {
+        "null": 331,
+        "incentive": 10,
+        "template": 31,
+        "no_text": 84
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "094_餡煮食（小籠湯包.麵食.麵點）.csv"
+    },
+    {
+      "store_name": "Doki Poke 夏威夷蒸鮮飯 台大二活店",
+      "place_id": "ChIJj011v1-pQjQRDKKZqJlLVlM",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=Doki%20Poke%20%E5%A4%8F%E5%A8%81%E5%A4%B7%E8%92%B8%E9%AE%AE%E9%A3%AF%20%E5%8F%B0%E5%A4%A7%E4%BA%8C%E6%B4%BB%E5%BA%97&query_place_id=ChIJj011v1-pQjQRDKKZqJlLVlM",
+      "n_total": 185,
+      "wash_rate_s1": 0.2703,
+      "type_counts": {
+        "null": 109,
+        "incentive": 5,
+        "template": 14,
+        "low_info": 5,
+        "no_text": 52
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "095_Doki Poke 夏威夷蒸鮮飯 台大二活店.csv"
+    },
+    {
+      "store_name": "強尼兄弟健康廚房 台大學餐",
+      "place_id": "ChIJG7kiA8qpQjQRXEF1iRaEk04",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%BC%B7%E5%B0%BC%E5%85%84%E5%BC%9F%E5%81%A5%E5%BA%B7%E5%BB%9A%E6%88%BF%20%E5%8F%B0%E5%A4%A7%E5%AD%B8%E9%A4%90&query_place_id=ChIJG7kiA8qpQjQRXEF1iRaEk04",
+      "n_total": 130,
+      "wash_rate_s1": 0.2923,
+      "type_counts": {
+        "null": 84,
+        "incentive": 2,
+        "template": 12,
+        "low_info": 1,
+        "no_text": 31
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "096_強尼兄弟健康廚房 台大學餐.csv"
+    },
+    {
+      "store_name": "咔滋日式豬排專賣店",
+      "place_id": "ChIJy6dP6qCpQjQRnNdwgHVxIIA",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E5%92%94%E6%BB%8B%E6%97%A5%E5%BC%8F%E8%B1%AC%E6%8E%92%E5%B0%88%E8%B3%A3%E5%BA%97&query_place_id=ChIJy6dP6qCpQjQRnNdwgHVxIIA",
+      "n_total": 345,
+      "wash_rate_s1": 0.371,
+      "type_counts": {
+        "null": 212,
+        "incentive": 9,
+        "template": 21,
+        "no_text": 103
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "097_咔滋日式豬排專賣店.csv"
+    },
+    {
+      "store_name": "迷客夏Milksha 臺北科技大樓店",
+      "place_id": "ChIJG21F1RyrQjQRRXza33K5LA0",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%BF%B7%E5%AE%A2%E5%A4%8FMilksha%20%E8%87%BA%E5%8C%97%E7%A7%91%E6%8A%80%E5%A4%A7%E6%A8%93%E5%BA%97&query_place_id=ChIJG21F1RyrQjQRRXza33K5LA0",
+      "n_total": 184,
+      "wash_rate_s1": 0.3859,
+      "type_counts": {
+        "null": 105,
+        "incentive": 3,
+        "template": 9,
+        "low_info": 1,
+        "no_text": 66
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "098_迷客夏Milksha 臺北科技大樓店.csv"
+    },
+    {
+      "store_name": "KIRABASE台科店",
+      "place_id": "ChIJyUIQ7c2rQjQRlH_5Ycy07IQ",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=KIRABASE%E5%8F%B0%E7%A7%91%E5%BA%97&query_place_id=ChIJyUIQ7c2rQjQRlH_5Ycy07IQ",
+      "n_total": 137,
+      "wash_rate_s1": 0.3869,
+      "type_counts": {
+        "incentive": 9,
+        "null": 74,
+        "no_text": 53,
+        "template": 1
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "099_KIRABASE台科店.csv"
+    },
+    {
+      "store_name": "臺大合作社 (公教品/大福門市)",
+      "place_id": "ChIJg9DYlkyrQjQR9ICxQ5HMqI8",
+      "url_key": "https://www.google.com/maps/search/?api=1&query=%E8%87%BA%E5%A4%A7%E5%90%88%E4%BD%9C%E7%A4%BE%20(%E5%85%AC%E6%95%99%E5%93%81%2F%E5%A4%A7%E7%A6%8F%E9%96%80%E5%B8%82)&query_place_id=ChIJg9DYlkyrQjQR9ICxQ5HMqI8",
+      "n_total": 34,
+      "wash_rate_s1": 0.4118,
+      "type_counts": {
+        "null": 12,
+        "no_text": 22
+      },
+      "n_sampled": 20,
+      "n_washed_in_sample": 10,
+      "csv_file": "100_臺大合作社 (公教品_大福門市).csv"
+    }
+  ]
+}
