@@ -4,7 +4,6 @@ cache.db
 .env
 review_scraper/venv
 chrome_auth_data
-restaurant_data
 eval
 gemini_prompts
 scripts
