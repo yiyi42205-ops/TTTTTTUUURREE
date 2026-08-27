@@ -20,7 +20,7 @@ export function Settings() {
     if (!trimmed) {
       sessionStorage.removeItem('truerating_gemini_api_key');
       setStatus('success');
-      setMessage('設定已清除，系統將使用預設的伺服器金鑰。');
+      setMessage('設定已清除，系統將使用預設的免費 Gemini 2.5 Flash Lite 模型。');
       return;
     }
 
@@ -39,35 +39,35 @@ export function Settings() {
     setApiKey('');
     sessionStorage.removeItem('truerating_gemini_api_key');
     setStatus('success');
-    setMessage('已清除 Session 金鑰，將回到伺服器託管金鑰。');
+    setMessage('已清除 Session 金鑰，將使用預設的免費模型。');
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#f5f1e8] p-4 md:p-8 pb-24">
+    <div className="flex-1 overflow-y-auto bg-background p-4 md:p-8 pb-24">
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="mb-8 text-center md:text-left">
-          <h1 className="text-3xl font-black text-[#4a5d52] font-display tracking-tight mb-2">
+          <h1 className="text-2xl font-semibold text-ink tracking-[-0.6px] mb-2">
             系統設定
           </h1>
-          <p className="text-sm text-[#6b8e7f] font-medium leading-relaxed">
-            配置您的個人 API 金鑰，實現無限制免費審計。
+          <p className="text-sm text-ink-subtle leading-relaxed">
+            配置您的個人 API 金鑰，或使用預設的免費 Gemini 2.5 Flash Lite 模型。
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-3xl p-6 border-3 border-[#4a5d52] shadow-tactile mb-6">
-          <div className="flex items-center gap-2.5 mb-5 text-[#4a5d52]">
-            <Key className="w-5 h-5 stroke-[2.5]" />
-            <h2 className="text-lg font-black font-display">Gemini API Key 設定</h2>
+        <div className="bg-surface-1 rounded-xl p-6 border border-hairline mb-6">
+          <div className="flex items-center gap-2.5 mb-5 text-ink">
+            <Key className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold tracking-[-0.4px]">Gemini API Key</h2>
           </div>
 
-          <p className="text-xs text-[#6b8e7f] font-bold leading-relaxed mb-6">
-            疑騙真星 TrueRating 為免費開源軟體。為了防止公共 API 流量遭濫用，您可以填入自己的免費 Google Gemini API Key。您的金鑰會安全地保存在當前分頁的 Session 中，關閉分頁或重整過久即會清除，絕不上傳資料庫。
+          <p className="text-sm text-ink-subtle leading-relaxed mb-6">
+            疑騙真星為免費開源軟體，預設使用免費的 Gemini 2.5 Flash Lite 模型。如需使用更高階模型或避免公共流量限制，您可以填入自己的 Google Gemini API Key。金鑰僅保存在當前分頁的 Session 中，關閉分頁即清除。
           </p>
 
           <div className="space-y-4">
-            <label className="block text-xs font-black text-[#4a5d52] uppercase tracking-wider">
+            <label className="block text-xs font-medium text-ink-subtle uppercase tracking-wider">
               您的 Gemini API 金鑰
             </label>
             <div className="relative">
@@ -76,12 +76,12 @@ export function Settings() {
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="輸入您的 AIzaSy... 金鑰"
-                className="w-full bg-[#f5f1e8] border-2 border-[#4a5d52] rounded-xl px-4 py-3 text-sm font-medium text-[#4a5d52] focus:outline-hidden pr-12 focus:ring-2 focus:ring-[#6b8e7f]/20"
+                className="w-full bg-surface-2 border border-hairline rounded-lg px-4 py-3 text-sm text-ink focus:outline-hidden focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pr-12 placeholder-ink-tertiary transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6b8e7f] hover:text-[#4a5d52] focus:outline-hidden"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-tertiary hover:text-ink-subtle focus:outline-hidden cursor-pointer"
               >
                 {showKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -92,10 +92,10 @@ export function Settings() {
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`flex items-start gap-2.5 p-3 rounded-xl border-2 text-xs font-bold ${
+                className={`flex items-start gap-2.5 p-3 rounded-lg border text-sm ${
                   status === 'success'
-                    ? 'bg-[#6b8e7f]/10 border-[#6b8e7f]/30 text-[#4a5d52]'
-                    : 'bg-[#ef4444]/10 border-[#ef4444]/30 text-[#ef4444]'
+                    ? 'bg-[var(--semantic-success)]/10 border-[var(--semantic-success)]/20 text-[var(--semantic-success)]'
+                    : 'bg-[var(--semantic-danger)]/10 border-[var(--semantic-danger)]/20 text-[var(--semantic-danger)]'
                 }`}
               >
                 {status === 'success' ? (
@@ -110,7 +110,7 @@ export function Settings() {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={handleSave}
-                className="flex-1 bg-[#6b8e7f] text-white py-3 rounded-xl text-sm font-black border-2 border-[#4a5d52] shadow-[3px_3px_0px_0px_#4a5d52] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_0px_#4a5d52] transition-all flex items-center justify-center gap-2 cursor-pointer font-display"
+                className="flex-1 bg-primary hover:bg-primary-hover text-white py-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Save className="w-4 h-4" />
                 儲存設定
@@ -118,7 +118,7 @@ export function Settings() {
               {apiKey && (
                 <button
                   onClick={handleClear}
-                  className="bg-[#f5f1e8] text-[#ef4444] border-2 border-[#4a5d52] p-3 rounded-xl hover:bg-[#ef4444]/5 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center justify-center cursor-pointer"
+                  className="bg-surface-2 text-[var(--semantic-danger)] border border-hairline p-3 rounded-lg hover:bg-[var(--semantic-danger)]/10 transition-all flex items-center justify-center cursor-pointer"
                   title="清除金鑰"
                 >
                   <Trash2 className="w-5 h-5" />
@@ -128,20 +128,20 @@ export function Settings() {
           </div>
         </div>
 
-        {/* Helpful Info Card */}
-        <div className="bg-[#6b8e7f]/10 rounded-3xl p-6 border-2 border-[#6b8e7f]/30">
-          <h3 className="text-[#4a5d52] font-black text-sm mb-2.5 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" />
+        {/* Help Card */}
+        <div className="bg-primary/5 rounded-xl p-6 border border-primary/15">
+          <h3 className="text-ink font-medium text-sm mb-2.5 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-primary" />
             如何取得免費 API Key？
           </h3>
-          <ol className="text-xs text-[#6b8e7f] font-bold space-y-2 list-decimal list-inside leading-relaxed">
+          <ol className="text-sm text-ink-subtle space-y-2 list-decimal list-inside leading-relaxed">
             <li>
               前往{' '}
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
                 rel="noreferrer"
-                className="text-[#6b8e7f] underline hover:text-[#4a5d52] font-black"
+                className="text-primary hover:text-primary-hover underline"
               >
                 Google AI Studio Key 申請頁
               </a>
