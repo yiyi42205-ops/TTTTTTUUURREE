@@ -10,7 +10,7 @@ export function Analyzer() {
   const [urls, setUrls] = useState<string[]>(['', '', '']);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const isPWA = useIsPWA();
-  
+
   // Suggestion Dropdown states for each slot
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,15 +28,15 @@ export function Analyzer() {
     try {
       const text = await navigator.clipboard.readText();
       const trimmed = (text || '').trim();
-      const isGoogleMapsUrl = trimmed.startsWith('https://') && 
-                             (trimmed.includes('google.com/maps') || 
-                              trimmed.includes('maps.app.goo.gl') || 
+      const isGoogleMapsUrl = trimmed.startsWith('https://') &&
+                             (trimmed.includes('google.com/maps') ||
+                              trimmed.includes('maps.app.goo.gl') ||
                               trimmed.includes('/maps/') ||
                               trimmed.includes('g.page'));
-      
+
       if (isGoogleMapsUrl) {
         if (scrapeUrls.includes(trimmed)) return;
-        
+
         const newScrapeUrls = [...scrapeUrls];
         const emptyIndex = newScrapeUrls.findIndex(url => url === '');
         if (emptyIndex !== -1) {
@@ -68,10 +68,10 @@ export function Analyzer() {
 
   const handleUrlChange = (index: number, value: string) => {
     const trimmed = value.trim();
-    const isUrl = trimmed.startsWith('http://') || 
-                  trimmed.startsWith('https://') || 
-                  trimmed.includes('google.com') || 
-                  trimmed.includes('maps.app.goo.gl') || 
+    const isUrl = trimmed.startsWith('http://') ||
+                  trimmed.startsWith('https://') ||
+                  trimmed.includes('google.com') ||
+                  trimmed.includes('maps.app.goo.gl') ||
                   trimmed.includes('/maps/');
     if (isUrl) {
       alert("內建測試數據庫僅支援搜尋與點選內建店家（例如：小高拉麵、清心師大）。\n如果您想輸入 Google Maps 網址進行即時爬取，請點選上方切換至「Google Maps 即時爬取」分頁。");
@@ -81,7 +81,7 @@ export function Analyzer() {
     const newUrls = [...urls];
     newUrls[index] = value;
     setUrls(newUrls);
-    
+
     // Open suggestions for this slot and set query
     setActiveSlot(index);
     setSearchQuery(value);
@@ -196,11 +196,11 @@ export function Analyzer() {
       navigate('/results', { state: { storeIds: matchedStoreIds } });
     }, 1800);
   };
-  
+
   const handleScrapeAndAnalyze = async () => {
     const activeUrls = scrapeUrls.map(u => u.trim()).filter(Boolean);
     if (activeUrls.length === 0) return;
-    
+
     // Validate each active URL/place name format
     for (const url of activeUrls) {
       const isUrl = url.startsWith('http://') || url.startsWith('https://');
@@ -212,7 +212,7 @@ export function Analyzer() {
         }
       }
     }
-    
+
     setScrapeError('');
     setIsAnalyzing(true);
     setScrapeLoadingStep(`正在平行抓取 ${activeUrls.length} 間店家的評論...`);
@@ -268,9 +268,6 @@ export function Analyzer() {
             throw new Error('無法抓取到任何評論，可能是網址無效或 Google 正在阻擋爬蟲請求。');
           }
 
-          // /api/scrape now always returns reviews normalized to a single shape
-          // (username/stars/time/text/images), regardless of whether Apify,
-          // the Playwright fallback, or the cache actually served the request.
           const mappedReviews = data.reviews.map((item: any) => ({
             username: item.username || '未知用戶',
             stars: parseInt(item.stars, 10) || 5,
@@ -302,10 +299,6 @@ export function Analyzer() {
       console.error(e);
       setScrapeError(e.message || '爬取過程中發生未知錯誤，請確認本地爬蟲伺服器已開啟。');
     } finally {
-      // Always clear the progress-message interval and reset loading state,
-      // whether the scrape succeeded, failed, or the response was a 500 —
-      // previously this was only cleared on the success path, so a failed
-      // scrape left the interval running in the background indefinitely.
       clearInterval(interval);
       setIsAnalyzing(false);
       setScrapeLoadingStep('');
@@ -328,15 +321,16 @@ export function Analyzer() {
   const drinkPresets = RESTAURANTS_DATA.filter(r => r.category === 'drinks').slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-[#f5f1e8] font-sans selection:bg-[#6b8e7f]/20 pb-12">
-      {/* Brand Navigation Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-[#f5f1e8]/80 border-b border-[#d4c5b0]/30 px-4 md:px-8 py-3.5 flex items-center justify-between shadow-xs">
+    <div className="min-h-screen bg-background font-sans selection:bg-primary/20 pb-12">
+      {/* Navigation Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b border-hairline px-4 md:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="bg-[#6b8e7f] text-white w-9 h-9 rounded-xl border-2 border-[#4a5d52] font-black text-base shadow-sm flex items-center justify-center">
-            <Shield className="w-5 h-5 text-white" />
+          <div className="bg-primary text-white w-8 h-8 rounded-lg flex items-center justify-center">
+            <Shield className="w-4.5 h-4.5 text-white" />
           </div>
-          <span className="font-display font-black text-lg text-[#4a5d52] tracking-tight">
-            疑騙真星 <span className="text-[#6b8e7f] font-sans font-bold text-sm bg-white border border-[#d4c5b0]/60 px-1.5 py-0.5 rounded-md ml-1">TrueRating</span>
+          <span className="font-sans font-semibold text-base text-ink tracking-[-0.4px]">
+            疑騙真星
+            <span className="text-ink-subtle font-normal text-sm ml-1.5">TrueRating</span>
           </span>
         </div>
         {!isPWA && (
@@ -344,9 +338,9 @@ export function Analyzer() {
             onClick={() => navigate('/')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-1.5 bg-white px-4 py-1.5 rounded-full shadow-xs border border-[#d4c5b0] text-xs font-bold text-[#4a5d52] cursor-pointer"
+            className="flex items-center gap-1.5 bg-surface-2 px-4 py-1.5 rounded-lg border border-hairline text-xs font-medium text-ink-subtle cursor-pointer hover:text-ink transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 text-[#6b8e7f]" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             返回首頁
           </motion.button>
         )}
@@ -354,47 +348,45 @@ export function Analyzer() {
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
 
-
         {/* Info Banner */}
         {!isPWA && (
           <motion.div
             initial={{ opacity: 0, y: -15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/95 backdrop-blur-xs rounded-2xl p-4.5 mb-8 shadow-xs border border-[#e8c547]/40 flex items-start gap-3.5"
+            className="bg-[var(--semantic-warning)]/8 rounded-xl p-4 mb-8 border border-[var(--semantic-warning)]/20 flex items-start gap-3"
           >
-            <Info className="w-5 h-5 text-[#e8c547] shrink-0 mt-0.5" />
-            <div className="text-xs md:text-sm text-[#4a5d52] leading-relaxed">
-              <span className="font-extrabold text-[#8b7534] bg-[#e8c547]/20 px-1.5 py-0.5 rounded mr-1">測試數據庫已加載</span>
-              系統內建拉麵、手搖飲、健康餐等 18 間店家歷史評論數據。您可以直接在對比欄位搜尋，或從下方推薦庫快速加載店家進行多店結構對比分析！
+            <Info className="w-4 h-4 text-[var(--semantic-warning)] shrink-0 mt-0.5" />
+            <div className="text-sm text-ink-muted leading-relaxed">
+              <span className="font-medium text-[var(--semantic-warning)] mr-1">測試數據庫已加載</span>
+              系統內建拉麵、手搖飲、健康餐等 18 間店家歷史評論數據。您可以直接在對比欄位搜尋，或從下方推薦庫快速加載店家進行多店結構對比分析。
             </div>
           </motion.div>
         )}
 
-        {/* Main Analysis Dashboard Box */}
+        {/* Main Analysis Card */}
         <div className="relative w-full max-w-3xl mx-auto mb-8">
-          <div className="bg-white rounded-[32px] shadow-md p-6 md:p-8 border-2 border-[#d4c5b0]/60">
+          <div className="bg-surface-1 rounded-xl p-6 md:p-8 border border-hairline">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-center mb-8"
             >
-              <div className="text-3xl mb-1 text-[#e8c547] select-none tracking-widest">★☆★☆★</div>
-              <h1 className="text-xl md:text-2xl font-black text-[#4a5d52] font-display">
+              <h1 className="text-xl md:text-2xl font-semibold text-ink tracking-[-0.6px]">
                 評論結構對比分析儀
               </h1>
-              <p className="text-xs text-[#6b8e7f] mt-1 font-medium">
+              <p className="text-sm text-ink-subtle mt-2">
                 選擇下方店家測試數據集，或透過即時爬蟲抓取 Google Map 上最新資料
               </p>
             </motion.div>
 
-            {/* Segmented Tab Selectors */}
-            <div className="flex gap-2 p-1.5 bg-[#f5f1e8] rounded-2xl mb-8 border-2 border-[#4a5d52] shadow-tactile-sm">
+            {/* Tab Selector */}
+            <div className="flex gap-1 p-1 bg-surface-2 rounded-lg mb-8 border border-hairline">
               <button
                 onClick={() => setActiveTab('preset')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all cursor-pointer ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
                   activeTab === 'preset'
-                    ? 'bg-white text-[#4a5d52] shadow-[2px_2px_0px_0px_#4a5d52] border-2 border-[#4a5d52]'
-                    : 'text-[#6b8e7f] hover:text-[#4a5d52] border-2 border-transparent hover:bg-white/50'
+                    ? 'bg-primary text-white'
+                    : 'text-ink-subtle hover:text-ink hover:bg-surface-3'
                 }`}
               >
                 <Database className="w-4 h-4" />
@@ -402,60 +394,58 @@ export function Analyzer() {
               </button>
               <button
                 onClick={() => setActiveTab('scraper')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs md:text-sm font-black transition-all cursor-pointer ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-all cursor-pointer ${
                   activeTab === 'scraper'
-                    ? 'bg-white text-[#4a5d52] shadow-[2px_2px_0px_0px_#4a5d52] border-2 border-[#4a5d52]'
-                    : 'text-[#6b8e7f] hover:text-[#4a5d52] border-2 border-transparent hover:bg-white/50'
+                    ? 'bg-primary text-white'
+                    : 'text-ink-subtle hover:text-ink hover:bg-surface-3'
                 }`}
               >
-                <Globe className="w-4 h-4 text-[#e8c547] animate-pulse" />
+                <Globe className="w-4 h-4" />
                 Google Maps 即時爬取
               </button>
             </div>
 
             {activeTab === 'preset' ? (
               <>
-
-
-                {/* URL Input Slots */}
-                <div className="space-y-4 mb-8 relative" ref={dropdownRef}>
+                {/* Preset Input Slots */}
+                <div className="space-y-3 mb-8 relative" ref={dropdownRef}>
                   {urls.map((url, index) => {
                     const isMatched = RESTAURANTS_DATA.some(r => r.name === url);
                     const matchedStore = RESTAURANTS_DATA.find(r => r.name === url);
                     const isEmpty = !url.trim();
-                    
+
                     return (
                       <motion.div
                         key={index}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.08 }}
-                        className={`rounded-2xl p-4 border-2 transition-all duration-200 ${
+                        className={`rounded-xl p-4 border transition-all duration-200 ${
                           isMatched
-                            ? 'bg-[#6b8e7f]/10 border-[#4a5d52] shadow-[2px_2px_0px_0px_#4a5d52]'
+                            ? 'bg-[var(--semantic-success)]/5 border-[var(--semantic-success)]/30'
                             : isEmpty
-                            ? 'bg-[#f5f1e8]/30 border-dashed border-[#d4c5b0] hover:bg-white hover:border-[#4a5d52] hover:shadow-[2px_2px_0px_0px_#4a5d52]'
-                            : 'bg-white border-[#4a5d52] shadow-[2px_2px_0px_0px_#4a5d52]'
+                            ? 'bg-surface-2 border-hairline border-dashed hover:border-hairline-strong'
+                            : 'bg-surface-2 border-hairline-strong'
                         }`}
                       >
                         <div className="flex items-center gap-2 mb-2">
-                          <div className={`font-black px-2.5 py-0.5 rounded-md text-[10px] border ${
+                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${
                             isMatched
-                              ? 'bg-[#6b8e7f] text-white border-[#4a5d52]'
+                              ? 'bg-[var(--semantic-success)]/15 text-[var(--semantic-success)]'
                               : isEmpty
-                              ? 'bg-white text-[#6b8e7f] border-[#d4c5b0] border-dashed'
-                              : 'bg-[#e8c547]/20 text-[#8b7534] border-[#e8c547]/40'
+                              ? 'bg-surface-3 text-ink-tertiary'
+                              : 'bg-[var(--semantic-warning)]/10 text-[var(--semantic-warning)]'
                           }`}>
                             對比店家 {index + 1}
-                          </div>
+                          </span>
                           {isMatched && matchedStore && (
-                            <span className="text-[10px] font-bold text-[#4a5d52] flex items-center gap-1.5">
-                              <Sparkles className="w-3.5 h-3.5 text-[#e8c547] animate-pulse" />
-                              已載入：<span className="text-[#6b8e7f]">【{matchedStore.categoryLabel}】</span>
+                            <span className="text-[11px] font-medium text-ink-subtle flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-[var(--semantic-warning)]" />
+                              已載入：<span className="text-primary">{matchedStore.categoryLabel}</span>
                             </span>
                           )}
                           {isEmpty && (
-                            <span className="text-[10px] text-[#6b8e7f] font-semibold flex items-center gap-1 select-none">
+                            <span className="text-[11px] text-ink-tertiary">
                               點擊下方推薦或輸入店名載入
                             </span>
                           )}
@@ -464,19 +454,19 @@ export function Analyzer() {
                               onClick={() => handleClear(index)}
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
-                              className="ml-auto bg-[#d4a5a5] text-white p-1 rounded-full border border-[#4a5d52] cursor-pointer shadow-xs"
+                              className="ml-auto bg-[var(--semantic-danger)] text-white p-1 rounded-md cursor-pointer"
                             >
-                              <X className="w-3.5 h-3.5" />
+                              <X className="w-3 h-3" />
                             </motion.button>
                           )}
                         </div>
                         <div className="relative">
                           {isMatched ? (
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b8e7f]" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                           ) : (
-                            <LinkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#d4c5b0]" />
+                            <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-tertiary" />
                           )}
-                          
+
                           <input
                             type="text"
                             value={url}
@@ -486,25 +476,27 @@ export function Analyzer() {
                               setSearchQuery(url);
                             }}
                             placeholder="請在此輸入並搜尋店家名稱，或點擊下方推薦店卡片..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl border border-[#d4c5b0] focus:border-[#6b8e7f] focus:ring-1 focus:ring-[#6b8e7f] outline-none text-xs md:text-sm text-[#4a5d52] font-semibold placeholder-[#a0b3a0] transition-shadow shadow-xs"
+                            className="w-full pl-10 pr-4 py-2.5 bg-surface-2 rounded-lg border border-hairline focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none text-sm text-ink placeholder-ink-tertiary transition-all"
                           />
 
                           {/* Dropdown Suggestions */}
                           {activeSlot === index && filteredSuggestions.length > 0 && (
-                            <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-[#d4c5b0] z-50 max-h-56 overflow-y-auto">
+                            <div className="absolute left-0 right-0 top-full mt-1 bg-surface-2 rounded-lg border border-hairline-strong z-50 max-h-56 overflow-y-auto">
                               {filteredSuggestions.map((restaurant) => (
                                 <button
                                   key={restaurant.id}
                                   onClick={() => handleSelectRestaurant(index, restaurant)}
-                                  className="w-full text-left px-4 py-2.5 hover:bg-[#6b8e7f]/10 flex items-center justify-between border-b border-[#f5f1e8] last:border-0 transition-colors text-xs"
+                                  className="w-full text-left px-4 py-2.5 hover:bg-surface-3 flex items-center justify-between border-b border-hairline last:border-0 transition-colors text-sm cursor-pointer"
                                 >
-                                  <div>
-                                    <span className="font-extrabold text-[#4a5d52]">{restaurant.name}</span>
-                                    <span className="ml-2 text-[10px] bg-[#e8dcc8] text-[#4a5d52] px-1.5 py-0.5 rounded">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-ink">{restaurant.name}</span>
+                                    <span className="text-[11px] bg-surface-3 text-ink-subtle px-1.5 py-0.5 rounded">
                                       {restaurant.categoryLabel}
                                     </span>
                                   </div>
-                                  <span className="text-[10px] text-[#6b8e7f] font-extrabold">
+                                  <span className={`text-[11px] font-medium ${
+                                    restaurant.isWashed ? 'text-[var(--semantic-danger)]' : 'text-[var(--semantic-success)]'
+                                  }`}>
                                     {restaurant.isWashed ? '含結構異常' : '結構自然'}
                                   </span>
                                 </button>
@@ -517,13 +509,13 @@ export function Analyzer() {
                   })}
                 </div>
 
-                {/* Main Action Button */}
+                {/* Analyze Button */}
                 <motion.button
                   onClick={handleAnalyze}
                   disabled={isAnalyzing || matchedCount === 0}
-                  whileHover={{ y: matchedCount > 0 && !isAnalyzing ? -4 : 0 }}
-                  whileTap={{ y: matchedCount > 0 && !isAnalyzing ? 0 : 0, boxShadow: '0px 0px 0px 0px var(--color-primary)' }}
-                  className="w-full bg-[#6b8e7f] hover:bg-[#5b7d6e] text-white font-black text-sm md:text-base py-4 rounded-full shadow-[4px_4px_0px_0px_#4a5d52] hover:shadow-[6px_6px_0px_0px_#4a5d52] disabled:shadow-none disabled:bg-[#c9bfae] disabled:cursor-not-allowed border-3 border-[#4a5d52] disabled:border-[#a0b3a0] transition-all cursor-pointer font-display tracking-wider active:translate-y-1 active:shadow-none"
+                  whileHover={{ y: matchedCount > 0 && !isAnalyzing ? -2 : 0 }}
+                  whileTap={{ scale: matchedCount > 0 && !isAnalyzing ? 0.98 : 1 }}
+                  className="w-full bg-primary hover:bg-primary-hover text-white font-medium text-sm md:text-base py-3.5 rounded-lg disabled:bg-surface-3 disabled:text-ink-tertiary disabled:cursor-not-allowed transition-all cursor-pointer tracking-[-0.2px]"
                 >
                   <AnimatePresence mode="wait">
                     {isAnalyzing ? (
@@ -543,7 +535,7 @@ export function Analyzer() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="flex items-center justify-center gap-2 font-display text-base tracking-wide"
+                        className="flex items-center justify-center gap-2"
                       >
                         開始結構分析（對比 {matchedCount} 間）
                       </motion.div>
@@ -554,14 +546,13 @@ export function Analyzer() {
             ) : (
               <div className="space-y-4">
 
-
                 {scrapeError && (
-                  <div className="p-3.5 bg-[#fde8e8] border-2 border-[#e53e3e] text-[#9b2c2c] rounded-2xl flex items-start gap-2.5">
-                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#e53e3e]" />
-                    <p className="flex-1 text-xs font-semibold leading-relaxed">{scrapeError}</p>
+                  <div className="p-3.5 bg-[var(--semantic-danger)]/10 border border-[var(--semantic-danger)]/20 text-[var(--semantic-danger)] rounded-xl flex items-start gap-2.5">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <p className="flex-1 text-sm leading-relaxed">{scrapeError}</p>
                     <button
                       onClick={() => setScrapeError('')}
-                      className="text-[#9b2c2c] hover:opacity-80 font-black cursor-pointer"
+                      className="text-[var(--semantic-danger)] hover:opacity-80 cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -569,19 +560,19 @@ export function Analyzer() {
                 )}
 
                 <div className="flex justify-between items-end mb-4">
-                  <h3 className="text-[#4a5d52] font-black font-display text-sm">輸入即時爬取網址</h3>
+                  <h3 className="text-ink font-medium text-sm">輸入即時爬取網址</h3>
                   <motion.button
                     onClick={handlePasteFromClipboard}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-1.5 text-xs font-black bg-white text-[#4a5d52] border-2 border-[#4a5d52] rounded-xl px-3 py-1.5 cursor-pointer shadow-[2px_2px_0px_0px_#4a5d52] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all"
+                    className="flex items-center gap-1.5 text-xs font-medium bg-surface-2 text-ink-subtle border border-hairline rounded-lg px-3 py-1.5 cursor-pointer hover:text-ink hover:border-hairline-strong transition-all"
                   >
-                    <ClipboardPaste className="w-3.5 h-3.5 text-[#6b8e7f]" />
+                    <ClipboardPaste className="w-3.5 h-3.5" />
                     從剪貼簿貼上
                   </motion.button>
                 </div>
 
-                <div className="space-y-4 mb-4">
+                <div className="space-y-3 mb-4">
                   {scrapeUrls.map((url, index) => {
                     const isEmpty = !url.trim();
                     return (
@@ -590,39 +581,39 @@ export function Analyzer() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.08 }}
-                        className={`rounded-2xl p-4 border-2 transition-all duration-200 ${
+                        className={`rounded-xl p-4 border transition-all duration-200 ${
                           isEmpty
-                            ? 'bg-[#f5f1e8]/30 border-dashed border-[#d4c5b0] hover:bg-white hover:border-[#4a5d52] hover:shadow-[2px_2px_0px_0px_#4a5d52]'
-                            : 'bg-white border-[#4a5d52] shadow-[2px_2px_0px_0px_#4a5d52]'
+                            ? 'bg-surface-2 border-hairline border-dashed hover:border-hairline-strong'
+                            : 'bg-surface-2 border-hairline-strong'
                         }`}
                       >
                         <div className="flex items-center gap-2 mb-2">
-                          <div className={`font-black px-2.5 py-0.5 rounded-md text-[10px] border ${
+                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${
                             isEmpty
-                              ? 'bg-white text-[#6b8e7f] border-[#d4c5b0] border-dashed'
-                              : 'bg-[#6b8e7f] text-white border-[#4a5d52]'
+                              ? 'bg-surface-3 text-ink-tertiary'
+                              : 'bg-primary/15 text-primary'
                           }`}>
                             即時爬取店家 {index + 1}
-                          </div>
+                          </span>
                           {url && (
                             <motion.button
                               onClick={() => handleScrapeUrlClear(index)}
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
-                              className="ml-auto bg-[#d4a5a5] text-white p-1 rounded-full border border-[#4a5d52] cursor-pointer shadow-xs"
+                              className="ml-auto bg-[var(--semantic-danger)] text-white p-1 rounded-md cursor-pointer"
                             >
-                              <X className="w-3.5 h-3.5" />
+                              <X className="w-3 h-3" />
                             </motion.button>
                           )}
                         </div>
                         <div className="relative">
-                          <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b8e7f]" />
+                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-tertiary" />
                           <input
                             type="text"
                             value={url}
                             onChange={(e) => handleScrapeUrlChange(index, e.target.value)}
                             placeholder="請輸入 Google Maps 網址，或直接輸入店家名稱（例如：蘇草salvia）..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-white rounded-xl border border-[#d4c5b0] focus:border-[#6b8e7f] focus:ring-1 focus:ring-[#6b8e7f] outline-none text-xs md:text-sm text-[#4a5d52] font-semibold placeholder-[#a0b3a0] transition-shadow shadow-xs"
+                            className="w-full pl-10 pr-4 py-2.5 bg-surface-2 rounded-lg border border-hairline focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none text-sm text-ink placeholder-ink-tertiary transition-all"
                           />
                         </div>
                       </motion.div>
@@ -630,13 +621,13 @@ export function Analyzer() {
                   })}
                 </div>
 
-                <div className="rounded-2xl p-5 bg-[#f5f1e8]/40 border border-[#e8dcc8]">
-                  <div className="flex justify-between items-center mb-1.5">
-                    <label className="text-xs font-black text-[#4a5d52] flex items-center gap-1.5">
-                      <Sliders className="w-3.5 h-3.5" />
-                      限制抓取評論筆數 (每間商家)
+                <div className="rounded-xl p-4 bg-surface-2 border border-hairline">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm font-medium text-ink flex items-center gap-1.5">
+                      <Sliders className="w-3.5 h-3.5 text-ink-subtle" />
+                      限制抓取評論筆數（每間商家）
                     </label>
-                    <span className="text-[10px] font-extrabold text-[#6b8e7f] bg-white px-2 py-0.5 rounded border border-[#d4c5b0]">
+                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                       {maxReviews} 筆
                     </span>
                   </div>
@@ -647,16 +638,16 @@ export function Analyzer() {
                     step="10"
                     value={maxReviews}
                     onChange={(e) => setMaxReviews(parseInt(e.target.value))}
-                    className="w-full accent-[#6b8e7f] h-1.5 bg-[#e8dcc8] rounded-lg appearance-none cursor-pointer"
+                    className="w-full accent-primary h-1 bg-surface-3 rounded-lg appearance-none cursor-pointer"
                   />
                 </div>
 
                 <motion.button
                   onClick={handleScrapeAndAnalyze}
                   disabled={isAnalyzing || filledScrapeCount === 0}
-                  whileHover={{ scale: filledScrapeCount > 0 && !isAnalyzing ? 1.02 : 1 }}
+                  whileHover={{ scale: filledScrapeCount > 0 && !isAnalyzing ? 1.01 : 1 }}
                   whileTap={{ scale: filledScrapeCount > 0 && !isAnalyzing ? 0.98 : 1 }}
-                  className="w-full bg-gradient-to-r from-[#6b8e7f] to-[#4a5d52] hover:opacity-95 text-white font-extrabold text-sm md:text-base py-3.5 rounded-full shadow-md disabled:from-[#c9bfae] disabled:to-[#c9bfae] disabled:cursor-not-allowed border-2 border-[#4a5d52] disabled:border-[#a0b3a0] transition-all cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full bg-primary hover:bg-primary-hover text-white font-medium text-sm md:text-base py-3.5 rounded-lg disabled:bg-surface-3 disabled:text-ink-tertiary disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   {isAnalyzing ? (
                     <>
@@ -665,7 +656,7 @@ export function Analyzer() {
                     </>
                   ) : (
                     <>
-                      <Globe className="w-4 h-4 text-[#e8c547] animate-pulse" />
+                      <Globe className="w-4 h-4" />
                       一鍵抓取評論並開啟 AI 審計 {filledScrapeCount > 0 ? `（共 ${filledScrapeCount} 間）` : ''}
                     </>
                   )}
@@ -675,99 +666,97 @@ export function Analyzer() {
           </div>
         </div>
 
-
-
-        {/* Preset Store Recommendations Grid */}
+        {/* Preset Store Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white/90 backdrop-blur-xs rounded-[32px] p-6 border border-[#d4c5b0] shadow-xs"
+          className="bg-surface-1 rounded-xl p-6 border border-hairline"
         >
-          <h2 className="text-sm md:text-base font-extrabold text-[#4a5d52] mb-5 flex items-center gap-1.5 font-display">
-            快速點選測試數據集（推薦對照體驗）
+          <h2 className="text-base font-semibold text-ink mb-5 tracking-[-0.4px]">
+            快速點選測試數據集
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Ramen Panel */}
-            <div className="space-y-3.5">
-              <h3 className="font-extrabold text-xs md:text-sm text-[#4a5d52] flex items-center gap-1.5 border-b pb-1.5 border-[#d4c5b0]/40 font-display">
+            {/* Ramen */}
+            <div className="space-y-3">
+              <h3 className="font-medium text-sm text-ink-muted pb-2 border-b border-hairline">
                 日式拉麵對照
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {ramenPresets.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => handleAddPreset(r)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl text-[11px] border font-semibold flex items-center justify-between transition-all hover:translate-x-1 cursor-pointer ${
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border flex items-center justify-between transition-all hover:translate-x-0.5 cursor-pointer ${
                       r.isWashed
-                        ? 'bg-[#d4a5a5]/10 hover:bg-[#d4a5a5]/20 border-[#d4a5a5]/30 text-[#8c4848]'
-                        : 'bg-[#6b8e7f]/10 hover:bg-[#6b8e7f]/20 border-[#6b8e7f]/30 text-[#304a3e]'
+                        ? 'bg-[var(--semantic-danger)]/5 hover:bg-[var(--semantic-danger)]/10 border-[var(--semantic-danger)]/15 text-[var(--semantic-danger)]'
+                        : 'bg-[var(--semantic-success)]/5 hover:bg-[var(--semantic-success)]/10 border-[var(--semantic-success)]/15 text-[var(--semantic-success)]'
                     }`}
                   >
                     <div>
-                      <span className="font-extrabold block text-xs">{r.name}</span>
-                      <span className="text-[9px] opacity-75 font-medium">
+                      <span className="font-medium block text-sm">{r.name}</span>
+                      <span className="text-[11px] opacity-70">
                         {r.isWashed ? '含促銷結構特徵' : '自然有機評論'}
                       </span>
                     </div>
-                    <Plus className="w-3.5 h-3.5 shrink-0 ml-1" />
+                    <Plus className="w-3.5 h-3.5 shrink-0 ml-1 opacity-50" />
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Bento Panel */}
-            <div className="space-y-3.5">
-              <h3 className="font-extrabold text-xs md:text-sm text-[#4a5d52] flex items-center gap-1.5 border-b pb-1.5 border-[#d4c5b0]/40 font-display">
+            {/* Bento */}
+            <div className="space-y-3">
+              <h3 className="font-medium text-sm text-ink-muted pb-2 border-b border-hairline">
                 健康便當對照
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {bentoPresets.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => handleAddPreset(r)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl text-[11px] border font-semibold flex items-center justify-between transition-all hover:translate-x-1 cursor-pointer ${
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border flex items-center justify-between transition-all hover:translate-x-0.5 cursor-pointer ${
                       r.isWashed
-                        ? 'bg-[#d4a5a5]/10 hover:bg-[#d4a5a5]/20 border-[#d4a5a5]/30 text-[#8c4848]'
-                        : 'bg-[#6b8e7f]/10 hover:bg-[#6b8e7f]/20 border-[#6b8e7f]/30 text-[#304a3e]'
+                        ? 'bg-[var(--semantic-danger)]/5 hover:bg-[var(--semantic-danger)]/10 border-[var(--semantic-danger)]/15 text-[var(--semantic-danger)]'
+                        : 'bg-[var(--semantic-success)]/5 hover:bg-[var(--semantic-success)]/10 border-[var(--semantic-success)]/15 text-[var(--semantic-success)]'
                     }`}
                   >
                     <div>
-                      <span className="font-extrabold block text-xs">{r.name}</span>
-                      <span className="text-[9px] opacity-75 font-medium">
+                      <span className="font-medium block text-sm">{r.name}</span>
+                      <span className="text-[11px] opacity-70">
                         {r.isWashed ? '包含打卡送茶飲' : '綠色低卡便當口碑'}
                       </span>
                     </div>
-                    <Plus className="w-3.5 h-3.5 shrink-0 ml-1" />
+                    <Plus className="w-3.5 h-3.5 shrink-0 ml-1 opacity-50" />
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Drinks Panel */}
-            <div className="space-y-3.5">
-              <h3 className="font-extrabold text-xs md:text-sm text-[#4a5d52] flex items-center gap-1.5 border-b pb-1.5 border-[#d4c5b0]/40 font-display">
+            {/* Drinks */}
+            <div className="space-y-3">
+              <h3 className="font-medium text-sm text-ink-muted pb-2 border-b border-hairline">
                 手搖茶飲對照
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {drinkPresets.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => handleAddPreset(r)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl text-[11px] border font-semibold flex items-center justify-between transition-all hover:translate-x-1 cursor-pointer ${
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border flex items-center justify-between transition-all hover:translate-x-0.5 cursor-pointer ${
                       r.isWashed
-                        ? 'bg-[#d4a5a5]/10 hover:bg-[#d4a5a5]/20 border-[#d4a5a5]/30 text-[#8c4848]'
-                        : 'bg-[#6b8e7f]/10 hover:bg-[#6b8e7f]/20 border-[#6b8e7f]/30 text-[#304a3e]'
+                        ? 'bg-[var(--semantic-danger)]/5 hover:bg-[var(--semantic-danger)]/10 border-[var(--semantic-danger)]/15 text-[var(--semantic-danger)]'
+                        : 'bg-[var(--semantic-success)]/5 hover:bg-[var(--semantic-success)]/10 border-[var(--semantic-success)]/15 text-[var(--semantic-success)]'
                     }`}
                   >
                     <div>
-                      <span className="font-extrabold block text-xs">{r.name}</span>
-                      <span className="text-[9px] opacity-75 font-medium">
+                      <span className="font-medium block text-sm">{r.name}</span>
+                      <span className="text-[11px] opacity-70">
                         {r.isWashed ? '網紅洗好評買一送一' : '巷弄古早手搖老店'}
                       </span>
                     </div>
-                    <Plus className="w-3.5 h-3.5 shrink-0 ml-1" />
+                    <Plus className="w-3.5 h-3.5 shrink-0 ml-1 opacity-50" />
                   </button>
                 ))}
               </div>
@@ -775,25 +764,25 @@ export function Analyzer() {
           </div>
         </motion.div>
 
-        {/* AI Config Card */}
+        {/* AI Engine Info */}
         {!isPWA && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-8 bg-white/90 backdrop-blur-xs rounded-[32px] p-6 border border-[#d4c5b0] shadow-xs flex flex-col md:flex-row items-center gap-6"
+            className="mt-6 bg-surface-1 rounded-xl p-6 border border-hairline flex flex-col md:flex-row items-center gap-6"
           >
-            <div className="flex-1 space-y-3">
-              <h3 className="text-[#4a5d52] font-black flex items-center gap-2 font-display">
-                <ShieldCheck className="w-5 h-5 text-[#6b8e7f]" />
+            <div className="flex-1 space-y-2">
+              <h3 className="text-ink font-medium flex items-center gap-2 tracking-[-0.4px]">
+                <ShieldCheck className="w-5 h-5 text-primary" />
                 雙階段審查：正則規則引擎 + AI 語意防護網
               </h3>
-              <p className="text-xs text-[#6b8e7f] leading-relaxed font-bold">
+              <p className="text-sm text-ink-subtle leading-relaxed">
                 這套工具並非單純呼叫語言模型。第一階段先由 Python 規則引擎掃描評論結構特徵（如促銷關鍵字、模板化用語等），進行初步分類；第二階段將模糊評論送至 Gemini 進行上下文語意分析，識別不自然的評論結構模式，實現高準確度的結構異常偵測。
               </p>
             </div>
             <div className="shrink-0">
-              <Sliders className="w-12 h-12 text-[#d4c5b0]/50" />
+              <Sliders className="w-10 h-10 text-ink-tertiary" />
             </div>
           </motion.div>
         )}
