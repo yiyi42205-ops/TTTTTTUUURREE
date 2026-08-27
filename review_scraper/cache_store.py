@@ -11,7 +11,7 @@ import os
 import sqlite3
 import time
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cache.db")
+DB_PATH = os.environ.get("DB_PATH") or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cache.db")
 CACHE_TTL_SECONDS = 7 * 24 * 60 * 60  # 7 days
 
 

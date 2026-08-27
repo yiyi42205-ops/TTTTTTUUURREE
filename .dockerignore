@@ -1,0 +1,13 @@
+node_modules
+cache.db
+.git
+.env
+review_scraper/venv
+chrome_auth_data
+restaurant_data
+eval
+gemini_prompts
+scripts
+tests
+docs
+*.md
