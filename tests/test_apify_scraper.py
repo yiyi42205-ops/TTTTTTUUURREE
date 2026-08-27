@@ -16,9 +16,12 @@ def client():
 def isolated_cache_db(tmp_path, monkeypatch):
     """Every test gets a fresh temp SQLite file instead of touching the real
     project-root cache.db. DB_PATH is read at call time (not bound as a
-    default-argument value), so monkeypatching the module attribute works."""
+    default-argument value), so monkeypatching the module attribute works.
+    Also sets a fake APIFY_TOKEN so integration tests reach the scraper code
+    path (the server checks for a token before calling scrape_via_apify)."""
     db_path = str(tmp_path / "test_cache.db")
     monkeypatch.setattr(cache_store, "DB_PATH", db_path)
+    monkeypatch.setenv("APIFY_TOKEN", "test-token")
     yield db_path
 
 
@@ -162,7 +165,7 @@ def fake_playwright_dataframe(records):
 
 
 def test_scrape_uses_apify_when_it_succeeds(client, monkeypatch):
-    def fake_scrape_via_apify(url, max_reviews=50):
+    def fake_scrape_via_apify(url, max_reviews=50, token=None):
         return "ChIJ_1", [{"username": "u1", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}], {}
 
     monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape_via_apify)
@@ -180,7 +183,7 @@ def test_scrape_does_not_fall_back_to_playwright_by_default(client, monkeypatch)
     must never even be invoked."""
     monkeypatch.delenv("ENABLE_PLAYWRIGHT_FALLBACK", raising=False)
 
-    def failing_apify(url, max_reviews=50):
+    def failing_apify(url, max_reviews=50, token=None):
         raise RuntimeError("Apify token 無效")
 
     playwright_called = {"called": False}
@@ -201,7 +204,7 @@ def test_scrape_does_not_fall_back_to_playwright_by_default(client, monkeypatch)
 def test_scrape_falls_back_to_playwright_when_apify_fails_and_fallback_enabled(client, monkeypatch):
     monkeypatch.setenv("ENABLE_PLAYWRIGHT_FALLBACK", "true")
 
-    def failing_apify(url, max_reviews=50):
+    def failing_apify(url, max_reviews=50, token=None):
         raise RuntimeError("Apify token 無效")
 
     def fake_playwright(url, max_reviews=50):
@@ -222,7 +225,7 @@ def test_scrape_falls_back_to_playwright_when_apify_fails_and_fallback_enabled(c
 def test_scrape_returns_500_when_both_apify_and_playwright_fail_and_fallback_enabled(client, monkeypatch):
     monkeypatch.setenv("ENABLE_PLAYWRIGHT_FALLBACK", "true")
 
-    def failing_apify(url, max_reviews=50):
+    def failing_apify(url, max_reviews=50, token=None):
         raise RuntimeError("Apify 額度用盡")
 
     def failing_playwright(url, max_reviews=50):
@@ -239,7 +242,7 @@ def test_scrape_returns_500_when_both_apify_and_playwright_fail_and_fallback_ena
 def test_scrape_cache_hit_skips_apify(client, monkeypatch):
     call_count = {"n": 0}
 
-    def counting_apify(url, max_reviews=50):
+    def counting_apify(url, max_reviews=50, token=None):
         call_count["n"] += 1
         return "ChIJ_4", [{"username": "fresh", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}], {}
 
@@ -260,7 +263,7 @@ def test_scrape_cache_hit_skips_apify(client, monkeypatch):
 def test_scrape_force_true_bypasses_cache(client, monkeypatch):
     call_count = {"n": 0}
 
-    def counting_apify(url, max_reviews=50):
+    def counting_apify(url, max_reviews=50, token=None):
         call_count["n"] += 1
         return "ChIJ_5", [{"username": f"user{call_count['n']}", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}], {}
 
@@ -293,7 +296,7 @@ def test_scrape_merges_new_reviews_into_cache(client, monkeypatch):
 
     call_count = {"n": 0}
 
-    def apify_varying(url, max_reviews=50):
+    def apify_varying(url, max_reviews=50, token=None):
         call_count["n"] += 1
         if call_count["n"] <= 2:
             return "ChIJ_merge", cached_reviews, {"totalScore": 3.9, "reviewsCount": 500}
@@ -335,7 +338,7 @@ def test_scrape_probe_hits_cache_avoids_full_scrape(client, monkeypatch):
 
     call_count = {"n": 0}
 
-    def probe_only_apify(url, max_reviews=50):
+    def probe_only_apify(url, max_reviews=50, token=None):
         call_count["n"] += 1
         return "ChIJ_precrawled", [{"username": "probe", "stars": 3, "time": "2025-06-01", "text": "x", "images": [], "hasText": True, "imageCount": 0}], {"totalScore": 4.2}
 
@@ -402,7 +405,7 @@ def test_resolve_google_share_url_handles_exceptions(monkeypatch):
 
 def test_scrape_normalizes_plain_text_query(client, monkeypatch):
     captured_url = []
-    def fake_scrape_via_apify(url, max_reviews=50):
+    def fake_scrape_via_apify(url, max_reviews=50, token=None):
         captured_url.append(url)
         return "ChIJ_text", [{"username": "u1", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0}], {}
 
@@ -441,7 +444,7 @@ def test_scrape_rejects_oversized_url(client):
 def test_scrape_rejects_non_restaurant_category(client, monkeypatch):
     """When Apify returns a non-food categoryName (e.g. 公園), the endpoint
     should return 400 with an appropriate error message."""
-    def fake_scrape(url, max_reviews=50):
+    def fake_scrape(url, max_reviews=50, token=None):
         return "ChIJ_park", [
             {"username": "u1", "stars": 5, "time": "2025-01-01", "text": "漂亮", "images": [], "hasText": True, "imageCount": 0},
         ], {"totalScore": 4.5, "categoryName": "公園"}
@@ -457,7 +460,7 @@ def test_scrape_rejects_non_restaurant_category(client, monkeypatch):
 
 def test_scrape_allows_restaurant_category(client, monkeypatch):
     """A venue with a food-related categoryName should pass through normally."""
-    def fake_scrape(url, max_reviews=50):
+    def fake_scrape(url, max_reviews=50, token=None):
         return "ChIJ_rest", [
             {"username": "u1", "stars": 5, "time": "2025-01-01", "text": "好吃", "images": [], "hasText": True, "imageCount": 0},
         ], {"totalScore": 4.3, "categoryName": "餐廳"}
@@ -472,7 +475,7 @@ def test_scrape_allows_restaurant_category(client, monkeypatch):
 def test_scrape_allows_missing_category(client, monkeypatch):
     """When no categoryName is present (e.g. Playwright fallback or old cache),
     the request should proceed without blocking."""
-    def fake_scrape(url, max_reviews=50):
+    def fake_scrape(url, max_reviews=50, token=None):
         return "ChIJ_nocat", [
             {"username": "u1", "stars": 4, "time": "2025-01-01", "text": "ok", "images": [], "hasText": True, "imageCount": 0},
         ], {"totalScore": 4.0}
@@ -489,7 +492,7 @@ def test_scrape_probe_rejects_non_restaurant_before_full_scrape(client, monkeypa
     full_scrape_called = {"called": False}
 
     call_count = {"n": 0}
-    def fake_scrape(url, max_reviews=50):
+    def fake_scrape(url, max_reviews=50, token=None):
         call_count["n"] += 1
         if max_reviews == 1:
             # Probe — returns non-restaurant category

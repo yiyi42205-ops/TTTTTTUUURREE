@@ -23,10 +23,10 @@ ACTOR_ID = "compass/Google-Maps-Reviews-Scraper"
 RUN_WAIT_SECONDS = 180
 
 
-def scrape_via_apify(url: str, max_reviews: int = 50) -> tuple[str | None, list, dict]:
-    token = os.getenv("APIFY_TOKEN")
+def scrape_via_apify(url: str, max_reviews: int = 50, token: str | None = None) -> tuple[str | None, list, dict]:
+    token = token or os.getenv("APIFY_TOKEN")
     if not token:
-        raise RuntimeError("缺少 APIFY_TOKEN 環境變數，無法呼叫 Apify 爬蟲服務。")
+        raise RuntimeError("缺少 APIFY_TOKEN，無法呼叫 Apify 爬蟲服務。")
 
     client = ApifyClient(token)
 

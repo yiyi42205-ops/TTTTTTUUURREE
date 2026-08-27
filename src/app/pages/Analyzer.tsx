@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Loader2, X, Globe, Sliders, ShieldCheck, Shield, AlertTriangle, ClipboardPaste } from 'lucide-react';
+import { ArrowLeft, Loader2, X, Globe, Sliders, ShieldCheck, Shield, AlertTriangle, ClipboardPaste, Key, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { useIsPWA } from '../hooks/useIsPWA';
 
 export function Analyzer() {
@@ -13,6 +13,13 @@ export function Analyzer() {
   const [maxReviews, setMaxReviews] = useState(50);
   const [scrapeLoadingStep, setScrapeLoadingStep] = useState('');
   const [scrapeError, setScrapeError] = useState('');
+
+  // Credentials prompt — shown only when a cache miss requires user keys
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [apifyToken, setApifyToken] = useState(() => sessionStorage.getItem('truerating_apify_token') || '');
+  const [geminiKey, setGeminiKey] = useState(() => sessionStorage.getItem('truerating_gemini_api_key') || '');
+  const [showApifyToken, setShowApifyToken] = useState(false);
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
 
   const handlePasteFromClipboard = useCallback(async () => {
     try {
@@ -56,6 +63,15 @@ export function Analyzer() {
     setScrapeUrls(newUrls);
   };
 
+  const saveCredentials = () => {
+    if (apifyToken.trim()) {
+      sessionStorage.setItem('truerating_apify_token', apifyToken.trim());
+    }
+    if (geminiKey.trim()) {
+      sessionStorage.setItem('truerating_gemini_api_key', geminiKey.trim());
+    }
+  };
+
   const handleScrapeAndAnalyze = async () => {
     const activeUrls = scrapeUrls.map(u => u.trim()).filter(Boolean);
     if (activeUrls.length === 0) return;
@@ -76,7 +92,8 @@ export function Analyzer() {
     setScrapeLoadingStep(`正在平行抓取 ${activeUrls.length} 間店家的評論...`);
 
     const steps = [
-      '正在向 Apify 送出抓取請求（若失敗將自動改用本地 Playwright 備援）...',
+      '正在查詢資料庫快取...',
+      '正在向 Apify 送出抓取請求...',
       '正在解析評論文字、發布時間與打卡照片...',
       '正在整理資料格式...'
     ];
@@ -86,7 +103,14 @@ export function Analyzer() {
         setScrapeLoadingStep(steps[stepIdx]);
         stepIdx++;
       }
-    }, 4000);
+    }, 3000);
+
+    // Build headers with user credentials if available
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const savedApify = sessionStorage.getItem('truerating_apify_token');
+    const savedGemini = sessionStorage.getItem('truerating_gemini_api_key');
+    if (savedApify) headers['X-Apify-Token'] = savedApify;
+    if (savedGemini) headers['X-Gemini-API-Key'] = savedGemini;
 
     try {
       const promises = activeUrls.map(async (currentUrl, i) => {
@@ -107,13 +131,17 @@ export function Analyzer() {
         try {
           const response = await fetch('/api/scrape', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ url: currentUrl, maxReviews })
           });
 
           const data = await response.json().catch(() => null);
 
           if (!response.ok) {
+            // If server says credentials required, surface the prompt
+            if (data?.code === 'CREDENTIALS_REQUIRED') {
+              throw { credentialsRequired: true, message: data.error };
+            }
             throw new Error(data?.error || '伺服器爬取失敗，請確認本地爬蟲伺服器已開啟，且網址正確。');
           }
 
@@ -136,6 +164,7 @@ export function Analyzer() {
             metadata: data.metadata || {}
           };
         } catch (e: any) {
+          if (e.credentialsRequired) throw e;
           throw new Error(`[${storeName}] 爬取失敗: ${e.message || '請確認本地後端服務已開啟'}`);
         }
       });
@@ -147,12 +176,23 @@ export function Analyzer() {
       });
     } catch (e: any) {
       console.error(e);
-      setScrapeError(e.message || '爬取過程中發生未知錯誤，請確認本地爬蟲伺服器已開啟。');
+      if (e.credentialsRequired) {
+        setShowCredentials(true);
+        setScrapeError('此店家尚未收錄於資料庫，需要您提供 API 金鑰才能即時爬取。請在下方填入後重試。');
+      } else {
+        setScrapeError(e.message || '爬取過程中發生未知錯誤，請確認本地爬蟲伺服器已開啟。');
+      }
     } finally {
       clearInterval(interval);
       setIsAnalyzing(false);
       setScrapeLoadingStep('');
     }
+  };
+
+  const handleRetryWithCredentials = () => {
+    saveCredentials();
+    setScrapeError('');
+    handleScrapeAndAnalyze();
   };
 
   const filledScrapeCount = scrapeUrls.filter(url => url.trim() !== '').length;
@@ -205,13 +245,111 @@ export function Analyzer() {
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <p className="flex-1 text-sm leading-relaxed">{scrapeError}</p>
               <button
-                onClick={() => setScrapeError('')}
+                onClick={() => { setScrapeError(''); setShowCredentials(false); }}
                 className="text-[var(--semantic-danger)] hover:opacity-80 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
+
+          {/* Credentials Panel — shown only on cache miss */}
+          <AnimatePresence>
+            {showCredentials && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden mb-6"
+              >
+                <div className="bg-surface-2 rounded-xl p-5 border border-hairline space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Key className="w-4 h-4 text-primary" />
+                    <h3 className="text-sm font-medium text-ink">請提供您的 API 金鑰</h3>
+                  </div>
+                  <p className="text-xs text-ink-subtle leading-relaxed">
+                    此店家不在資料庫快取中，需透過 Apify 即時爬取評論。審計階段使用 Gemini AI（選填，不填則使用伺服器預設金鑰）。
+                  </p>
+
+                  {/* Apify Token */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-medium text-ink-subtle">
+                        Apify Token <span className="text-[var(--semantic-danger)]">*</span>
+                      </label>
+                      <a
+                        href="https://console.apify.com/account/integrations"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] text-primary hover:text-primary-hover flex items-center gap-1"
+                      >
+                        取得 Token <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showApifyToken ? 'text' : 'password'}
+                        value={apifyToken}
+                        onChange={(e) => setApifyToken(e.target.value)}
+                        placeholder="apify_api_..."
+                        className="w-full bg-surface-3 border border-hairline rounded-lg px-3 py-2.5 text-sm text-ink placeholder-ink-tertiary focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none pr-10 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowApifyToken(!showApifyToken)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-tertiary hover:text-ink-subtle cursor-pointer"
+                      >
+                        {showApifyToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Gemini Key */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-medium text-ink-subtle">
+                        Gemini API Key（選填）
+                      </label>
+                      <a
+                        href="https://aistudio.google.com/app/apikey"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] text-primary hover:text-primary-hover flex items-center gap-1"
+                      >
+                        取得金鑰 <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showGeminiKey ? 'text' : 'password'}
+                        value={geminiKey}
+                        onChange={(e) => setGeminiKey(e.target.value)}
+                        placeholder="AIzaSy...（不填則使用免費 Flash Lite）"
+                        className="w-full bg-surface-3 border border-hairline rounded-lg px-3 py-2.5 text-sm text-ink placeholder-ink-tertiary focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none pr-10 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowGeminiKey(!showGeminiKey)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-tertiary hover:text-ink-subtle cursor-pointer"
+                      >
+                        {showGeminiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <motion.button
+                    onClick={handleRetryWithCredentials}
+                    disabled={!apifyToken.trim()}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full bg-primary hover:bg-primary-hover text-white font-medium text-sm py-2.5 rounded-lg disabled:bg-surface-3 disabled:text-ink-tertiary disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Key className="w-4 h-4" />
+                    儲存金鑰並重試爬取
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="flex justify-between items-end mb-4">
             <h3 className="text-ink font-medium text-sm">輸入店家網址或名稱</h3>
@@ -331,7 +469,7 @@ export function Analyzer() {
                 雙階段審查：正則規則引擎 + AI 語意防護網
               </h3>
               <p className="text-sm text-ink-subtle leading-relaxed">
-                第一階段由 Python 規則引擎掃描評論結構特徵（促銷關鍵字、模板化用語等）進行初步分類；第二階段將模糊評論送至 Gemini 進行語意分析，識別不自然的評論模式。預設使用免費的 Gemini 2.5 Flash Lite 模型，您也可以在設定頁面配置自己的 API Key。
+                第一階段由 Python 規則引擎掃描評論結構特徵（促銷關鍵字、模板化用語等）進行初步分類；第二階段將模糊評論送至 Gemini 進行語意分析，識別不自然的評論模式。資料庫已收錄的店家可直接查詢；未收錄的店家需要您提供 Apify Token 即時爬取。
               </p>
             </div>
             <div className="shrink-0">
