@@ -243,6 +243,9 @@ def scrape():
 
     force = request.args.get("force", "false").lower() == "true"
 
+    # Resolve Apify token: prefer user-provided header, fall back to env
+    apify_token = (request.headers.get("X-Apify-Token") or "").strip() or os.getenv("APIFY_TOKEN") or None
+
     # Helper: save all known query/URL → place_id mappings
     def _save_mappings(place_id):
         set_query_place_id_mapping(original_query, place_id)
@@ -259,6 +262,15 @@ def scrape():
                 response["metadata"] = cached_meta
             return jsonify(response)
 
+    # If we reach here, the store is NOT in cache — scraping is required.
+    # Without an Apify token we cannot proceed; tell the frontend to ask the user.
+    if not apify_token:
+        logger.info(f"Cache miss for {url_to_scrape}, no Apify token available — requesting credentials")
+        return jsonify({
+            "error": "此店家尚未收錄於資料庫，需要 Apify Token 進行即時爬取。請在下方填入您的 API 金鑰。",
+            "code": "CREDENTIALS_REQUIRED",
+        }), 403
+
     try:
         from apify_scraper import scrape_via_apify
 
@@ -267,7 +279,7 @@ def scrape():
         # we skip the full scrape entirely.
         if not target_place_id and not force:
             logger.info(f"No place_id found, probing Apify with 1 review for: {url_to_scrape}")
-            probe_place_id, _, probe_metadata = scrape_via_apify(url_to_scrape, max_reviews=1)
+            probe_place_id, _, probe_metadata = scrape_via_apify(url_to_scrape, max_reviews=1, token=apify_token)
 
             # Early category gate: the 1-review probe already gives us
             # categoryName — reject non-restaurant venues before the full scrape.
@@ -293,7 +305,7 @@ def scrape():
                     return jsonify(response)
 
         logger.info(f"Starting Apify scrape for URL: {url_to_scrape} (limit: {max_reviews})")
-        apify_place_id, records, metadata = scrape_via_apify(url_to_scrape, max_reviews=max_reviews)
+        apify_place_id, records, metadata = scrape_via_apify(url_to_scrape, max_reviews=max_reviews, token=apify_token)
 
         # Category gate for full scrape (covers the path where we already had
         # a place_id and skipped the probe above).
