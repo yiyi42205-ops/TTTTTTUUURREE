@@ -14,7 +14,7 @@ from prompt_builder import build_prompt, build_qa_prompt
 
 logger = logging.getLogger("ScraperServer")
 
-MODEL_NAME_GEMINI = 'gemini-2.5-flash'
+MODEL_NAME_GEMINI = 'gemini-2.5-flash-lite'
 MODEL_NAME_DEEPSEEK = 'deepseek-chat'
 
 # LLM only outputs I/A/D scores now — these are the required fields.
