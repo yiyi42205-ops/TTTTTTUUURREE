@@ -11,6 +11,7 @@ import { aggregateAuditedReviews, mergeStage2Results, ShopStats, AuditResult, Si
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { historyStore } from '../utils/historyStore';
+import { useResultsGuide } from '../hooks/useOnboarding';
 
 // New dark-themed components
 import { StoreVerdict } from '../components/results/StoreVerdict';
@@ -18,6 +19,8 @@ import { IssueCards } from '../components/results/IssueCards';
 import { RatingChart } from '../components/results/RatingChart';
 import { ReviewInspector } from '../components/results/ReviewInspector';
 import { LoadingState } from '../components/results/LoadingState';
+import { AISummary } from '../components/results/AISummary';
+import { ResultsGuide } from '../components/results/ResultsGuide';
 
 function cleanStoreName(name: string): string {
   if (!name) return '';
@@ -92,6 +95,13 @@ export function Results() {
   const [isQaLoading, setIsQaLoading] = useState<{ [storeIdx: number]: boolean }>({});
   const [qaResults, setQaResults] = useState<{ [storeIdx: number]: any }>({});
   const [qaErrors, setQaErrors] = useState<{ [storeIdx: number]: string }>({});
+
+  // Auto AI Summary states (one per store index)
+  const [summaryResults, setSummaryResults] = useState<{ [storeIdx: number]: { answer: string; sufficient: boolean } | null }>({});
+  const [isSummaryLoading, setIsSummaryLoading] = useState<{ [storeIdx: number]: boolean }>({});
+
+  // Results guide (first-time tooltip)
+  const { isOpen: isResultsGuideOpen, dismissResultsGuide } = useResultsGuide();
 
   // 1. Initial Parse -> call backend /api/audit-rules for Stage 1 heuristics
   useEffect(() => {
@@ -353,11 +363,59 @@ export function Results() {
       updatedResults.forEach(shop => {
         historyStore.saveHistory(shop);
       });
+
+      // Auto-trigger AI summary for each store after Stage 2 completes
+      updatedResults.forEach((shop, idx) => {
+        triggerAutoSummary(shop, idx, storeIds[idx] || `custom_${idx}`);
+      });
     } catch (e: any) {
       console.error(e);
       setApiError(e.message || '連線 API 時發生未知錯誤');
     } finally {
       setIsAiAuditing(false);
+    }
+  };
+
+  // Auto-summary trigger: fires once per store after Stage 2 audit
+  const triggerAutoSummary = async (
+    shop: ShopStats,
+    storeIdx: number,
+    placeId: string,
+  ) => {
+    // Don't re-trigger if already loaded
+    if (summaryResults[storeIdx] !== undefined) return;
+
+    const validReviews = shop.auditedReviews
+      .filter(r => !r.audit.isWashed && r.text && r.text.trim())
+      .map(r => ({
+        id: r.username,
+        text: r.text,
+        stars: r.stars,
+        time: r.time,
+      }));
+
+    if (validReviews.length === 0) return;
+
+    setIsSummaryLoading(prev => ({ ...prev, [storeIdx]: true }));
+    try {
+      const response = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          placeId,
+          storeName: shop.storeName,
+          reviews: validReviews,
+          question: '請用 2-3 句話總結這家店的優缺點和整體評價。先列出値得推薦的菜色或體驗，再指出需要避雷的面向。',
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSummaryResults(prev => ({ ...prev, [storeIdx]: { answer: data.answer, sufficient: data.sufficient ?? true } }));
+      }
+    } catch {
+      // Silently ignore summary errors — it's non-critical
+    } finally {
+      setIsSummaryLoading(prev => ({ ...prev, [storeIdx]: false }));
     }
   };
 
@@ -549,16 +607,23 @@ export function Results() {
               storeName={cleanStoreName(activeResult.storeName)}
             />
 
-            {/* 2. Issue cards - three metric cards */}
+            {/* 2. AI Summary - auto-generated after audit */}
+            <AISummary
+              isLoading={!!isSummaryLoading[activeStoreTab]}
+              summary={summaryResults[activeStoreTab] ?? null}
+              storeName={cleanStoreName(activeResult.storeName)}
+            />
+
+            {/* 3. Issue cards - three metric cards */}
             <IssueCards result={activeResult} />
 
-            {/* 3. Rating chart - star distribution */}
+            {/* 4. Rating chart - star distribution */}
             <RatingChart
               result={activeResult}
               chartId={`store-${activeStoreTab}`}
             />
 
-            {/* 4. Review inspector - collapsed by default */}
+            {/* 5. Review inspector - collapsed by default */}
             <ReviewInspector
               result={activeResult}
               storeIndex={activeStoreTab}
@@ -686,6 +751,11 @@ export function Results() {
           </div>
         )}
       </div>
+
+      {/* Results guide — shown once to first-time visitors */}
+      {isComplete && isResultsGuideOpen && (
+        <ResultsGuide onDismiss={dismissResultsGuide} />
+      )}
     </div>
   );
 }

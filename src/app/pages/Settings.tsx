@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Key, Check, AlertCircle, Eye, EyeOff, Save, Trash2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Key, Check, AlertCircle, Eye, EyeOff, Save, Trash2, BookOpen, HelpCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useOnboarding } from '../hooks/useOnboarding';
+import { OnboardingModal } from '../components/OnboardingModal';
 
 export function Settings() {
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const { isOpen: isOnboardingOpen, dismissOnboarding, resetOnboarding } = useOnboarding();
 
   useEffect(() => {
     const savedKey = sessionStorage.getItem('truerating_gemini_api_key');
@@ -128,6 +131,25 @@ export function Settings() {
           </div>
         </div>
 
+        {/* Tutorial Card */}
+        <div className="bg-surface-1 rounded-xl p-6 border border-hairline mb-6">
+          <div className="flex items-center gap-2.5 mb-4 text-ink">
+            <BookOpen className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold tracking-[-0.4px]">使用教學</h2>
+          </div>
+          <p className="text-sm text-ink-subtle leading-relaxed mb-4">
+            第一次使用嗎？或是忘記怎麼操作了？重新觀看 4 步驟的新手教程，快速上手疑騙真星的所有功能。
+          </p>
+          <motion.button
+            onClick={resetOnboarding}
+            whileTap={{ scale: 0.98 }}
+            className="w-full flex items-center justify-center gap-2 bg-surface-2 hover:bg-surface-3 text-ink-muted border border-hairline py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer"
+          >
+            <HelpCircle className="w-4 h-4" />
+            重新觀看新手教程
+          </motion.button>
+        </div>
+
         {/* Help Card */}
         <div className="bg-primary/5 rounded-xl p-6 border border-primary/15">
           <h3 className="text-ink font-medium text-sm mb-2.5 flex items-center gap-2">
@@ -152,6 +174,13 @@ export function Settings() {
           </ol>
         </div>
       </div>
+
+      {/* Onboarding modal triggered from Settings */}
+      <AnimatePresence>
+        {isOnboardingOpen && (
+          <OnboardingModal onDismiss={dismissOnboarding} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

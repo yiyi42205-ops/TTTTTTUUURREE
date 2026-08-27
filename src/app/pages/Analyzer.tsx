@@ -1,13 +1,16 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Loader2, X, Globe, Sliders, ShieldCheck, Shield, AlertTriangle, ClipboardPaste, Key, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Loader2, X, Globe, Sliders, ShieldCheck, Shield, AlertTriangle, ClipboardPaste, Key, ExternalLink, Eye, EyeOff, HelpCircle } from 'lucide-react';
 import { useIsPWA } from '../hooks/useIsPWA';
+import { useOnboarding } from '../hooks/useOnboarding';
+import { OnboardingModal } from '../components/OnboardingModal';
 
 export function Analyzer() {
   const navigate = useNavigate();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const isPWA = useIsPWA();
+  const { isOpen: isOnboardingOpen, dismissOnboarding, showOnboarding } = useOnboarding();
 
   const [scrapeUrls, setScrapeUrls] = useState<string[]>(['', '', '']);
   const [maxReviews, setMaxReviews] = useState(50);
@@ -199,6 +202,13 @@ export function Analyzer() {
 
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20 pb-12">
+      {/* Onboarding Modal */}
+      <AnimatePresence>
+        {isOnboardingOpen && (
+          <OnboardingModal onDismiss={dismissOnboarding} />
+        )}
+      </AnimatePresence>
+
       {/* Navigation Header */}
       <header className="sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b border-hairline px-4 md:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
@@ -210,17 +220,29 @@ export function Analyzer() {
             <span className="text-ink-subtle font-normal text-sm ml-1.5">TrueRating</span>
           </span>
         </div>
-        {!isPWA && (
+        <div className="flex items-center gap-2">
           <motion.button
-            onClick={() => navigate('/')}
+            onClick={showOnboarding}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-1.5 bg-surface-2 px-4 py-1.5 rounded-lg border border-hairline text-xs font-medium text-ink-subtle cursor-pointer hover:text-ink transition-colors"
+            title="查看新手教程"
+            className="flex items-center gap-1.5 bg-surface-2 px-3 py-1.5 rounded-lg border border-hairline text-xs font-medium text-ink-subtle cursor-pointer hover:text-ink transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            返回首頁
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">使用說明</span>
           </motion.button>
-        )}
+          {!isPWA && (
+            <motion.button
+              onClick={() => navigate('/')}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-1.5 bg-surface-2 px-4 py-1.5 rounded-lg border border-hairline text-xs font-medium text-ink-subtle cursor-pointer hover:text-ink transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              返回首頁
+            </motion.button>
+          )}
+        </div>
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-3xl">

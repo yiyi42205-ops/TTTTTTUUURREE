@@ -53,7 +53,7 @@ export function StoreVerdict({ result, storeName }: StoreVerdictProps) {
 
       {/* Big rating comparison */}
       <div className="flex items-center justify-center gap-3 md:gap-5 py-4 mb-5 bg-surface-2 rounded-xl border border-hairline">
-        <div className="text-center">
+        <div className="text-center" title="Google Maps 上的公開評分（含所有評論，未過濾）">
           <span className="block text-xs text-ink-subtle font-medium mb-1">原始評分</span>
           <span className="text-2xl md:text-3xl font-semibold text-ink-muted tracking-[-1px] line-through decoration-ink-subtle/40">
             {result.originalRating.toFixed(2)}
@@ -72,7 +72,7 @@ export function StoreVerdict({ result, storeName }: StoreVerdictProps) {
 
         <ArrowRight className="w-5 h-5 text-ink-tertiary shrink-0" />
 
-        <div className="text-center">
+        <div className="text-center" title="移除結構異常評論後，以信任權重重新計算的真實評分。落差越大代表水分越多。">
           <span className="block text-xs text-primary font-medium mb-1">校正後</span>
           <span className="text-2xl md:text-3xl font-semibold text-primary tracking-[-1px]">
             {result.filteredRating.toFixed(2)}
@@ -84,7 +84,10 @@ export function StoreVerdict({ result, storeName }: StoreVerdictProps) {
       {/* Structural health score */}
       <div className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-sm text-ink-muted font-medium">
+          <span
+            className="flex items-center gap-1.5 text-sm text-ink-muted font-medium cursor-help"
+            title="0–100 分，評估評論整體自然程度。越高代表評論越真實，洗評可能性越低。"
+          >
             <Shield className="w-4 h-4 text-ink-subtle" />
             結構健康度
           </span>
