@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router';
 import {
   ArrowLeft, AlertTriangle, Shield, X, Database, MessageSquare, Send,
-  Loader2, Sparkles, Trophy, AlertCircle, ThumbsUp
+  Loader2, Sparkles, Trophy, AlertCircle, ThumbsUp, Info
 } from 'lucide-react';
 import { RESTAURANTS_DATA } from '../data/restaurantsData';
 import { parseReviews, Review } from '../utils/csvParser';
@@ -18,6 +18,8 @@ import { RatingChart } from '../components/results/RatingChart';
 import { ReviewInspector, ReviewInspectorHandle } from '../components/results/ReviewInspector';
 import { LoadingState } from '../components/results/LoadingState';
 import { Footer } from '../components/Footer';
+import { TutorialModal } from '../components/TutorialModal';
+import { DisclaimerModal } from '../components/DisclaimerModal';
 
 function cleanStoreName(name: string): string {
   if (!name) return '';
@@ -96,6 +98,8 @@ export function Results() {
   // Store summary states
   const [storeSummaries, setStoreSummaries] = useState<{ [storeIdx: number]: { warnings: any[]; recommendations: any[] } }>({});
   const [isSummaryLoading, setIsSummaryLoading] = useState<{ [storeIdx: number]: boolean }>({});
+
+  const [showTutorial, setShowTutorial] = useState(false);
 
   // ReviewInspector ref for source click navigation
   const inspectorRef = useRef<ReviewInspectorHandle>(null);
@@ -477,13 +481,22 @@ export function Results() {
           <span className="text-ink-subtle font-normal text-sm ml-1.5">TrueRating</span>
         </span>
       </div>
-      <button
-        onClick={() => navigate('/analyzer')}
-        className="flex items-center gap-1.5 bg-surface-1 hover:bg-surface-2 px-4 py-1.5 rounded-lg border border-hairline text-xs font-medium text-ink-muted cursor-pointer transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        返回修改
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setShowTutorial(true)}
+          className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
+          title="使用教學"
+        >
+          <Info className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={() => navigate('/analyzer')}
+          className="flex items-center gap-1.5 bg-surface-1 hover:bg-surface-2 px-4 py-1.5 rounded border border-hairline text-xs font-medium text-ink-muted cursor-pointer transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          返回修改
+        </button>
+      </div>
     </header>
   );
 
@@ -491,6 +504,8 @@ export function Results() {
   if (!isComplete) {
     return (
       <div className="min-h-screen bg-background font-sans">
+        <DisclaimerModal />
+        {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
         {renderHeader()}
         <LoadingState
           shopResults={shopResults}
@@ -506,6 +521,8 @@ export function Results() {
 
   return (
     <div className="min-h-screen bg-background font-sans pb-16">
+      <DisclaimerModal />
+      {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
       {renderHeader()}
 
       <div className="container mx-auto px-4 py-6 max-w-3xl">
