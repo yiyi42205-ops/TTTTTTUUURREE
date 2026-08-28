@@ -12,12 +12,14 @@ import sqlite3
 import time
 
 DB_PATH = os.environ.get("DB_PATH") or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cache.db")
-CACHE_TTL_SECONDS = 7 * 24 * 60 * 60  # 7 days
+# No TTL — cache entries are permanent until overwritten by a fresh scrape.
 
 
 def _connect(db_path: str) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path)
-    
+    # WAL mode: allows concurrent reads while writing, critical for gevent workers
+    conn.execute("PRAGMA journal_mode=WAL")
+
     # Auto-migration / flush: if the old table with 'url' as PK exists, drop it.
     cursor = conn.cursor()
     cursor.execute("PRAGMA table_info(scrape_cache)")
@@ -42,6 +44,9 @@ def _connect(db_path: str) -> sqlite3.Connection:
     sc_columns = [col[1] for col in cursor.fetchall()]
     if "metadata_json" not in sc_columns:
         conn.execute("ALTER TABLE scrape_cache ADD COLUMN metadata_json TEXT")
+        conn.commit()
+    if "last_checked_at" not in sc_columns:
+        conn.execute("ALTER TABLE scrape_cache ADD COLUMN last_checked_at REAL")
         conn.commit()
 
     conn.execute(
@@ -78,6 +83,15 @@ def _connect(db_path: str) -> sqlite3.Connection:
             answer_json TEXT NOT NULL,
             created_at REAL NOT NULL,
             PRIMARY KEY (place_id, question)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS summary_cache (
+            place_id TEXT PRIMARY KEY,
+            summary_json TEXT NOT NULL,
+            created_at REAL NOT NULL
         )
         """
     )
@@ -129,12 +143,12 @@ def set_query_place_id_mapping(query: str, place_id: str, db_path: str = None) -
         conn.close()
 
 
-def get_cached_reviews(place_id: str, db_path: str = None, ttl_seconds: int = CACHE_TTL_SECONDS):
-    """Returns the cached review list if a fresh (within ttl_seconds) entry exists, else None."""
+def get_cached_reviews(place_id: str, db_path: str = None):
+    """Returns the cached review list if an entry exists, else None."""
     conn = _connect(db_path or DB_PATH)
     try:
         row = conn.execute(
-            "SELECT reviews_json, fetched_at FROM scrape_cache WHERE place_id = ?", (place_id,)
+            "SELECT reviews_json FROM scrape_cache WHERE place_id = ?", (place_id,)
         ).fetchone()
     finally:
         conn.close()
@@ -142,11 +156,45 @@ def get_cached_reviews(place_id: str, db_path: str = None, ttl_seconds: int = CA
     if row is None:
         return None
 
-    reviews_json, fetched_at = row
-    if time.time() - fetched_at > ttl_seconds:
-        return None
+    return json.loads(row[0])
 
-    return json.loads(reviews_json)
+
+
+def get_last_checked_at(place_id: str, db_path: str = None) -> float | None:
+    """Returns the last_checked_at timestamp (UNIX) for a place_id, or None."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        row = conn.execute(
+            "SELECT last_checked_at FROM scrape_cache WHERE place_id = ?", (place_id,)
+        ).fetchone()
+        return row[0] if row and row[0] else None
+    finally:
+        conn.close()
+
+
+def set_last_checked_at(place_id: str, db_path: str = None) -> None:
+    """Update last_checked_at to now for an existing scrape_cache entry."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute(
+            "UPDATE scrape_cache SET last_checked_at = ? WHERE place_id = ?",
+            (time.time(), place_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_fetched_at(place_id: str, db_path: str = None) -> float | None:
+    """Returns the fetched_at timestamp (UNIX) for a place_id, or None."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        row = conn.execute(
+            "SELECT fetched_at FROM scrape_cache WHERE place_id = ?", (place_id,)
+        ).fetchone()
+        return row[0] if row and row[0] else None
+    finally:
+        conn.close()
 
 
 def get_cached_metadata(place_id: str, db_path: str = None) -> dict | None:
@@ -164,12 +212,12 @@ def get_cached_metadata(place_id: str, db_path: str = None) -> dict | None:
     return None
 
 
-def get_cached_audit(place_id: str, db_path: str = None, ttl_seconds: int = CACHE_TTL_SECONDS):
-    """Returns the cached audit result dict if a fresh entry exists, else None."""
+def get_cached_audit(place_id: str, db_path: str = None):
+    """Returns the cached audit result dict if an entry exists, else None."""
     conn = _connect(db_path or DB_PATH)
     try:
         row = conn.execute(
-            "SELECT audit_json, audited_at FROM audit_cache WHERE place_id = ?", (place_id,)
+            "SELECT audit_json FROM audit_cache WHERE place_id = ?", (place_id,)
         ).fetchone()
     finally:
         conn.close()
@@ -177,11 +225,7 @@ def get_cached_audit(place_id: str, db_path: str = None, ttl_seconds: int = CACH
     if row is None:
         return None
 
-    audit_json, audited_at = row
-    if time.time() - audited_at > ttl_seconds:
-        return None
-
-    return json.loads(audit_json)
+    return json.loads(row[0])
 
 
 def set_cached_audit(place_id: str, audit_result: dict, db_path: str = None) -> None:
@@ -288,17 +332,15 @@ def check_and_increment_qa_limit(ip: str, place_id: str, limit: int = 20, db_pat
         conn.close()
 
 
-def get_cached_qa(place_id: str, question: str, ttl_seconds: int = CACHE_TTL_SECONDS, db_path: str = None) -> dict | None:
-    """Returns the cached QA response if a fresh entry exists, else None."""
+def get_cached_qa(place_id: str, question: str, db_path: str = None) -> dict | None:
+    """Returns the cached QA response if an entry exists, else None."""
     conn = _connect(db_path or DB_PATH)
     try:
         row = conn.execute(
-            "SELECT answer_json, created_at FROM qa_cache WHERE place_id = ? AND question = ?", 
+            "SELECT answer_json FROM qa_cache WHERE place_id = ? AND question = ?",
             (place_id, question)
         ).fetchone()
         if not row:
-            return None
-        if time.time() - row[1] > ttl_seconds:
             return None
         return json.loads(row[0])
     finally:
@@ -317,6 +359,40 @@ def set_cached_qa(place_id: str, question: str, answer_json: dict, db_path: str 
                 created_at = excluded.created_at
             """,
             (place_id, question, json.dumps(answer_json, ensure_ascii=False), time.time())
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+# ── Store summary cache ────────────────────────────────────────
+
+def get_cached_summary(place_id: str, db_path: str = None) -> dict | None:
+    """Returns the cached store summary dict if an entry exists, else None."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        row = conn.execute(
+            "SELECT summary_json FROM summary_cache WHERE place_id = ?", (place_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+    if row is None:
+        return None
+    return json.loads(row[0])
+
+
+def set_cached_summary(place_id: str, summary: dict, db_path: str = None) -> None:
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute(
+            """
+            INSERT INTO summary_cache (place_id, summary_json, created_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(place_id) DO UPDATE SET
+                summary_json = excluded.summary_json,
+                created_at = excluded.created_at
+            """,
+            (place_id, json.dumps(summary, ensure_ascii=False), time.time()),
         )
         conn.commit()
     finally:

@@ -10,15 +10,18 @@ import os
 import time
 import traceback
 import urllib.request
+from datetime import datetime
 from urllib.parse import urlparse
 
 from normalize import normalize_review
-from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES, call_llm_qa, MODEL_NAME_GEMINI, MODEL_NAME_DEEPSEEK
+from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES, call_llm_qa, call_llm_summary, MODEL_NAME_GEMINI, MODEL_NAME_DEEPSEEK
 from cache_store import (
     get_cached_reviews, set_cached_reviews, get_place_id_for_query,
     set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata,
     check_and_increment_qa_limit, get_cached_qa, set_cached_qa,
+    get_cached_summary, set_cached_summary,
     get_cached_scores, set_cached_scores,
+    get_last_checked_at, set_last_checked_at, get_fetched_at,
 )
 from prompt_builder import get_prompt_version
 from stage2_rules import build_stage2_result
@@ -59,13 +62,17 @@ logger = logging.getLogger("ScraperServer")
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise RuntimeError(
-        "缺少 GEMINI_API_KEY 環境變數。請在專案根目錄建立 .env 檔案並設定 GEMINI_API_KEY"
-        "（可參考 .env.example），或於啟動前以環境變數形式提供。"
+# Lazy init: server can start without GEMINI_API_KEY (visitor mode only needs
+# cache). The client is created on first use; /api/audit will return an error
+# if no key is available (neither server-side nor user-provided).
+genai_client = None
+if GEMINI_API_KEY:
+    genai_client = genai.Client(api_key=GEMINI_API_KEY)
+else:
+    logger.warning(
+        "GEMINI_API_KEY 未設定 — 伺服器仍可啟動（快取查詢正常），"
+        "但 Stage 2 AI 審計需要用戶自帶 Gemini API Key。"
     )
-
-genai_client = genai.Client(api_key=GEMINI_API_KEY)
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dist")
 
 # Global DeepSeek Client
@@ -81,6 +88,64 @@ if DEEPSEEK_API_KEY:
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 CORS(app)
 
+# Background thread pool for incremental cache refresh (fire-and-forget)
+_refresh_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="cache_refresh")
+
+# How many seconds before a store can be re-checked (7 days)
+REFRESH_COOLDOWN_SECONDS = 604800
+# How many newest reviews to fetch for incremental refresh
+REFRESH_REVIEW_COUNT = 20
+
+
+def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
+    """Background task: fetch newest reviews from Apify, dedup, merge into cache.
+
+    Called after a cache hit when the store hasn't been checked in 24+ hours.
+    Updates last_checked_at unconditionally; updates fetched_at only when new
+    reviews are actually found.
+    """
+    try:
+        from apify_scraper import scrape_via_apify
+
+        logger.info(f"[refresh] Starting incremental refresh for {place_id}")
+        _, new_reviews, metadata = scrape_via_apify(
+            url, max_reviews=REFRESH_REVIEW_COUNT, token=apify_token,
+        )
+
+        existing = get_cached_reviews(place_id)
+        if not existing:
+            # Shouldn't happen (we only refresh on cache hit), but guard anyway
+            set_last_checked_at(place_id)
+            return
+
+        by_username = {r["username"]: r for r in existing}
+        new_count = 0
+        for r in new_reviews:
+            if r["username"] not in by_username:
+                new_count += 1
+            by_username[r["username"]] = r  # newer version wins
+
+        if new_count > 0:
+            merged = list(by_username.values())
+            logger.info(
+                f"[refresh] {place_id}: {new_count} new reviews found, "
+                f"merged {len(existing)} → {len(merged)}"
+            )
+            set_cached_reviews(place_id, merged, source="refresh", metadata=metadata)
+            # set_cached_reviews already invalidates audit_cache
+        else:
+            logger.info(f"[refresh] {place_id}: no new reviews (all {len(new_reviews)} already cached)")
+
+        # Always update last_checked_at (whether or not new reviews were found)
+        set_last_checked_at(place_id)
+    except Exception as e:
+        logger.warning(f"[refresh] Background refresh failed for {place_id}: {e}")
+        # Still mark as checked so we don't retry immediately on every request
+        try:
+            set_last_checked_at(place_id)
+        except Exception:
+            pass
+
 def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tuple[dict, int] | None]:
     """
     Factory helper to resolve the appropriate LLM client instance based on provider and headers.
@@ -92,38 +157,38 @@ def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tup
             user_api_key = user_api_key.strip()
             if not user_api_key.startswith("AIzaSy") or len(user_api_key) < 35:
                 logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
-                return None, ({"error": "無效的用戶 Gemini API Key 格式"}, 400)
+                return None, ({"error": "無效的用戶 Gemini API Key 格式", "code": "INVALID_API_KEY"}, 400)
             try:
                 return genai.Client(api_key=user_api_key), None
             except Exception as e:
                 logger.error(f"Failed to init Gemini client: {e}")
-                return None, ({"error": "無法初始化 Gemini Client"}, 400)
+                return None, ({"error": "無法初始化 Gemini Client", "code": "INVALID_API_KEY"}, 400)
         if not genai_client:
-            return None, ({"error": "Server is missing GEMINI_API_KEY"}, 500)
+            return None, ({"error": "伺服器未設定 Gemini API Key，請在設定頁提供您的金鑰。", "code": "CREDENTIALS_REQUIRED"}, 403)
         return genai_client, None
 
     elif provider == "deepseek":
         try:
             import openai
         except ImportError:
-            return None, ({"error": "Server is missing openai package"}, 500)
-            
+            return None, ({"error": "伺服器缺少 openai 套件，DeepSeek 不可用。", "code": "SERVER_ERROR"}, 500)
+
         user_api_key = headers.get("X-DeepSeek-API-Key")
         if user_api_key:
             user_api_key = user_api_key.strip()
             if not user_api_key.startswith("sk-"):
                 logger.warning(f"Invalid X-DeepSeek-API-Key format from IP: {ip}")
-                return None, ({"error": "無效的用戶 DeepSeek API Key 格式 (必須以 sk- 開頭)"}, 400)
+                return None, ({"error": "無效的用戶 DeepSeek API Key 格式（必須以 sk- 開頭）", "code": "INVALID_API_KEY"}, 400)
             try:
                 return openai.OpenAI(api_key=user_api_key, base_url="https://api.deepseek.com"), None
             except Exception as e:
                 logger.error(f"Failed to init DeepSeek client: {e}")
-                return None, ({"error": "無法初始化 DeepSeek Client"}, 400)
+                return None, ({"error": "無法初始化 DeepSeek Client", "code": "INVALID_API_KEY"}, 400)
         if not deepseek_client:
-            return None, ({"error": "Server is missing DEEPSEEK_API_KEY"}, 500)
+            return None, ({"error": "伺服器未設定 DeepSeek API Key。", "code": "CREDENTIALS_REQUIRED"}, 403)
         return deepseek_client, None
 
-    return None, ({"error": f"Unknown provider: {provider}"}, 400)
+    return None, ({"error": f"不支援的 AI 模型：{provider}", "code": "VALIDATION_ERROR"}, 400)
 
 
 @app.route("/", methods=["GET"])
@@ -146,7 +211,7 @@ def catch_all(path):
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
         return app.send_static_file("index.html")
-    return jsonify({"error": "Not found"}), 404
+    return jsonify({"error": "Not found", "code": "NOT_FOUND"}), 404
 
 def resolve_google_share_url(url: str) -> str:
     try:
@@ -203,12 +268,12 @@ def scrape():
     url = data.get("url")
     if not url or not isinstance(url, str):
         logger.error(f"Scrape request from {ip} failed validation: Missing or invalid field 'url'")
-        return jsonify({"error": "Missing or invalid field: url (must be a non-empty string)"}), 400
-    
+        return jsonify({"error": "Missing or invalid field: url (must be a non-empty string)", "code": "VALIDATION_ERROR"}), 400
+
     url = url.strip()
     if len(url) > 2048:
         logger.error(f"Scrape request from {ip} failed validation: URL length exceeds limit ({len(url)} > 2048)")
-        return jsonify({"error": "URL length exceeds limit (max 2048 characters)"}), 400
+        return jsonify({"error": "URL length exceeds limit (max 2048 characters)", "code": "VALIDATION_ERROR"}), 400
 
     original_query = url
     is_url = original_query.startswith("http://") or original_query.startswith("https://")
@@ -260,12 +325,29 @@ def scrape():
             response = {"reviews": cached, "source": "cache"}
             if cached_meta:
                 response["metadata"] = cached_meta
+
+            # Attach last_checked_at as dataAsOf for the frontend
+            last_checked = get_last_checked_at(target_place_id)
+            fetched = get_fetched_at(target_place_id)
+            # Display the more recent of the two (or whichever exists)
+            display_ts = last_checked or fetched
+            if display_ts:
+                response["dataAsOf"] = datetime.fromtimestamp(display_ts).strftime("%Y-%m-%d %H:%M")
+
+            # Fire background incremental refresh if not checked in 24h
+            if apify_token:
+                now = time.time()
+                if not last_checked or (now - last_checked) >= REFRESH_COOLDOWN_SECONDS:
+                    logger.info(f"Scheduling background refresh for {target_place_id}")
+                    _refresh_executor.submit(
+                        _background_refresh, target_place_id, url_to_scrape, apify_token,
+                    )
+
             return jsonify(response)
 
-    # If we reach here, the store is NOT in cache — scraping is required.
-    # Without an Apify token we cannot proceed; tell the frontend to ask the user.
+    # Cache is permanent — if we reach here, the store genuinely isn't in the DB.
     if not apify_token:
-        logger.info(f"Cache miss for {url_to_scrape}, no Apify token available — requesting credentials")
+        logger.info(f"No cached data for {url_to_scrape}, no Apify token available — requesting credentials")
         return jsonify({
             "error": "此店家尚未收錄於資料庫，需要 Apify Token 進行即時爬取。請在下方填入您的 API 金鑰。",
             "code": "CREDENTIALS_REQUIRED",
@@ -287,7 +369,8 @@ def scrape():
             if cat and not _is_food_category(cat):
                 logger.info(f"Non-restaurant category detected via probe: '{cat}' for {url_to_scrape}")
                 return jsonify({
-                    "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。"
+                    "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。",
+                    "code": "NOT_RESTAURANT"
                 }), 400
 
             if probe_place_id:
@@ -302,6 +385,22 @@ def scrape():
                     response = {"reviews": cached, "source": "cache"}
                     if cached_meta:
                         response["metadata"] = cached_meta
+
+                    # Attach timestamp for frontend
+                    last_checked = get_last_checked_at(probe_place_id)
+                    fetched = get_fetched_at(probe_place_id)
+                    display_ts = last_checked or fetched
+                    if display_ts:
+                        response["dataAsOf"] = datetime.fromtimestamp(display_ts).strftime("%Y-%m-%d %H:%M")
+
+                    # Schedule background refresh if stale
+                    now_ts = time.time()
+                    if not last_checked or (now_ts - last_checked) >= REFRESH_COOLDOWN_SECONDS:
+                        logger.info(f"Scheduling background refresh for {probe_place_id}")
+                        _refresh_executor.submit(
+                            _background_refresh, probe_place_id, url_to_scrape, apify_token,
+                        )
+
                     return jsonify(response)
 
         logger.info(f"Starting Apify scrape for URL: {url_to_scrape} (limit: {max_reviews})")
@@ -338,12 +437,29 @@ def scrape():
         else:
             response = {"reviews": records, "source": "apify"}
 
+        # Mark this place as freshly checked + fetched
+        if final_place_id:
+            set_last_checked_at(final_place_id)
+
         logger.info(f"Apify scrape succeeded: {len(response['reviews'])} reviews in {time.time() - start_time:.2f}s.")
         if metadata:
             response["metadata"] = metadata
+
+        # Attach timestamp for frontend
+        if final_place_id:
+            response["dataAsOf"] = datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M")
+
         return jsonify(response)
     except Exception as apify_err:
         logger.warning(f"Apify scrape failed for {url_to_scrape}: {apify_err}.")
+
+        # Map typed Apify exceptions to user-friendly error responses.
+        # Internal details are logged server-side only — never sent to the client.
+        from apify_scraper import ApifyTokenInvalidError, ApifyQuotaExhaustedError, ApifyRunFailedError
+        if isinstance(apify_err, ApifyTokenInvalidError):
+            return jsonify({"error": "Apify Token 無效或已過期，請確認後重試。", "code": "APIFY_TOKEN_INVALID"}), 401
+        if isinstance(apify_err, ApifyQuotaExhaustedError):
+            return jsonify({"error": "Apify 免費額度已用完，請稍後再試或更換 Token。", "code": "APIFY_QUOTA_EXHAUSTED"}), 429
 
         # Playwright fallback is opt-in: read at request time (not bound to a
         # module-level constant) so it can be toggled via env var / tests
@@ -351,7 +467,7 @@ def scrape():
         fallback_enabled = os.getenv("ENABLE_PLAYWRIGHT_FALLBACK", "false").lower() == "true"
         if not fallback_enabled:
             logger.error(f"Playwright fallback disabled (set ENABLE_PLAYWRIGHT_FALLBACK=true to enable); returning Apify failure for {url_to_scrape}.")
-            return jsonify({"error": str(apify_err)}), 500
+            return jsonify({"error": "評論爬取失敗，請稍後再試。", "code": "SCRAPE_FAILED"}), 500
 
         logger.warning("Falling back to Playwright.")
         try:
@@ -373,7 +489,7 @@ def scrape():
             logger.error(f"Apify error: {apify_err}")
             logger.error(f"Playwright error: {playwright_err}")
             logger.error(traceback.format_exc())
-            return jsonify({"error": str(playwright_err)}), 500
+            return jsonify({"error": "評論爬取失敗，請稍後再試。", "code": "SCRAPE_FAILED"}), 500
 
 @app.route("/api/audit-rules", methods=["POST"])
 def audit_rules():
@@ -386,7 +502,7 @@ def audit_rules():
     place_id = data.get("placeId")
     if not raw_reviews or not isinstance(raw_reviews, list):
         logger.error(f"audit-rules request from {ip} failed validation: Missing or invalid field 'reviews'")
-        return jsonify({"error": "Missing or invalid required field: reviews"}), 400
+        return jsonify({"error": "Missing or invalid required field: reviews", "code": "VALIDATION_ERROR"}), 400
 
     # Check audit cache
     if place_id:
@@ -432,7 +548,7 @@ def audit():
     raw_reviews = data.get("reviews")
     if not raw_reviews or not isinstance(raw_reviews, list):
         logger.error(f"Audit request from {ip} failed validation: Missing or invalid required field 'reviews'")
-        return jsonify({"error": "Missing or invalid required field: reviews"}), 400
+        return jsonify({"error": "Missing or invalid required field: reviews", "code": "VALIDATION_ERROR"}), 400
 
     # Build per-review metadata (username, isSpikePeriod, daysElapsed for batching)
     reviews_meta = []
@@ -515,7 +631,7 @@ def audit():
             set_cached_scores(to_cache, model_name, prompt_version)
 
     if errors and not llm_scores and not cached:
-        return jsonify({"error": f"LLM ({provider}) 語意審計全部批次皆失敗", "details": errors}), 502
+        return jsonify({"error": f"LLM ({provider}) 語意審計全部批次皆失敗", "code": "LLM_FAILED"}), 502
 
     # ── 3. Apply rules + compose results ─────────────────────────
     # Build a map from original index → scores for uncached reviews
@@ -564,6 +680,68 @@ def audit():
         response_body["errors"] = errors
     return jsonify(response_body)
 
+@app.route("/api/store-summary", methods=["POST"])
+def store_summary():
+    start_time = time.time()
+    ip = request.remote_addr
+    logger.info(f"POST /api/store-summary request from IP: {ip}")
+
+    data = request.get_json() or {}
+    place_id = data.get("placeId")
+    if not place_id or not isinstance(place_id, str) or not place_id.strip():
+        return jsonify({"error": "Missing or invalid placeId", "code": "VALIDATION_ERROR"}), 400
+
+    # Check cache first
+    cached = get_cached_summary(place_id)
+    if cached:
+        logger.info(f"Summary cache hit for '{place_id}'")
+        return jsonify(cached)
+
+    store_name = data.get("storeName", "待審查店家")
+    provider = data.get("provider", "gemini")
+
+    raw_reviews = data.get("reviews")
+    if not raw_reviews or not isinstance(raw_reviews, list):
+        return jsonify({"error": "Missing or invalid required field: reviews", "code": "VALIDATION_ERROR"}), 400
+
+    # Filter: only real reviews with text
+    valid_reviews = []
+    for r in raw_reviews:
+        if not isinstance(r, dict):
+            continue
+        audit = r.get("audit") or {}
+        if isinstance(audit, dict) and audit.get("isWashed"):
+            continue
+        text = str(r.get("text") or "").strip()
+        if not text:
+            continue
+        valid_reviews.append(r)
+
+    # Sort by text length (descending), cap at 150
+    valid_reviews.sort(key=lambda x: len(x.get("text", "")), reverse=True)
+    valid_reviews = valid_reviews[:150]
+
+    if not valid_reviews:
+        result = {"warnings": [], "recommendations": []}
+        return jsonify(result)
+
+    client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
+    if err_resp:
+        return jsonify(err_resp[0]), err_resp[1]
+
+    try:
+        logger.info(f"Generating summary for '{store_name}' with {len(valid_reviews)} reviews...")
+        result = call_llm_summary(provider, client_to_use, store_name, valid_reviews)
+        logger.info(f"Summary completed in {time.time() - start_time:.2f}s.")
+
+        set_cached_summary(place_id, result)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"LLM summary ({provider}) failed: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({"error": "AI 總結生成失敗，請稍後再試。", "code": "LLM_FAILED"}), 502
+
+
 @app.route("/api/summarize", methods=["POST"])
 def summarize():
     start_time = time.time()
@@ -578,19 +756,19 @@ def summarize():
     
     place_id = data.get("placeId")
     if not place_id or not isinstance(place_id, str) or not place_id.strip():
-        return jsonify({"error": "Missing or invalid placeId"}), 400
-        
+        return jsonify({"error": "Missing or invalid placeId", "code": "VALIDATION_ERROR"}), 400
+
     question = data.get("question")
     if not isinstance(question, str) or not question.strip():
-        return jsonify({"error": "Missing or invalid question"}), 400
-        
+        return jsonify({"error": "Missing or invalid question", "code": "VALIDATION_ERROR"}), 400
+
     # Cap question length to prevent prompt injection / resource exhaustion
     if len(question) > 500:
-        return jsonify({"error": "問題字數超過上限 (最大 500 字)"}), 400
+        return jsonify({"error": "問題字數超過上限（最大 500 字）", "code": "VALIDATION_ERROR"}), 400
 
     raw_reviews = data.get("reviews")
     if not raw_reviews or not isinstance(raw_reviews, list):
-        return jsonify({"error": "Missing or invalid required field: reviews"}), 400
+        return jsonify({"error": "Missing or invalid required field: reviews", "code": "VALIDATION_ERROR"}), 400
 
     store_name = data.get("storeName", "待審查店家")
     provider = data.get("provider", "gemini")
@@ -606,7 +784,7 @@ def summarize():
 
     # Rate limiting
     if not check_and_increment_qa_limit(ip, place_id):
-        return jsonify({"error": "每家店每個 IP 提問次數已達上限"}), 429
+        return jsonify({"error": "每家店每個 IP 提問次數已達上限", "code": "RATE_LIMITED"}), 429
 
     # Filter real reviews (isWashed = False)
     valid_reviews = []
@@ -679,7 +857,7 @@ def summarize():
     except Exception as e:
         logger.error(f"LLM QA ({provider}) failed: {e}")
         logger.error(traceback.format_exc())
-        return jsonify({"error": "分析回答失敗", "details": str(e)}), 502
+        return jsonify({"error": "分析回答失敗，請稍後再試。", "code": "LLM_FAILED"}), 502
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5001))
