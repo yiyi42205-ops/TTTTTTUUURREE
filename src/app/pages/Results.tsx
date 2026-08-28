@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router';
 import {
@@ -16,7 +16,7 @@ import { historyStore } from '../utils/historyStore';
 import { StoreVerdict } from '../components/results/StoreVerdict';
 import { IssueCards } from '../components/results/IssueCards';
 import { RatingChart } from '../components/results/RatingChart';
-import { ReviewInspector } from '../components/results/ReviewInspector';
+import { ReviewInspector, ReviewInspectorHandle } from '../components/results/ReviewInspector';
 import { LoadingState } from '../components/results/LoadingState';
 
 function cleanStoreName(name: string): string {
@@ -96,6 +96,13 @@ export function Results() {
   // Store summary states
   const [storeSummaries, setStoreSummaries] = useState<{ [storeIdx: number]: { warnings: any[]; recommendations: any[] } }>({});
   const [isSummaryLoading, setIsSummaryLoading] = useState<{ [storeIdx: number]: boolean }>({});
+
+  // ReviewInspector ref for source click navigation
+  const inspectorRef = useRef<ReviewInspectorHandle>(null);
+
+  const handleSourceClick = (reviewId: string) => {
+    inspectorRef.current?.expandAndSearch(reviewId);
+  };
 
   // 1. Initial Parse -> call backend /api/audit-rules for Stage 1 heuristics
   useEffect(() => {
@@ -604,9 +611,18 @@ export function Results() {
                         <div key={i} className="bg-[var(--semantic-warning)]/5 border border-[var(--semantic-warning)]/15 rounded-lg p-3">
                           <p className="text-sm text-ink leading-relaxed">{w.summary}</p>
                           {w.sourceReviewIds?.length > 0 && (
-                            <p className="text-[11px] text-ink-tertiary mt-1.5">
-                              來源：{w.sourceReviewIds.join('、')}
-                            </p>
+                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                              <span className="text-[11px] text-ink-tertiary">來源：</span>
+                              {w.sourceReviewIds.map((id: string, j: number) => (
+                                <button
+                                  key={j}
+                                  onClick={() => handleSourceClick(id)}
+                                  className="text-[11px] text-primary hover:text-primary-hover underline underline-offset-2 cursor-pointer"
+                                >
+                                  {id}
+                                </button>
+                              ))}
+                            </div>
                           )}
                         </div>
                       ))}
@@ -628,9 +644,18 @@ export function Results() {
                             {r.reason && <span className="text-ink-muted"> — {r.reason}</span>}
                           </p>
                           {r.sourceReviewIds?.length > 0 && (
-                            <p className="text-[11px] text-ink-tertiary mt-1.5">
-                              來源：{r.sourceReviewIds.join('、')}
-                            </p>
+                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                              <span className="text-[11px] text-ink-tertiary">來源：</span>
+                              {r.sourceReviewIds.map((id: string, j: number) => (
+                                <button
+                                  key={j}
+                                  onClick={() => handleSourceClick(id)}
+                                  className="text-[11px] text-primary hover:text-primary-hover underline underline-offset-2 cursor-pointer"
+                                >
+                                  {id}
+                                </button>
+                              ))}
+                            </div>
                           )}
                         </div>
                       ))}
@@ -655,6 +680,7 @@ export function Results() {
 
             {/* 4. Review inspector - collapsed by default */}
             <ReviewInspector
+              ref={inspectorRef}
               result={activeResult}
               storeIndex={activeStoreTab}
               inspectSearch={inspectSearch[activeStoreTab] || ''}
