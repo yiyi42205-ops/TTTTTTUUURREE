@@ -12,9 +12,8 @@ import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Ba
 import { useIsPWA } from '../hooks/useIsPWA';
 import { historyStore } from '../utils/historyStore';
 
-// New dark-themed components
+// Report components
 import { StoreVerdict } from '../components/results/StoreVerdict';
-import { IssueCards } from '../components/results/IssueCards';
 import { RatingChart } from '../components/results/RatingChart';
 import { ReviewInspector, ReviewInspectorHandle } from '../components/results/ReviewInspector';
 import { LoadingState } from '../components/results/LoadingState';
@@ -467,10 +466,10 @@ export function Results() {
 
   // ---- Header (shared between loading and complete states) ----
   const renderHeader = () => (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b border-hairline px-4 md:px-8 py-3.5 flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-background border-b border-hairline px-4 md:px-8 py-3.5 flex items-center justify-between">
       <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
-        <div className="bg-primary text-white w-8 h-8 rounded-lg flex items-center justify-center">
-          <Shield className="w-4.5 h-4.5 text-white" />
+        <div className="bg-ink text-background w-8 h-8 rounded flex items-center justify-center">
+          <Shield className="w-4.5 h-4.5" />
         </div>
         <span className="font-sans font-semibold text-base text-ink tracking-[-0.4px]">
           疑騙真星
@@ -510,23 +509,19 @@ export function Results() {
 
       <div className="container mx-auto px-4 py-6 max-w-3xl">
         {/* Page title */}
-        <motion.div
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
-        >
+        <div className="mb-8">
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-semibold text-ink tracking-[-0.6px]">
               審計結果
             </h1>
             {isHistoryCache && (
-              <span className="text-[11px] bg-surface-2 text-ink-subtle border border-hairline px-2 py-0.5 rounded-lg font-medium flex items-center gap-1">
+              <span className="text-[11px] bg-surface-2 text-ink-subtle border border-hairline px-2 py-0.5 rounded font-medium flex items-center gap-1">
                 <Database className="w-3 h-3" />
                 歷史快取
               </span>
             )}
           </div>
-        </motion.div>
+        </div>
 
         {/* API error banner */}
         {apiError && (
@@ -575,9 +570,9 @@ export function Results() {
           </div>
         )}
 
-        {/* Main content - single vertical scroll */}
+        {/* Main content */}
         {activeResult && (
-          <div className="space-y-4">
+          <div className="space-y-8">
             {/* 1. Store verdict - big rating + health score */}
             <StoreVerdict
               result={activeResult}
@@ -586,7 +581,7 @@ export function Results() {
 
             {/* 1.5. AI Store Summary */}
             {isSummaryLoading[activeStoreTab] && (
-              <div className="bg-surface-1 border border-hairline rounded-xl p-5">
+              <div className="border-t border-hairline pt-6">
                 <div className="flex items-center gap-2 text-ink-subtle text-sm">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   正在生成 AI 總結...
@@ -594,7 +589,7 @@ export function Results() {
               </div>
             )}
             {storeSummaries[activeStoreTab] && (
-              <div className="bg-surface-1 border border-hairline rounded-xl p-5 space-y-4">
+              <div className="border-t border-hairline pt-6 space-y-4">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-primary" />
                   <h3 className="text-sm font-medium text-ink tracking-[-0.2px]">AI 總結</h3>
@@ -669,10 +664,7 @@ export function Results() {
               </div>
             )}
 
-            {/* 2. Issue cards - three metric cards */}
-            <IssueCards result={activeResult} />
-
-            {/* 3. Rating chart - star distribution */}
+            {/* 2. Rating chart - star distribution */}
             <RatingChart
               result={activeResult}
               chartId={`store-${activeStoreTab}`}
@@ -696,7 +688,7 @@ export function Results() {
             />
 
             {/* 5. AI QA section */}
-            <div className="bg-surface-1 border border-hairline rounded-xl p-5">
+            <div className="border-t border-hairline pt-6">
               <div className="flex items-center gap-2 mb-3">
                 <MessageSquare className="w-4 h-4 text-ink-subtle" />
                 <h3 className="text-sm font-medium text-ink tracking-[-0.2px]">

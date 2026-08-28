@@ -200,10 +200,10 @@ export function Analyzer() {
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20 pb-12">
       {/* Navigation Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b border-hairline px-4 md:px-8 py-3.5 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-background border-b border-hairline px-4 md:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="bg-primary text-white w-8 h-8 rounded-lg flex items-center justify-center">
-            <Shield className="w-4.5 h-4.5 text-white" />
+          <div className="bg-ink text-background w-8 h-8 rounded flex items-center justify-center">
+            <Shield className="w-4.5 h-4.5" />
           </div>
           <span className="font-sans font-semibold text-base text-ink tracking-[-0.4px]">
             疑騙真星

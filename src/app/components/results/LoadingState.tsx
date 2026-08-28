@@ -38,7 +38,7 @@ export function LoadingState({ shopResults, showLoader, cleanStoreName }: Loadin
           className="bg-surface-1 border border-hairline rounded-xl p-6 relative overflow-hidden"
         >
           {/* Scan line */}
-          <div className="absolute left-0 right-0 h-0.5 bg-primary/50 top-0 animate-scan" />
+          <div className="absolute left-0 right-0 h-px bg-ink/10 top-0" />
 
           <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
           <h3 className="text-base font-semibold text-ink tracking-[-0.4px] mb-1.5">
