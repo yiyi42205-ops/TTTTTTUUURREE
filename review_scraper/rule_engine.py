@@ -35,6 +35,7 @@ class RuleConfig:
     low_info_escalation_similar_count: int = 2
     spike_multiplier: float = 3.0
     spike_min_count: int = 10
+    spike_window_size: int = 20
     structural_min_similarity: float = 0.55
     structural_min_similar_count: int = 2
     structural_min_hot_term_count: int = 2
@@ -409,26 +410,69 @@ def detect_language_ratio(reviews: list[dict]) -> float:
 
 
 def detect_spike_months(reviews, config: RuleConfig = None):
-    """Flags months with review volume > Nx average and >= M reviews."""
+    """Detect review-density spikes using a sliding window over review order.
+
+    Instead of binning by calendar month (which misses bursts spanning month
+    boundaries and is too coarse for short campaigns), this uses a sliding
+    window of *spike_window_size* consecutive reviews.  If the time span of a
+    window is much shorter than expected (density > spike_multiplier × average
+    density), every review in that window is flagged as spike.
+
+    Returns:
+      - flags: list[bool] per review (True = in a spike region)
+      - spike_months: set[str] of YYYY-MM strings that contain spike reviews
+        (kept for backward compat with signals output)
+    """
     if config is None:
         config = RuleConfig()
-    counts = defaultdict(int)
-    months = []
+
+    n = len(reviews)
+    if n < config.spike_min_count:
+        return [False] * n, set()
+
+    # Parse dates, keeping index alignment
+    dates = []
     for r in reviews:
         time_str = r.get('time', '') or ''
         try:
-            dt = datetime.strptime(time_str[:10], '%Y-%m-%d')
-            mk = dt.strftime('%Y-%m')
-            counts[mk] += 1
-            months.append(mk)
+            dates.append(datetime.strptime(time_str[:10], '%Y-%m-%d'))
         except (ValueError, TypeError):
-            months.append(None)
-    if not counts:
-        return [False] * len(reviews), set()
-    avg = sum(counts.values()) / len(counts)
-    spike = {m for m, c in counts.items()
-             if c > avg * config.spike_multiplier and c >= config.spike_min_count}
-    return [(m in spike) if m else False for m in months], spike
+            dates.append(None)
+
+    # Build list of (original_index, date) for reviews with valid dates,
+    # sorted by date ascending
+    dated = sorted(
+        [(i, d) for i, d in enumerate(dates) if d is not None],
+        key=lambda x: x[1],
+    )
+
+    if len(dated) < config.spike_min_count:
+        return [False] * n, set()
+
+    # Overall density: reviews per day across the full time range
+    total_span_days = max((dated[-1][1] - dated[0][1]).days, 1)
+    overall_density = len(dated) / total_span_days  # reviews/day
+
+    # Sliding window
+    w = min(config.spike_window_size, len(dated))
+    flags = [False] * n
+
+    for start in range(len(dated) - w + 1):
+        end = start + w - 1
+        window_days = max((dated[end][1] - dated[start][1]).days, 1)
+        window_density = w / window_days
+
+        if window_density > overall_density * config.spike_multiplier:
+            for j in range(start, end + 1):
+                flags[dated[j][0]] = True
+
+    # Build spike_months set for backward compat
+    spike_months = set()
+    for i, flagged in enumerate(flags):
+        if flagged and dates[i]:
+            spike_months.add(dates[i].strftime('%Y-%m'))
+
+    return flags, spike_months
 
 
 # ─── Per-review audit (mirrors auditEngine.ts auditReview) ───

@@ -3,6 +3,7 @@ Tests for the canonical Stage 1 rule engine (review_scraper/rule_engine.py)
 and the /api/audit-rules endpoint in server.py.
 """
 import pytest
+from datetime import datetime
 from langdetect import DetectorFactory
 DetectorFactory.seed = 0
 from rule_engine import (
@@ -355,76 +356,99 @@ class TestStage1VerdictLock:
 # ─── Spike detection (threshold tuning) ──────────────────────
 
 class TestSpikeDetection:
-    def _make_reviews(self, month_counts):
-        """Helper: generate reviews with given counts per month."""
-        reviews = []
-        for month, count in month_counts.items():
-            for day in range(1, count + 1):
-                d = min(day, 28)
-                reviews.append({'stars': 5, 'time': f'{month}-{d:02d}', 'text': ''})
+    @staticmethod
+    def _make_reviews_spread(spans):
+        """Helper: generate reviews spread evenly across date ranges.
+
+        *spans* is a list of (start_date_str, count, days) tuples.
+        Reviews are spread 1 per day over *days* days starting from start_date.
+        """
+        from datetime import timedelta
+        reviews = []  # noqa: E501
+        for start_str, count, days in spans:
+            start = datetime.strptime(start_str, '%Y-%m-%d')
+            for i in range(count):
+                d = start + timedelta(days=int(i * days / max(count, 1)))
+                reviews.append({'stars': 5, 'time': d.strftime('%Y-%m-%d'), 'text': ''})
         return reviews
 
     def test_no_spike_uniform(self):
-        """Uniform distribution should not trigger spike."""
-        reviews = self._make_reviews({
-            '2025-01': 15, '2025-02': 15, '2025-03': 15, '2025-04': 15,
-        })
+        """Uniform density should not trigger spike."""
+        # 4 months, ~15 reviews each, evenly spread → no spike
+        reviews = self._make_reviews_spread([
+            ('2025-01-01', 15, 30),
+            ('2025-02-01', 15, 28),
+            ('2025-03-01', 15, 31),
+            ('2025-04-01', 15, 30),
+        ])
         _, spike_months = detect_spike_months(reviews)
         assert spike_months == set()
 
-    def test_spike_at_3x(self):
-        """A month with >3x average and >=10 should be flagged."""
-        reviews = self._make_reviews({
-            '2025-01': 10, '2025-02': 10, '2025-03': 10, '2025-04': 40,
-        })
-        # avg = 17.5, 3x = 52.5 → 40 is NOT a spike
-        _, spike_months = detect_spike_months(reviews)
-        assert '2025-04' not in spike_months
-
-    def test_spike_just_under_3x(self):
-        """A month just under 3x average should NOT be flagged."""
-        reviews = self._make_reviews({
-            '2025-01': 10, '2025-02': 10, '2025-03': 10, '2025-04': 60,
-        })
-        # avg = 22.5, 3x = 67.5 → 60 is NOT a spike (just under)
-        _, spike_months = detect_spike_months(reviews)
-        assert '2025-04' not in spike_months
-
-    def test_spike_clear_outlier(self):
-        """A clear outlier (>3x) should be flagged."""
-        reviews = self._make_reviews({
-            '2025-01': 10, '2025-02': 10, '2025-03': 10, '2025-04': 100,
-        })
-        # avg = 32.5, 3x = 97.5 → 100 IS a spike
-        _, spike_months = detect_spike_months(reviews)
+    def test_spike_burst_in_few_days(self):
+        """20 reviews crammed into 3 days among months of normal activity → spike."""
+        reviews = self._make_reviews_spread([
+            ('2025-01-01', 10, 30),  # ~1 review every 3 days
+            ('2025-02-01', 10, 28),
+            ('2025-03-01', 10, 31),
+            ('2025-04-10', 20, 3),   # 20 reviews in 3 days = burst
+        ])
+        flags, spike_months = detect_spike_months(reviews)
         assert '2025-04' in spike_months
+        assert sum(flags) >= 15  # most of the burst flagged
+
+    def test_no_spike_moderate_increase(self):
+        """Moderate increase spread over a full month is NOT a spike."""
+        # 10/month for 3 months, then 25 over 30 days → density ~0.83/day
+        # overall ~55/120 ≈ 0.46/day → 1.8× → below 3×
+        reviews = self._make_reviews_spread([
+            ('2025-01-01', 10, 30),
+            ('2025-02-01', 10, 28),
+            ('2025-03-01', 10, 31),
+            ('2025-04-01', 25, 30),
+        ])
+        _, spike_months = detect_spike_months(reviews)
+        assert spike_months == set()
 
     def test_spike_below_min_count(self):
-        """Even at >3x, months with <10 reviews should not spike."""
-        reviews = self._make_reviews({
-            '2025-01': 2, '2025-02': 2, '2025-03': 2, '2025-04': 9,
-        })
+        """Too few total reviews should never trigger spike."""
+        reviews = self._make_reviews_spread([
+            ('2025-01-01', 3, 30),
+            ('2025-02-01', 3, 28),
+            ('2025-04-10', 3, 1),
+        ])
         _, spike_months = detect_spike_months(reviews)
         assert spike_months == set()
 
-    def test_old_2x_would_have_spiked(self):
-        """Verify that the old 2x threshold would flag this but 3x doesn't."""
-        reviews = self._make_reviews({
-            '2025-01': 10, '2025-02': 10, '2025-03': 10, '2025-04': 30,
-        })
-        # avg = 15, 2x = 30 → would spike at 2x; 3x = 45 → no spike at 3x
-        _, spike_months = detect_spike_months(reviews)
-        assert '2025-04' not in spike_months
+    def test_spike_same_day_cluster(self):
+        """Many reviews on the same day → definite spike."""
+        reviews = self._make_reviews_spread([
+            ('2025-01-01', 10, 30),
+            ('2025-02-01', 10, 28),
+            ('2025-03-01', 10, 31),
+        ])
+        # Add 20 reviews all on the same day
+        for _ in range(20):
+            reviews.append({'stars': 5, 'time': '2025-04-15', 'text': ''})
+        flags, spike_months = detect_spike_months(reviews)
+        assert '2025-04' in spike_months
 
     def test_config_override(self):
-        """Custom config can loosen or tighten spike detection."""
-        reviews = self._make_reviews({
-            '2025-01': 10, '2025-02': 10, '2025-03': 10, '2025-04': 31,
-        })
-        # avg = 15.25, 2x = 30.5 → 31 > 30.5 → spike with 2x
-        loose = RuleConfig(spike_multiplier=2.0)
-        _, spike_months = detect_spike_months(reviews, loose)
-        assert '2025-04' in spike_months
+        """Custom multiplier can loosen spike detection."""
+        # Moderate burst: 20 reviews in 7 days among steady background
+        # overall ~50/120 ≈ 0.42/day, burst window = 20/7 ≈ 2.86/day → 6.8×
+        # At 3× → spike; at 10× → no spike
+        reviews = self._make_reviews_spread([
+            ('2025-01-01', 10, 30),
+            ('2025-02-01', 10, 28),
+            ('2025-03-01', 10, 31),
+            ('2025-04-10', 20, 7),
+        ])
+        _, spike_months_default = detect_spike_months(reviews)
+        assert '2025-04' in spike_months_default
+
+        strict = RuleConfig(spike_multiplier=10.0)
+        _, spike_months_strict = detect_spike_months(reviews, strict)
+        assert spike_months_strict == set()
 
 
 # ─── Structural template detection (rule 2.6) ─────────────────

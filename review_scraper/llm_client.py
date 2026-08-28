@@ -100,6 +100,11 @@ def _validate_score_item(item: dict, max_id: int) -> bool:
     """Return True if item has all required fields with valid values."""
     if not isinstance(item, dict):
         return False
+    # Fix common LLM typos in field names
+    _TYPO_MAP = {'descriptionGranarity': 'descriptionGranularity'}
+    for typo, correct in _TYPO_MAP.items():
+        if typo in item and correct not in item:
+            item[correct] = item.pop(typo)
     if not _REQUIRED_FIELDS.issubset(item.keys()):
         return False
     # id must be an integer in [0, max_id]
