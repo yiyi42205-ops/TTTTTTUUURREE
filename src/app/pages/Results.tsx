@@ -17,6 +17,7 @@ import { StoreVerdict } from '../components/results/StoreVerdict';
 import { RatingChart } from '../components/results/RatingChart';
 import { ReviewInspector, ReviewInspectorHandle } from '../components/results/ReviewInspector';
 import { LoadingState } from '../components/results/LoadingState';
+import { Footer } from '../components/Footer';
 
 function cleanStoreName(name: string): string {
   if (!name) return '';
@@ -799,6 +800,7 @@ export function Results() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

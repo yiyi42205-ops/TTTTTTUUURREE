@@ -135,10 +135,6 @@ export function Home() {
           </button>
         </div>
 
-        {/* Footnote */}
-        <div className="mt-12 text-center text-[10px] text-ink-tertiary leading-relaxed max-w-3xl mx-auto">
-          <p>免責聲明：本平台基於自然語言處理 (NLP) 演算法及時間序列分析對 Google Maps 評論數據集進行行為模式判定。分析報告旨在揭露異常資料及提高消費市場透明度，所提供評分結果僅供使用者個人消費決策之參考，不代表本平台對特定商家之衛生、品質或服務水準之保證，亦不對因此產生之任何消費爭議承擔法律責任。</p>
-        </div>
       </div>
     </div>
   );
