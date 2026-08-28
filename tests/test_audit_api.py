@@ -29,7 +29,7 @@ def fake_llm_scores(batch):
 
 
 def test_audit_returns_results_for_each_review(client, monkeypatch):
-    monkeypatch.setattr(server, "call_llm_batch", lambda provider, client_to_use, store_name, batch: fake_llm_scores(batch))
+    monkeypatch.setattr(server, "call_llm_batch", lambda provider, client_to_use, store_name, batch, **kwargs: fake_llm_scores(batch))
     # Bypass score cache
     monkeypatch.setattr(server, "get_cached_scores", lambda *args, **kwargs: {})
     monkeypatch.setattr(server, "set_cached_scores", lambda *args, **kwargs: None)
@@ -62,7 +62,7 @@ def test_audit_non_list_reviews_field_returns_4xx(client):
 
 
 def test_audit_malformed_gemini_response_returns_error_not_crash(client, monkeypatch):
-    def raise_malformed(provider, client_to_use, store_name, batch):
+    def raise_malformed(provider, client_to_use, store_name, batch, **kwargs):
         raise ValueError("Gemini 回傳內容非合法 JSON：模擬缺欄位/格式錯誤")
 
     monkeypatch.setattr(server, "call_llm_batch", raise_malformed)
@@ -81,7 +81,7 @@ def test_audit_malformed_gemini_response_returns_error_not_crash(client, monkeyp
 def test_audit_partial_batch_failure_still_returns_successful_results(client, monkeypatch):
     call_count = {"n": 0}
 
-    def sometimes_failing(provider, client_to_use, store_name, batch):
+    def sometimes_failing(provider, client_to_use, store_name, batch, **kwargs):
         call_count["n"] += 1
         if call_count["n"] == 1:
             raise ValueError("模擬第一批失敗")
@@ -106,7 +106,7 @@ def test_audit_partial_batch_failure_still_returns_successful_results(client, mo
 def test_audit_splits_100_reviews_into_multiple_batches(client, monkeypatch):
     seen_batch_sizes = []
 
-    def recording(provider, client_to_use, store_name, batch):
+    def recording(provider, client_to_use, store_name, batch, **kwargs):
         seen_batch_sizes.append(len(batch))
         return fake_llm_scores(batch)
 
@@ -124,7 +124,7 @@ def test_audit_splits_100_reviews_into_multiple_batches(client, monkeypatch):
 
 
 def test_audit_api_key_validation(client, monkeypatch):
-    monkeypatch.setattr(server, "call_llm_batch", lambda provider, client_to_use, store_name, batch: fake_llm_scores(batch))
+    monkeypatch.setattr(server, "call_llm_batch", lambda provider, client_to_use, store_name, batch, **kwargs: fake_llm_scores(batch))
     monkeypatch.setattr(server, "get_cached_scores", lambda *args, **kwargs: {})
     monkeypatch.setattr(server, "set_cached_scores", lambda *args, **kwargs: None)
     reviews = [make_review(0)]

@@ -16,7 +16,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 from normalize import normalize_review
-from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES, call_llm_qa, call_llm_summary, MODEL_NAME_GEMINI, MODEL_NAME_DEEPSEEK
+from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES, call_llm_qa, call_llm_summary, MODEL_NAME_GEMINI, MODEL_NAME_DEEPSEEK, MODEL_NAME_OPENAI_COMPAT
 from cache_store import (
     get_cached_reviews, set_cached_reviews, get_place_id_for_query,
     set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata,
@@ -200,6 +200,22 @@ def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tup
         if not deepseek_client:
             return None, ({"error": "伺服器未設定 DeepSeek API Key。", "code": "CREDENTIALS_REQUIRED"}, 403)
         return deepseek_client, None
+
+    elif provider == "openai_compatible":
+        try:
+            import openai
+        except ImportError:
+            return None, ({"error": "伺服器缺少 openai 套件。", "code": "SERVER_ERROR"}, 500)
+
+        user_api_key = headers.get("X-Custom-API-Key", "").strip()
+        base_url = headers.get("X-Custom-Base-URL", "").strip()
+        if not user_api_key or not base_url:
+            return None, ({"error": "自訂模型需要提供 API Key 與 Base URL。", "code": "CREDENTIALS_REQUIRED"}, 400)
+        try:
+            return openai.OpenAI(api_key=user_api_key, base_url=base_url), None
+        except Exception as e:
+            logger.error(f"Failed to init custom OpenAI-compatible client: {e}")
+            return None, ({"error": f"無法初始化自訂模型 Client：{e}", "code": "INVALID_API_KEY"}, 400)
 
     return None, ({"error": f"不支援的 AI 模型：{provider}", "code": "VALIDATION_ERROR"}, 400)
 
@@ -563,6 +579,7 @@ def audit():
 
     data = request.get_json() or {}
     provider = data.get("provider", "gemini")
+    custom_model_name = data.get("modelName")  # user-specified model for openai_compatible
 
     client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
     if err_resp:
@@ -590,7 +607,12 @@ def audit():
     if not reviews_meta:
         return jsonify({"results": []})
 
-    model_name = MODEL_NAME_GEMINI if provider == "gemini" else MODEL_NAME_DEEPSEEK
+    if provider == "openai_compatible":
+        model_name = custom_model_name or MODEL_NAME_OPENAI_COMPAT
+    elif provider == "deepseek":
+        model_name = custom_model_name or MODEL_NAME_DEEPSEEK
+    else:
+        model_name = MODEL_NAME_GEMINI
     prompt_version = get_prompt_version()
 
     # ── 1. Cache lookup ──────────────────────────────────────────
@@ -617,7 +639,7 @@ def audit():
         flat_results = []
         with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_BATCHES) as executor:
             futures = {
-                executor.submit(call_llm_batch, provider, client_to_use, store_name, batch): (batch_idx, batch)
+                executor.submit(call_llm_batch, provider, client_to_use, store_name, batch, model_name=custom_model_name): (batch_idx, batch)
                 for batch_idx, batch in enumerate(batches)
             }
             # Collect results, tracking which batch each came from
@@ -724,6 +746,7 @@ def store_summary():
 
     store_name = data.get("storeName", "待審查店家")
     provider = data.get("provider", "gemini")
+    custom_model_name = data.get("modelName")
 
     raw_reviews = data.get("reviews")
     if not raw_reviews or not isinstance(raw_reviews, list):
@@ -756,7 +779,7 @@ def store_summary():
 
     try:
         logger.info(f"Generating summary for '{store_name}' with {len(valid_reviews)} reviews...")
-        result = call_llm_summary(provider, client_to_use, store_name, valid_reviews)
+        result = call_llm_summary(provider, client_to_use, store_name, valid_reviews, model_name=custom_model_name)
         logger.info(f"Summary completed in {time.time() - start_time:.2f}s.")
 
         set_cached_summary(place_id, result)
@@ -798,6 +821,7 @@ def summarize():
 
     store_name = data.get("storeName", "待審查店家")
     provider = data.get("provider", "gemini")
+    custom_model_name = data.get("modelName")
 
     # Normalize question for cache key to avoid cache misses from punctuation or spacing differences
     cache_key_question = re.sub(r'[^\w\s]', '', question).strip()
@@ -864,7 +888,7 @@ def summarize():
     # Execute LLM QA
     try:
         logger.info(f"Summarizing for '{store_name}' with {len(valid_reviews)} anonymized reviews...")
-        result = call_llm_qa(provider, client_to_use, store_name, anonymized_reviews, question)
+        result = call_llm_qa(provider, client_to_use, store_name, anonymized_reviews, question, model_name=custom_model_name)
         logger.info(f"Summarize completed in {time.time() - start_time:.2f}s.")
         
         # Restore original usernames from the anonymized indices

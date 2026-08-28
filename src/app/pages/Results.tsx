@@ -18,6 +18,7 @@ import { RatingChart } from '../components/results/RatingChart';
 import { ReviewInspector, ReviewInspectorHandle } from '../components/results/ReviewInspector';
 import { LoadingState } from '../components/results/LoadingState';
 import { Footer } from '../components/Footer';
+import { getLLMSettings, hasLLMKey } from '../utils/llmProvider';
 import { TutorialModal } from '../components/TutorialModal';
 import { DisclaimerModal } from '../components/DisclaimerModal';
 
@@ -265,17 +266,18 @@ export function Results() {
           });
 
           const placeId = storeIds[idx] || '';
-          const localApiKey = sessionStorage.getItem('truerating_gemini_api_key') || '';
+          const llm = getLLMSettings();
           const response = await fetch('/api/audit', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              ...(localApiKey ? { 'X-Gemini-API-Key': localApiKey } : {})
+              ...llm.headers,
             },
             body: JSON.stringify({
               storeName: result.storeName,
               placeId,
               reviews: reviewsPayload,
+              ...llm.body,
             })
           });
 
@@ -373,13 +375,15 @@ export function Results() {
           audit: r.audit,
         }));
 
+      const summaryLlm = getLLMSettings();
       fetch('/api/store-summary', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...summaryLlm.headers },
         body: JSON.stringify({
           placeId,
           storeName: shop.storeName,
           reviews: validReviews,
+          ...summaryLlm.body,
         }),
       })
         .then(res => res.json())
@@ -397,9 +401,8 @@ export function Results() {
     const question = qaInput[storeIdx]?.trim();
     if (!question) return;
 
-    const localApiKey = sessionStorage.getItem('truerating_gemini_api_key') || '';
-    if (!localApiKey) {
-      setQaErrors(prev => ({ ...prev, [storeIdx]: '請先在設定頁輸入您的 Gemini API Key 才能使用 AI 問答功能。' }));
+    if (!hasLLMKey()) {
+      setQaErrors(prev => ({ ...prev, [storeIdx]: '請先在設定頁配置 AI 模型金鑰才能使用問答功能。' }));
       return;
     }
 
@@ -418,18 +421,20 @@ export function Results() {
     setIsQaLoading(prev => ({ ...prev, [storeIdx]: true }));
     setQaErrors(prev => ({ ...prev, [storeIdx]: '' }));
 
+    const llm = getLLMSettings();
     try {
       const response = await fetch('/api/summarize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Gemini-API-Key': localApiKey,
+          ...llm.headers,
         },
         body: JSON.stringify({
           placeId: storeIds[storeIdx] || shop.storeName,
           storeName: shop.storeName,
           reviews: validReviews,
-          question: question
+          question: question,
+          ...llm.body,
         })
       });
 
@@ -722,7 +727,7 @@ export function Results() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleQaSubmit(activeStoreTab);
                   }}
-                  placeholder={sessionStorage.getItem('truerating_gemini_api_key') ? "例如：這家店推薦點什麼菜？服務態度好嗎？" : "需要 Gemini API Key（設定頁輸入）"}
+                  placeholder={hasLLMKey() ? "例如：這家店推薦點什麼菜？服務態度好嗎？" : "需要在設定頁配置 AI 模型金鑰"}
                   disabled={isQaLoading[activeStoreTab]}
                   className="flex-1 px-4 py-2 bg-surface-2 border border-hairline rounded-lg text-sm text-ink placeholder-ink-tertiary focus:outline-none focus:border-primary/50 font-sans disabled:opacity-50"
                 />

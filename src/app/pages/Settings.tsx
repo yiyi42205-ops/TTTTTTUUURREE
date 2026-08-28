@@ -1,45 +1,101 @@
 import { useState, useEffect } from 'react';
-import { Key, Check, AlertCircle, Eye, EyeOff, Save, Trash2 } from 'lucide-react';
+import { Key, Check, AlertCircle, Eye, EyeOff, Save, Trash2, ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
 
+type ProviderType = 'gemini' | 'deepseek' | 'openai_compatible';
+
+interface ProviderOption {
+  id: ProviderType;
+  label: string;
+  description: string;
+}
+
+const PROVIDERS: ProviderOption[] = [
+  { id: 'gemini', label: 'Gemini（預設）', description: '免費的 Gemini 2.5 Flash Lite，無需設定即可使用' },
+  { id: 'deepseek', label: 'DeepSeek', description: 'DeepSeek Chat，需自備 API Key' },
+  { id: 'openai_compatible', label: '自訂模型', description: '任何 OpenAI 相容的 API（Groq、Mistral、Together、OpenRouter、Ollama 等）' },
+];
+
+const STORAGE_KEYS = {
+  provider: 'truerating_llm_provider',
+  geminiKey: 'truerating_gemini_api_key',
+  deepseekKey: 'truerating_deepseek_api_key',
+  customKey: 'truerating_custom_api_key',
+  customBaseUrl: 'truerating_custom_base_url',
+  customModel: 'truerating_custom_model_name',
+};
+
 export function Settings() {
-  const [apiKey, setApiKey] = useState('');
+  const [provider, setProvider] = useState<ProviderType>('gemini');
+  const [geminiKey, setGeminiKey] = useState('');
+  const [deepseekKey, setDeepseekKey] = useState('');
+  const [customKey, setCustomKey] = useState('');
+  const [customBaseUrl, setCustomBaseUrl] = useState('');
+  const [customModel, setCustomModel] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const savedKey = sessionStorage.getItem('truerating_gemini_api_key');
-    if (savedKey) {
-      setApiKey(savedKey);
-    }
+    setProvider((sessionStorage.getItem(STORAGE_KEYS.provider) as ProviderType) || 'gemini');
+    setGeminiKey(sessionStorage.getItem(STORAGE_KEYS.geminiKey) || '');
+    setDeepseekKey(sessionStorage.getItem(STORAGE_KEYS.deepseekKey) || '');
+    setCustomKey(sessionStorage.getItem(STORAGE_KEYS.customKey) || '');
+    setCustomBaseUrl(sessionStorage.getItem(STORAGE_KEYS.customBaseUrl) || '');
+    setCustomModel(sessionStorage.getItem(STORAGE_KEYS.customModel) || '');
   }, []);
 
   const handleSave = () => {
-    const trimmed = apiKey.trim();
-    if (!trimmed) {
-      sessionStorage.removeItem('truerating_gemini_api_key');
-      setStatus('success');
-      setMessage('設定已清除，系統將使用預設的免費 Gemini 2.5 Flash Lite 模型。');
-      return;
+    setStatus('idle');
+
+    // Validate provider-specific fields
+    if (provider === 'gemini') {
+      const trimmed = geminiKey.trim();
+      if (trimmed && !trimmed.startsWith('AIzaSy')) {
+        setStatus('error');
+        setMessage('Gemini 金鑰格式不正確，通常以 "AIzaSy" 開頭。');
+        return;
+      }
+      sessionStorage.setItem(STORAGE_KEYS.geminiKey, trimmed);
+    } else if (provider === 'deepseek') {
+      const trimmed = deepseekKey.trim();
+      if (!trimmed) {
+        setStatus('error');
+        setMessage('請輸入 DeepSeek API Key。');
+        return;
+      }
+      if (!trimmed.startsWith('sk-')) {
+        setStatus('error');
+        setMessage('DeepSeek API Key 格式不正確，通常以 "sk-" 開頭。');
+        return;
+      }
+      sessionStorage.setItem(STORAGE_KEYS.deepseekKey, trimmed);
+    } else if (provider === 'openai_compatible') {
+      if (!customKey.trim() || !customBaseUrl.trim() || !customModel.trim()) {
+        setStatus('error');
+        setMessage('自訂模型需要填寫 API Key、Base URL 和模型名稱。');
+        return;
+      }
+      sessionStorage.setItem(STORAGE_KEYS.customKey, customKey.trim());
+      sessionStorage.setItem(STORAGE_KEYS.customBaseUrl, customBaseUrl.trim());
+      sessionStorage.setItem(STORAGE_KEYS.customModel, customModel.trim());
     }
 
-    if (!trimmed.startsWith('AIzaSy')) {
-      setStatus('error');
-      setMessage('金鑰格式似乎不正確，通常以 "AIzaSy" 開頭。');
-      return;
-    }
-
-    sessionStorage.setItem('truerating_gemini_api_key', trimmed);
+    sessionStorage.setItem(STORAGE_KEYS.provider, provider);
     setStatus('success');
-    setMessage('金鑰已安全儲存於當前 Session！關閉分頁即會清除。');
+    setMessage('設定已儲存！金鑰僅保存於當前 Session，關閉分頁即清除。');
   };
 
   const handleClear = () => {
-    setApiKey('');
-    sessionStorage.removeItem('truerating_gemini_api_key');
+    Object.values(STORAGE_KEYS).forEach(k => sessionStorage.removeItem(k));
+    setProvider('gemini');
+    setGeminiKey('');
+    setDeepseekKey('');
+    setCustomKey('');
+    setCustomBaseUrl('');
+    setCustomModel('');
     setStatus('success');
-    setMessage('已清除 Session 金鑰，將使用預設的免費模型。');
+    setMessage('已清除所有設定，將使用預設的免費 Gemini 模型。');
   };
 
   return (
@@ -48,44 +104,132 @@ export function Settings() {
         {/* Header */}
         <div className="mb-8 text-center md:text-left">
           <h1 className="text-2xl font-semibold text-ink tracking-[-0.6px] mb-2">
-            系統設定
+            AI 模型設定
           </h1>
           <p className="text-sm text-ink-subtle leading-relaxed">
-            配置您的個人 API 金鑰，或使用預設的免費 Gemini 2.5 Flash Lite 模型。
+            選擇語意分析使用的 AI 模型。預設免費，也可自備金鑰使用其他模型。
           </p>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-surface-1 rounded-xl p-6 border border-hairline mb-6">
-          <div className="flex items-center gap-2.5 mb-5 text-ink">
+        {/* Provider Selector */}
+        <div className="bg-surface-1 rounded-xl p-6 border border-hairline mb-4">
+          <div className="flex items-center gap-2.5 mb-4 text-ink">
             <Key className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold tracking-[-0.4px]">Gemini API Key</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.4px]">AI 模型</h2>
           </div>
 
-          <p className="text-sm text-ink-subtle leading-relaxed mb-6">
-            疑騙真星為免費開源軟體，預設使用免費的 Gemini 2.5 Flash Lite 模型。如需使用更高階模型或避免公共流量限制，您可以填入自己的 Google Gemini API Key。金鑰僅保存在當前分頁的 Session 中，關閉分頁即清除。
+          <div className="relative mb-5">
+            <select
+              value={provider}
+              onChange={(e) => { setProvider(e.target.value as ProviderType); setStatus('idle'); }}
+              className="w-full bg-surface-2 border border-hairline rounded-lg px-4 py-3 text-sm text-ink appearance-none cursor-pointer focus:outline-hidden focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+            >
+              {PROVIDERS.map(p => (
+                <option key={p.id} value={p.id}>{p.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle pointer-events-none" />
+          </div>
+
+          <p className="text-xs text-ink-tertiary mb-5">
+            {PROVIDERS.find(p => p.id === provider)?.description}
           </p>
 
+          {/* Provider-specific fields */}
           <div className="space-y-4">
-            <label className="block text-xs font-medium text-ink-subtle uppercase tracking-wider">
-              您的 Gemini API 金鑰
-            </label>
-            <div className="relative">
-              <input
-                type={showKey ? 'text' : 'password'}
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="輸入您的 AIzaSy... 金鑰"
-                className="w-full bg-surface-2 border border-hairline rounded-lg px-4 py-3 text-sm text-ink focus:outline-hidden focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pr-12 placeholder-ink-tertiary transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowKey(!showKey)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-tertiary hover:text-ink-subtle focus:outline-hidden cursor-pointer"
-              >
-                {showKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
+            {provider === 'gemini' && (
+              <>
+                <label className="block text-xs font-medium text-ink-subtle uppercase tracking-wider">
+                  Gemini API Key（選填，留空使用免費預設）
+                </label>
+                <div className="relative">
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    value={geminiKey}
+                    onChange={(e) => setGeminiKey(e.target.value)}
+                    placeholder="AIzaSy..."
+                    className="w-full bg-surface-2 border border-hairline rounded-lg px-4 py-3 text-sm text-ink focus:outline-hidden focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pr-12 placeholder-ink-tertiary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey(!showKey)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-tertiary hover:text-ink-subtle cursor-pointer"
+                  >
+                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {provider === 'deepseek' && (
+              <>
+                <label className="block text-xs font-medium text-ink-subtle uppercase tracking-wider">
+                  DeepSeek API Key
+                </label>
+                <div className="relative">
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    value={deepseekKey}
+                    onChange={(e) => setDeepseekKey(e.target.value)}
+                    placeholder="sk-..."
+                    className="w-full bg-surface-2 border border-hairline rounded-lg px-4 py-3 text-sm text-ink focus:outline-hidden focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pr-12 placeholder-ink-tertiary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey(!showKey)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-tertiary hover:text-ink-subtle cursor-pointer"
+                  >
+                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {provider === 'openai_compatible' && (
+              <>
+                <label className="block text-xs font-medium text-ink-subtle uppercase tracking-wider">
+                  API Key
+                </label>
+                <div className="relative">
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    value={customKey}
+                    onChange={(e) => setCustomKey(e.target.value)}
+                    placeholder="你的 API Key"
+                    className="w-full bg-surface-2 border border-hairline rounded-lg px-4 py-3 text-sm text-ink focus:outline-hidden focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pr-12 placeholder-ink-tertiary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey(!showKey)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-tertiary hover:text-ink-subtle cursor-pointer"
+                  >
+                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <label className="block text-xs font-medium text-ink-subtle uppercase tracking-wider">
+                  Base URL
+                </label>
+                <input
+                  type="text"
+                  value={customBaseUrl}
+                  onChange={(e) => setCustomBaseUrl(e.target.value)}
+                  placeholder="例如 https://api.groq.com/openai/v1"
+                  className="w-full bg-surface-2 border border-hairline rounded-lg px-4 py-3 text-sm text-ink focus:outline-hidden focus:border-primary/50 focus:ring-1 focus:ring-primary/20 placeholder-ink-tertiary"
+                />
+
+                <label className="block text-xs font-medium text-ink-subtle uppercase tracking-wider">
+                  模型名稱
+                </label>
+                <input
+                  type="text"
+                  value={customModel}
+                  onChange={(e) => setCustomModel(e.target.value)}
+                  placeholder="例如 llama-3.3-70b-versatile"
+                  className="w-full bg-surface-2 border border-hairline rounded-lg px-4 py-3 text-sm text-ink focus:outline-hidden focus:border-primary/50 focus:ring-1 focus:ring-primary/20 placeholder-ink-tertiary"
+                />
+              </>
+            )}
 
             {/* Status Alert */}
             {status !== 'idle' && (
@@ -115,15 +259,40 @@ export function Settings() {
                 <Save className="w-4 h-4" />
                 儲存設定
               </button>
-              {apiKey && (
-                <button
-                  onClick={handleClear}
-                  className="bg-surface-2 text-[var(--semantic-danger)] border border-hairline p-3 rounded-lg hover:bg-[var(--semantic-danger)]/10 transition-all flex items-center justify-center cursor-pointer"
-                  title="清除金鑰"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              )}
+              <button
+                onClick={handleClear}
+                className="bg-surface-2 text-[var(--semantic-danger)] border border-hairline p-3 rounded-lg hover:bg-[var(--semantic-danger)]/10 transition-all flex items-center justify-center cursor-pointer"
+                title="清除所有設定"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Common Providers Reference */}
+        <div className="bg-surface-1 rounded-xl p-6 border border-hairline mb-4">
+          <h3 className="text-sm font-semibold text-ink mb-3">常用 OpenAI 相容服務</h3>
+          <div className="space-y-2 text-xs text-ink-subtle">
+            <div className="flex justify-between bg-surface-2 rounded p-2.5">
+              <span className="font-medium text-ink">Groq</span>
+              <code className="text-ink-tertiary">https://api.groq.com/openai/v1</code>
+            </div>
+            <div className="flex justify-between bg-surface-2 rounded p-2.5">
+              <span className="font-medium text-ink">Together</span>
+              <code className="text-ink-tertiary">https://api.together.xyz/v1</code>
+            </div>
+            <div className="flex justify-between bg-surface-2 rounded p-2.5">
+              <span className="font-medium text-ink">OpenRouter</span>
+              <code className="text-ink-tertiary">https://openrouter.ai/api/v1</code>
+            </div>
+            <div className="flex justify-between bg-surface-2 rounded p-2.5">
+              <span className="font-medium text-ink">Mistral</span>
+              <code className="text-ink-tertiary">https://api.mistral.ai/v1</code>
+            </div>
+            <div className="flex justify-between bg-surface-2 rounded p-2.5">
+              <span className="font-medium text-ink">Ollama（本機）</span>
+              <code className="text-ink-tertiary">http://localhost:11434/v1</code>
             </div>
           </div>
         </div>
@@ -132,7 +301,7 @@ export function Settings() {
         <div className="bg-primary/5 rounded-xl p-6 border border-primary/15">
           <h3 className="text-ink font-medium text-sm mb-2.5 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-primary" />
-            如何取得免費 API Key？
+            如何取得免費 Gemini API Key？
           </h3>
           <ol className="text-sm text-ink-subtle space-y-2 list-decimal list-inside leading-relaxed">
             <li>
@@ -147,8 +316,8 @@ export function Settings() {
               </a>
             </li>
             <li>登入您的 Google 帳號</li>
-            <li>點選「Create API Key」（建立 API 金鑰）</li>
-            <li>複製產生的金鑰（開頭為 AIzaSy），並貼入此頁面儲存</li>
+            <li>點選「Create API Key」</li>
+            <li>複製產生的金鑰（開頭為 AIzaSy），並貼入上方儲存</li>
           </ol>
         </div>
       </div>

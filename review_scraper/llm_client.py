@@ -17,6 +17,10 @@ logger = logging.getLogger("ScraperServer")
 MODEL_NAME_GEMINI = 'gemini-2.5-flash-lite'
 MODEL_NAME_DEEPSEEK = 'deepseek-chat'
 
+# Default model name for OpenAI-compatible providers; callers override via
+# the model_name parameter when the user specifies a custom model.
+MODEL_NAME_OPENAI_COMPAT = 'gpt-3.5-turbo'
+
 # LLM only outputs I/A/D scores now — these are the required fields.
 _REQUIRED_FIELDS = {'id', 'reasoning', 'incentiveIntensity', 'sentimentAuthenticity', 'descriptionGranularity'}
 
@@ -96,6 +100,11 @@ def _validate_score_item(item: dict, max_id: int) -> bool:
     """Return True if item has all required fields with valid values."""
     if not isinstance(item, dict):
         return False
+    # Fix common LLM typos in field names
+    _TYPO_MAP = {'descriptionGranarity': 'descriptionGranularity'}
+    for typo, correct in _TYPO_MAP.items():
+        if typo in item and correct not in item:
+            item[correct] = item.pop(typo)
     if not _REQUIRED_FIELDS.issubset(item.keys()):
         return False
     # id must be an integer in [0, max_id]
@@ -114,8 +123,12 @@ def _validate_score_item(item: dict, max_id: int) -> bool:
     return True
 
 
-def _call_llm_raw(provider: str, client, prompt: str) -> str:
-    """Send prompt to LLM and return raw text response."""
+def _call_llm_raw(provider: str, client, prompt: str, model_name: str | None = None) -> str:
+    """Send prompt to LLM and return raw text response.
+
+    *model_name* overrides the default model for openai_compatible / deepseek
+    providers. Ignored for gemini (which uses MODEL_NAME_GEMINI).
+    """
     if provider == 'gemini':
         response = client.models.generate_content(
             model=MODEL_NAME_GEMINI,
@@ -127,9 +140,10 @@ def _call_llm_raw(provider: str, client, prompt: str) -> str:
             },
         )
         return getattr(response, 'text', None)
-    elif provider == 'deepseek':
+    elif provider in ('deepseek', 'openai_compatible'):
+        effective_model = model_name or (MODEL_NAME_DEEPSEEK if provider == 'deepseek' else MODEL_NAME_OPENAI_COMPAT)
         response = client.chat.completions.create(
-            model=MODEL_NAME_DEEPSEEK,
+            model=effective_model,
             messages=[
                 {"role": "system", "content": "你是一個數據分析助手。直接輸出 JSON 數組。"},
                 {"role": "user", "content": prompt}
@@ -142,7 +156,8 @@ def _call_llm_raw(provider: str, client, prompt: str) -> str:
     raise ValueError(f"Unknown LLM provider: {provider}")
 
 
-def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retries: int = 2) -> list:
+def call_llm_batch(provider: str, client, store_name: str, batch: list,
+                    max_retries: int = 2, model_name: str | None = None) -> list:
     """Sends one batch of reviews to the LLM and returns validated score dicts.
 
     Each returned dict has: id, reasoning, incentiveIntensity,
@@ -151,7 +166,7 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
     split in half and retried once.
     """
     prompt = build_prompt(store_name, batch)
-    if provider not in ('gemini', 'deepseek'):
+    if provider not in ('gemini', 'deepseek', 'openai_compatible'):
         raise ValueError(f"Unknown LLM provider: {provider}")
 
     n = len(batch)
@@ -160,7 +175,7 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
 
     for attempt in range(max_retries + 1):
         try:
-            raw_text = _call_llm_raw(provider, client, prompt)
+            raw_text = _call_llm_raw(provider, client, prompt, model_name=model_name)
             items = parse_llm_json(raw_text)
 
             # Validate and deduplicate
@@ -183,8 +198,8 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list, max_retr
                     f"LLM returned {len(valid)}/{n} valid items, splitting batch in half and retrying"
                 )
                 mid = n // 2
-                left = call_llm_batch(provider, client, store_name, batch[:mid], max_retries=0)
-                right_items = call_llm_batch(provider, client, store_name, batch[mid:], max_retries=0)
+                left = call_llm_batch(provider, client, store_name, batch[:mid], max_retries=0, model_name=model_name)
+                right_items = call_llm_batch(provider, client, store_name, batch[mid:], max_retries=0, model_name=model_name)
                 # Remap ids for the right half
                 for item in right_items:
                     item['id'] = item['id'] + mid
@@ -234,10 +249,11 @@ def parse_qa_llm_json(raw_text: str) -> dict:
     return parsed
 
 
-def call_llm_qa(provider: str, client, store_name: str, reviews: list, question: str, max_retries: int = 2) -> dict:
+def call_llm_qa(provider: str, client, store_name: str, reviews: list, question: str,
+                max_retries: int = 2, model_name: str | None = None) -> dict:
     prompt = build_qa_prompt(store_name, reviews, question)
-    
-    if provider not in ('gemini', 'deepseek'):
+
+    if provider not in ('gemini', 'deepseek', 'openai_compatible'):
         raise ValueError(f"Unknown LLM provider: {provider}")
 
     last_exception = None
@@ -250,9 +266,10 @@ def call_llm_qa(provider: str, client, store_name: str, reviews: list, question:
                     config={'response_mime_type': 'application/json'},
                 )
                 raw_text = getattr(response, 'text', None)
-            elif provider == 'deepseek':
+            else:  # deepseek / openai_compatible
+                effective_model = model_name or (MODEL_NAME_DEEPSEEK if provider == 'deepseek' else MODEL_NAME_OPENAI_COMPAT)
                 response = client.chat.completions.create(
-                    model=MODEL_NAME_DEEPSEEK,
+                    model=effective_model,
                     messages=[
                         {"role": "system", "content": "You are a data analysis assistant. You must output a JSON object."},
                         {"role": "user", "content": prompt}
@@ -261,9 +278,9 @@ def call_llm_qa(provider: str, client, store_name: str, reviews: list, question:
                     timeout=60.0
                 )
                 raw_text = response.choices[0].message.content
-                
+
             return parse_qa_llm_json(raw_text)
-            
+
         except Exception as e:
             last_exception = e
             if attempt < max_retries:
@@ -296,11 +313,11 @@ def parse_summary_llm_json(raw_text: str) -> dict:
 
 
 def call_llm_summary(provider: str, client, store_name: str, reviews: list,
-                     max_retries: int = 2) -> dict:
+                     max_retries: int = 2, model_name: str | None = None) -> dict:
     """Call LLM with summarize_prompt.txt, return {warnings, recommendations}."""
     prompt = build_summary_prompt(store_name, reviews)
 
-    if provider not in ('gemini', 'deepseek'):
+    if provider not in ('gemini', 'deepseek', 'openai_compatible'):
         raise ValueError(f"Unknown LLM provider: {provider}")
 
     last_exception = None
@@ -313,9 +330,10 @@ def call_llm_summary(provider: str, client, store_name: str, reviews: list,
                     config={'response_mime_type': 'application/json'},
                 )
                 raw_text = getattr(response, 'text', None)
-            elif provider == 'deepseek':
+            else:  # deepseek / openai_compatible
+                effective_model = model_name or (MODEL_NAME_DEEPSEEK if provider == 'deepseek' else MODEL_NAME_OPENAI_COMPAT)
                 response = client.chat.completions.create(
-                    model=MODEL_NAME_DEEPSEEK,
+                    model=effective_model,
                     messages=[
                         {"role": "system", "content": "你是一個餐廳評論分析師。直接輸出 JSON。"},
                         {"role": "user", "content": prompt}
