@@ -1,5 +1,4 @@
 import { motion } from 'motion/react';
-import { Shield, ArrowRight, TrendingDown } from 'lucide-react';
 import type { ShopStats } from '../../utils/auditEngine';
 
 interface StoreVerdictProps {
@@ -29,88 +28,114 @@ function getHealthTextColor(trustScore: number): string {
 
 export function StoreVerdict({ result, storeName }: StoreVerdictProps) {
   const drop = result.originalRating - result.filteredRating;
-  const hasMajorDrop = drop >= 0.3 || result.trustScore < 80;
+  const total = result.totalReviews;
+
+  const incentiveCount = result.issues.timeAnomaly;
+  const templateCount = result.issues.templateText;
+  const discrepancyCount = result.issues.vague;
+  const cleanCount = total - result.suspiciousReviews;
+
+  const pct = (n: number) => total > 0 ? ((n / total) * 100).toFixed(1) : '0.0';
+
+  const composition = [
+    { label: '促銷型', sublabel: '打卡送餐', count: incentiveCount, color: 'bg-[var(--semantic-danger)]' },
+    { label: '模板型', sublabel: '套版複製', count: templateCount, color: 'bg-[var(--semantic-warning)]' },
+    { label: '語意矛盾', sublabel: '評分文字割裂', count: discrepancyCount, color: 'bg-ink-subtle' },
+    { label: '自然評論', sublabel: '通過檢核', count: cleanCount, color: 'bg-[var(--semantic-success)]' },
+  ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="bg-surface-1 border border-hairline rounded-xl p-5 md:p-6"
-    >
-      {/* Store name */}
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl md:text-2xl font-semibold text-ink tracking-[-0.6px]">
+    <div className="border-2 border-ink">
+      {/* Header band */}
+      <div className="bg-ink text-background px-5 py-2.5 flex items-center justify-between">
+        <span className="text-sm font-semibold tracking-wide">評論檢驗報告</span>
+        <span className="text-xs font-mono opacity-60 tracking-wider">REVIEW AUDIT REPORT</span>
+      </div>
+
+      <div className="px-5 py-5">
+        {/* Store name */}
+        <h2 className="text-2xl font-semibold text-ink tracking-tight mb-4">
           {storeName}
         </h2>
-        {hasMajorDrop && (
-          <span className="flex items-center gap-1 bg-[var(--semantic-danger)]/10 text-[var(--semantic-danger)] border border-[var(--semantic-danger)]/20 px-2.5 py-1 rounded-lg text-xs font-medium">
-            <TrendingDown className="w-3.5 h-3.5" />
-            評分落差大
-          </span>
-        )}
-      </div>
 
-      {/* Big rating comparison */}
-      <div className="flex items-center justify-center gap-3 md:gap-5 py-4 mb-5 bg-surface-2 rounded-xl border border-hairline">
-        <div className="text-center">
-          <span className="block text-xs text-ink-subtle font-medium mb-1">原始評分</span>
-          <span className="text-2xl md:text-3xl font-semibold text-ink-muted tracking-[-1px] line-through decoration-ink-subtle/40">
-            {result.originalRating.toFixed(2)}
+        {/* Rating comparison */}
+        <div className="flex items-baseline gap-3 flex-wrap mb-5">
+          <span className="text-sm text-ink-subtle">原始</span>
+          <span className="text-xl font-semibold text-ink-muted line-through font-mono tabular-nums">
+            {result.originalRating.toFixed(2)}★
           </span>
-          <span className="text-ink-subtle ml-0.5">★</span>
+          <span className="text-ink-tertiary">→</span>
+          <span className="text-sm text-ink-subtle">校正</span>
+          <span className="text-2xl font-bold text-ink font-mono tabular-nums">
+            {result.filteredRating.toFixed(2)}★
+          </span>
+          {drop > 0 && (
+            <span className="text-sm font-medium text-[var(--semantic-danger)] font-mono tabular-nums">
+              ▼{drop.toFixed(2)}
+            </span>
+          )}
         </div>
 
-        <ArrowRight className="w-5 h-5 text-ink-tertiary shrink-0" />
+        <hr className="border-hairline-strong mb-5" />
 
-        <div className="text-center">
-          <span className="block text-xs text-[var(--semantic-danger)] font-medium mb-1">扣減</span>
-          <span className="text-lg md:text-xl font-semibold text-[var(--semantic-danger)] tracking-[-0.6px]">
-            -{drop.toFixed(2)}★
-          </span>
+        {/* Trust score */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-ink">結構健康度</span>
+            <span className={`text-lg font-bold font-mono tabular-nums ${getHealthTextColor(result.trustScore)}`}>
+              {result.trustScore}
+              <span className="text-ink-tertiary text-sm font-normal"> / 100</span>
+            </span>
+          </div>
+          <div className="w-full h-2 bg-surface-3 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${result.trustScore}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className={`h-full ${getHealthColor(result.trustScore)}`}
+            />
+          </div>
         </div>
 
-        <ArrowRight className="w-5 h-5 text-ink-tertiary shrink-0" />
+        <hr className="border-hairline-strong mb-5" />
 
-        <div className="text-center">
-          <span className="block text-xs text-primary font-medium mb-1">校正後</span>
-          <span className="text-2xl md:text-3xl font-semibold text-primary tracking-[-1px]">
-            {result.filteredRating.toFixed(2)}
-          </span>
-          <span className="text-primary/60 ml-0.5">★</span>
+        {/* Composition — nutrition label style */}
+        <div className="mb-5">
+          <div className="flex items-baseline justify-between mb-4">
+            <h3 className="text-sm font-semibold text-ink tracking-tight">評論成分</h3>
+            <span className="text-[11px] text-ink-tertiary font-mono tracking-wider">COMPOSITION</span>
+          </div>
+          <div className="space-y-3">
+            {composition.map(item => (
+              <div key={item.label}>
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="text-sm text-ink">
+                    {item.label}
+                    <span className="text-ink-tertiary text-xs ml-1.5">({item.sublabel})</span>
+                  </span>
+                  <span className="text-sm font-mono tabular-nums text-ink">
+                    {item.count} 則
+                    <span className="text-ink-subtle ml-2">{pct(item.count)}%</span>
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-surface-3 overflow-hidden">
+                  <div
+                    className={`h-full transition-all ${item.color}`}
+                    style={{ width: `${total > 0 ? (item.count / total) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Structural health score */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-sm text-ink-muted font-medium">
-            <Shield className="w-4 h-4 text-ink-subtle" />
-            結構健康度
-          </span>
-          <span className={`text-lg font-semibold tracking-[-0.4px] ${getHealthTextColor(result.trustScore)}`}>
-            {result.trustScore}<span className="text-ink-subtle text-sm font-normal">/100</span>
-          </span>
-        </div>
+        <hr className="border-hairline-strong mb-4" />
 
-        {/* Progress bar */}
-        <div className="w-full h-2 bg-surface-3 rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${result.trustScore}%` }}
-            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
-            className={`h-full rounded-full ${getHealthColor(result.trustScore)}`}
-          />
-        </div>
-
-        {/* Verdict text */}
-        <p className="text-sm text-ink-subtle leading-relaxed">
-          {getVerdictText(result.trustScore)}
-          <span className="text-ink-tertiary ml-1">
-            (偵測到 {result.suspiciousReviews} 則結構標記評論，佔總數 {result.totalReviews > 0 ? ((result.suspiciousReviews / result.totalReviews) * 100).toFixed(0) : 0}%)
-          </span>
+        {/* Verdict */}
+        <p className="text-sm text-ink-muted leading-relaxed">
+          偵測到 <span className="font-mono tabular-nums font-medium text-ink">{result.suspiciousReviews}</span> 則結構標記評論，佔總數 <span className="font-mono tabular-nums font-medium text-ink">{total > 0 ? ((result.suspiciousReviews / total) * 100).toFixed(1) : 0}%</span>。{getVerdictText(result.trustScore)}
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 }
