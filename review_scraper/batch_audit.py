@@ -35,22 +35,26 @@ def main():
                         help='只統計，不實際審計')
     parser.add_argument('--force', action='store_true',
                         help='忽略已有的審計 cache，全部重跑')
+    parser.add_argument('--min-reviews', type=int, default=10,
+                        help='跳過評論數少於 N 的店家 (default: 10)')
     parser.add_argument('--verbose', action='store_true',
                         help='顯示詳細錯誤 traceback')
     args = parser.parse_args()
 
     if args.force:
         # --force: re-audit everything
-        to_audit = list(iter_all_scrape_cache())
+        to_audit = [(pid, revs) for pid, revs in iter_all_scrape_cache()
+                     if len(revs) >= args.min_reviews]
         total = len(to_audit)
         skipped = 0
     else:
         # Normal mode: only audit entries without existing audit cache (SQL-level filtering)
-        to_audit = list(get_pending_audit_entries())
+        to_audit = [(pid, revs) for pid, revs in get_pending_audit_entries()
+                     if len(revs) >= args.min_reviews]
         # Count total for reporting
         total_entries = sum(1 for _ in iter_all_scrape_cache())
-        skipped = total_entries - len(to_audit)
         total = total_entries
+        skipped = total_entries - len(to_audit)
 
     print(f'📋 scrape_cache 共 {total} 筆')
     print(f'🎯 需要審計: {len(to_audit)} 筆（跳過 {skipped} 筆已有 cache）')
