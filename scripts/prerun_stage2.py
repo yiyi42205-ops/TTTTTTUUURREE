@@ -62,6 +62,8 @@ def main():
                         help='Re-process all reviews (ignore existing stage2_scores)')
     parser.add_argument('--limit', type=int, default=0,
                         help='Process at most N stores (0 = all)')
+    parser.add_argument('--min-reviews', type=int, default=10,
+                        help='Skip stores with fewer than N reviews (default: 10)')
     parser.add_argument('--batch-size', type=int, default=20,
                         help='Reviews per LLM batch (default: 20)')
     parser.add_argument('--delay', type=float, default=1.0,
@@ -105,11 +107,14 @@ def main():
 
     # Collect all stores
     print('Loading scrape_cache...')
-    all_stores = list(iter_all_scrape_cache())
+    all_stores_raw = list(iter_all_scrape_cache())
+    all_stores = [(pid, revs) for pid, revs in all_stores_raw
+                   if len(revs) >= args.min_reviews]
+    skipped_few = len(all_stores_raw) - len(all_stores)
     if args.limit:
         all_stores = all_stores[:args.limit]
 
-    print(f'📋 scrape_cache: {len(all_stores)} stores')
+    print(f'📋 scrape_cache: {len(all_stores)} stores (skipped {skipped_few} with < {args.min_reviews} reviews)')
     print(f'📝 model: {model_name}, prompt_version: {prompt_version}')
 
     total_ambiguous = 0

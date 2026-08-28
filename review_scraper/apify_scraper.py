@@ -23,10 +23,20 @@ ACTOR_ID = "compass/Google-Maps-Reviews-Scraper"
 RUN_WAIT_SECONDS = 180
 
 
+class ApifyTokenInvalidError(RuntimeError):
+    """Raised when the Apify token is missing or rejected by the API."""
+
+class ApifyQuotaExhaustedError(RuntimeError):
+    """Raised when the Apify free-tier quota is exhausted."""
+
+class ApifyRunFailedError(RuntimeError):
+    """Raised when the Apify actor run fails or times out."""
+
+
 def scrape_via_apify(url: str, max_reviews: int = 50, token: str | None = None) -> tuple[str | None, list, dict]:
     token = token or os.getenv("APIFY_TOKEN")
     if not token:
-        raise RuntimeError("缺少 APIFY_TOKEN，無法呼叫 Apify 爬蟲服務。")
+        raise ApifyTokenInvalidError("缺少 APIFY_TOKEN，無法呼叫 Apify 爬蟲服務。")
 
     client = ApifyClient(token)
 
@@ -47,11 +57,11 @@ def scrape_via_apify(url: str, max_reviews: int = 50, token: str | None = None) 
     # raises AttributeError even when the Apify run itself succeeded.
     status = run.status if run else None
     if status != "SUCCEEDED":
-        raise RuntimeError(f"Apify 執行未成功完成（狀態：{status or '無回應，可能逾時'}）。")
+        raise ApifyRunFailedError(f"Apify 執行未成功完成（狀態：{status or '無回應，可能逾時'}）。")
 
     dataset_id = run.default_dataset_id
     if not dataset_id:
-        raise RuntimeError("Apify 執行未回傳有效的 dataset ID。")
+        raise ApifyRunFailedError("Apify 執行未回傳有效的 dataset ID。")
 
     items = client.dataset(dataset_id).list_items().items
     

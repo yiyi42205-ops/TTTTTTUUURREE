@@ -213,22 +213,28 @@ def catch_all(path):
         return app.send_static_file("index.html")
     return jsonify({"error": "Not found", "code": "NOT_FOUND"}), 404
 
-def resolve_google_share_url(url: str) -> str:
+def resolve_short_url(url: str) -> str:
+    """Follow redirects for Google Maps short/share URLs.
+
+    Handles: share.google, goo.gl/maps, maps.app.goo.gl
+    CID URLs (maps.google.com/?cid=) are NOT resolved here — Google requires
+    JS rendering, so they fall through to Apify which handles them natively.
+    """
+    _REDIRECT_HOSTS = {"share.google", "goo.gl", "maps.app.goo.gl"}
     try:
         parsed = urlparse(url)
-        if parsed.hostname == "share.google":
-            # Follow redirects using HEAD request with a standard browser User-Agent
+        if parsed.hostname in _REDIRECT_HOSTS:
             req = urllib.request.Request(
                 url,
                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"},
                 method="HEAD"
             )
-            with urllib.request.urlopen(req, timeout=5) as response:
+            with urllib.request.urlopen(req, timeout=10) as response:
                 final_url = response.geturl()
-                logger.info(f"Resolved share.google URL {url} to: {final_url}")
+                logger.info(f"Resolved short URL {url} → {final_url}")
                 return final_url
     except Exception as e:
-        logger.warning(f"Failed to resolve share.google URL {url}: {e}")
+        logger.warning(f"Failed to resolve short URL {url}: {e}")
     return url
 
 def extract_place_id(url: str) -> str | None:
@@ -285,8 +291,8 @@ def scrape():
     # 2. If not found in mapping, try to extract or construct it
     if not target_place_id:
         if is_url:
-            # First time seeing this URL. Resolve it and try to extract place_id via Regex
-            url_to_scrape = resolve_google_share_url(original_query)
+            # First time seeing this URL. Resolve short/share links, then extract place_id
+            url_to_scrape = resolve_short_url(original_query)
             target_place_id = extract_place_id(url_to_scrape)
         else:
             # Text query: No network extraction attempted. Apify will handle it.
