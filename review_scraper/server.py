@@ -223,8 +223,10 @@ def catch_all(path):
     static_file = os.path.join(STATIC_DIR, path)
     if os.path.exists(static_file) and not os.path.isdir(static_file):
         return app.send_static_file(path)
+    # SPA route (not a real file) — log as page visit
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
+        log_visitor(request.remote_addr, f"/{path}")
         return app.send_static_file("index.html")
     return jsonify({"error": "Not found", "code": "NOT_FOUND"}), 404
 
