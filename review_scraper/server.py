@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 from google import genai
@@ -22,6 +24,7 @@ from cache_store import (
     get_cached_summary, set_cached_summary,
     get_cached_scores, set_cached_scores,
     get_last_checked_at, set_last_checked_at, get_fetched_at,
+    log_visitor, get_visitor_stats,
 )
 from prompt_builder import get_prompt_version
 from stage2_rules import build_stage2_result
@@ -87,6 +90,16 @@ if DEEPSEEK_API_KEY:
 
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 CORS(app)
+
+# Rate limiter — per IP, in-memory storage (resets on deploy, fine for basic protection)
+_limiter_enabled = os.getenv("TESTING") != "1"
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["60 per minute"],
+    storage_uri="memory://",
+    enabled=_limiter_enabled,
+)
 
 # Background thread pool for incremental cache refresh (fire-and-forget)
 _refresh_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="cache_refresh")
@@ -193,6 +206,8 @@ def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tup
 
 @app.route("/", methods=["GET"])
 def index():
+    # Log visitor
+    log_visitor(request.remote_addr, "/")
     # Serve the SPA frontend if dist/ exists, otherwise return API status
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
@@ -265,6 +280,7 @@ def extract_place_id(url: str) -> str | None:
     return None
 
 @app.route("/api/scrape", methods=["POST"])
+@limiter.limit("10 per minute")
 def scrape():
     start_time = time.time()
     ip = request.remote_addr
@@ -537,6 +553,7 @@ def audit_rules():
 
 
 @app.route("/api/audit", methods=["POST"])
+@limiter.limit("10 per minute")
 def audit():
     start_time = time.time()
     ip = request.remote_addr
@@ -749,6 +766,7 @@ def store_summary():
 
 
 @app.route("/api/summarize", methods=["POST"])
+@limiter.limit("10 per minute")
 def summarize():
     start_time = time.time()
     
@@ -864,6 +882,11 @@ def summarize():
         logger.error(f"LLM QA ({provider}) failed: {e}")
         logger.error(traceback.format_exc())
         return jsonify({"error": "分析回答失敗，請稍後再試。", "code": "LLM_FAILED"}), 502
+
+@app.route("/api/stats", methods=["GET"])
+@limiter.exempt
+def stats():
+    return jsonify(get_visitor_stats())
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5001))

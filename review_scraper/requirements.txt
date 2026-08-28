@@ -6,6 +6,7 @@ playwright-stealth>=1.0.6
 python-dateutil>=2.9.0
 flask>=3.0.0
 flask-cors>=4.0.0
+flask-limiter>=3.5.0
 python-dotenv>=1.0.1
 google-genai>=0.3.0
 apify-client>=1.7.0
