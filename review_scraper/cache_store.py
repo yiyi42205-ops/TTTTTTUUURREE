@@ -97,6 +97,16 @@ def _connect(db_path: str) -> sqlite3.Connection:
     )
     conn.execute(
         """
+        CREATE TABLE IF NOT EXISTS visitor_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip TEXT NOT NULL,
+            path TEXT NOT NULL,
+            visited_at REAL NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS stage2_scores (
             review_id TEXT NOT NULL,
             model TEXT NOT NULL,
@@ -395,6 +405,41 @@ def set_cached_summary(place_id: str, summary: dict, db_path: str = None) -> Non
             (place_id, json.dumps(summary, ensure_ascii=False), time.time()),
         )
         conn.commit()
+    finally:
+        conn.close()
+
+
+# ── Visitor counter ────────────────────────────────────────────
+
+def log_visitor(ip: str, path: str, db_path: str = None) -> None:
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute(
+            "INSERT INTO visitor_log (ip, path, visited_at) VALUES (?, ?, ?)",
+            (ip, path, time.time()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_visitor_stats(db_path: str = None) -> dict:
+    conn = _connect(db_path or DB_PATH)
+    try:
+        now = time.time()
+        day_ago = now - 86400
+        week_ago = now - 604800
+
+        total = conn.execute("SELECT COUNT(DISTINCT ip) FROM visitor_log").fetchone()[0]
+        today = conn.execute(
+            "SELECT COUNT(DISTINCT ip) FROM visitor_log WHERE visited_at >= ?", (day_ago,)
+        ).fetchone()[0]
+        week = conn.execute(
+            "SELECT COUNT(DISTINCT ip) FROM visitor_log WHERE visited_at >= ?", (week_ago,)
+        ).fetchone()[0]
+        total_hits = conn.execute("SELECT COUNT(*) FROM visitor_log").fetchone()[0]
+
+        return {"unique_total": total, "unique_today": today, "unique_week": week, "total_hits": total_hits}
     finally:
         conn.close()
 

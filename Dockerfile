@@ -20,4 +20,6 @@ ENV PYTHONPATH=/app/review_scraper
 ENV DB_PATH=/data/cache.db
 
 EXPOSE 8080
-CMD ["gunicorn", "server:app", "--chdir", "/app/review_scraper", "--bind", "0.0.0.0:8080", "--timeout", "120", "--workers", "2"]
+RUN pip install --no-cache-dir gevent>=24.2.1
+
+CMD ["gunicorn", "server:app", "--chdir", "/app/review_scraper", "--bind", "0.0.0.0:8080", "--timeout", "120", "--workers", "2", "--worker-class", "gevent", "--worker-connections", "100"]
