@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ChevronDown, ChevronUp, Star, Shield, Check,
@@ -6,6 +6,10 @@ import {
 } from 'lucide-react';
 import type { ShopStats, AuditResult } from '../../utils/auditEngine';
 import type { Review } from '../../utils/csvParser';
+
+export interface ReviewInspectorHandle {
+  expandAndSearch: (username: string) => void;
+}
 
 interface ReviewInspectorProps {
   result: ShopStats;
@@ -18,7 +22,7 @@ interface ReviewInspectorProps {
   onToggleCoT: (storeIndex: number, reviewIndex: number) => void;
 }
 
-export function ReviewInspector({
+export const ReviewInspector = forwardRef<ReviewInspectorHandle, ReviewInspectorProps>(function ReviewInspector({
   result,
   storeIndex,
   inspectSearch,
@@ -27,8 +31,20 @@ export function ReviewInspector({
   onFilterChange,
   expandedCoT,
   onToggleCoT,
-}: ReviewInspectorProps) {
+}, ref) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    expandAndSearch(username: string) {
+      onSearchChange(username);
+      onFilterChange('all');
+      setIsExpanded(true);
+      setTimeout(() => {
+        containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    },
+  }));
 
   const stage1Count = result.auditedReviews.filter(r => r.audit.isWashed && !r.audit.reasoningPath).length;
   const stage2Count = result.auditedReviews.filter(r => r.audit.isWashed && Boolean(r.audit.reasoningPath)).length;
@@ -58,7 +74,7 @@ export function ReviewInspector({
   ];
 
   return (
-    <div className="bg-surface-1 border border-hairline rounded-xl overflow-hidden">
+    <div ref={containerRef} className="bg-surface-1 border border-hairline rounded-xl overflow-hidden">
       {/* Collapsed toggle button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -145,7 +161,7 @@ export function ReviewInspector({
       </AnimatePresence>
     </div>
   );
-}
+});
 
 /* ---- Individual Review Card ---- */
 
@@ -163,6 +179,8 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
   const isLowInfo = audit.issueType === 'low_info';
   const isLowConfidenceWashed = isWashed && audit.confidenceScore < 50;
   const hasCoT = !!audit.reasoningPath;
+  // Unscored ambiguous review: Stage 1 found nothing, Stage 2 hasn't run yet
+  const isPendingReview = !isWashed && audit.issueType === null && !audit.verdictBasis;
 
   const starArr = Array.from({ length: review.stars });
 
@@ -182,6 +200,9 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
   } else if (isLowInfo) {
     badgeBg = 'bg-surface-3 border-hairline text-ink-subtle';
     badgeLabel = '低資訊';
+  } else if (isPendingReview) {
+    badgeBg = 'bg-surface-3 border-hairline text-ink-subtle';
+    badgeLabel = '待複審';
   } else {
     badgeBg = 'bg-[var(--semantic-success)]/10 border-[var(--semantic-success)]/20 text-[var(--semantic-success)]';
     badgeLabel = '自然評論';
@@ -193,7 +214,7 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
     auditBoxClass = isLowConfidenceWashed
       ? 'bg-[var(--semantic-warning)]/5 border-[var(--semantic-warning)]/15 text-[var(--semantic-warning)]'
       : 'bg-[var(--semantic-danger)]/5 border-[var(--semantic-danger)]/15 text-[var(--semantic-danger)]';
-  } else if (isLowInfo) {
+  } else if (isLowInfo || isPendingReview) {
     auditBoxClass = 'bg-surface-3 border-hairline text-ink-subtle';
   } else {
     auditBoxClass = 'bg-[var(--semantic-success)]/5 border-[var(--semantic-success)]/15 text-[var(--semantic-success)]';
@@ -201,12 +222,14 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
 
   const verdictIcon = isWashed
     ? <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-    : isLowInfo
+    : (isLowInfo || isPendingReview)
     ? <HelpCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
     : <Check className="w-3.5 h-3.5 shrink-0 mt-0.5" />;
 
   const verdictLabel = isWashed
     ? (isLowConfidenceWashed ? '疑似結構異常' : '標記：符合結構特徵')
+    : isPendingReview
+    ? '待 AI 複審'
     : isLowInfo
     ? '低資訊評論'
     : '自然評論';
@@ -242,7 +265,7 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
       <div className={`p-3 rounded-lg border text-xs leading-relaxed ${auditBoxClass}`}>
         <div className="flex items-start gap-1.5 font-medium flex-wrap mb-1">
           {verdictIcon}
-          <span>{verdictLabel} ({audit.confidenceScore}% 信心度)</span>
+          <span>{verdictLabel}{!isPendingReview ? ` (${audit.confidenceScore}% 信心度)` : ''}</span>
           {isWashed && !isLowConfidenceWashed && (
             hasCoT ? (
               <span className="ml-1 bg-[var(--semantic-warning)]/15 text-[var(--semantic-warning)] text-[10px] font-medium px-1.5 py-0.5 rounded border border-[var(--semantic-warning)]/20">
