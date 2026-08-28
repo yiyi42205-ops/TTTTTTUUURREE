@@ -1,6 +1,7 @@
 import { Outlet, useNavigate, useLocation } from 'react-router';
 import { Search, Clock, Settings } from 'lucide-react';
 import { useIsPWA } from '../hooks/useIsPWA';
+import { Footer } from './Footer';
 
 export function Layout() {
   const navigate = useNavigate();
@@ -31,8 +32,9 @@ export function Layout() {
   return (
     <div className="flex flex-col h-[100dvh] bg-background font-sans overflow-hidden">
       {/* Content Viewport */}
-      <div className="flex-1 overflow-y-auto pb-4">
+      <div className="flex-1 overflow-y-auto">
         <Outlet />
+        {!isPWA && <Footer />}
       </div>
 
       {/* Fixed Bottom Navigation (Mobile PWA Tab Bar) */}
