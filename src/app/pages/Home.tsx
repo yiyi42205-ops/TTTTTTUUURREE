@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Shield, Star, AlertTriangle, ArrowRight, Search, FileText, Sparkles, Clock } from 'lucide-react';
+import { Shield, Star, AlertTriangle, ArrowRight, Search, FileText, Sparkles, Clock, Info } from 'lucide-react';
 import { useEffect } from 'react';
 import { useIsPWA } from '../hooks/useIsPWA';
+import { TutorialModal } from '../components/TutorialModal';
 
 export function Home() {
   const navigate = useNavigate();
   const isPWA = useIsPWA();
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     if (isPWA) {
@@ -26,8 +29,16 @@ export function Home() {
             <span className="text-ink-subtle font-normal text-sm ml-1.5">TrueRating</span>
           </span>
         </div>
-        <span className="text-[10px] md:text-xs text-ink-tertiary font-mono tracking-wider">v1.2</span>
+        <button
+          onClick={() => setShowTutorial(true)}
+          className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
+          title="使用教學"
+        >
+          <Info className="w-3.5 h-3.5" />
+        </button>
       </header>
+
+      {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
 
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16 max-w-5xl">

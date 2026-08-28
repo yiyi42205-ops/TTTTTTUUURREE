@@ -1,13 +1,15 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Loader2, X, Globe, Sliders, ShieldCheck, Shield, AlertTriangle, ClipboardPaste, Key, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Loader2, X, Globe, Sliders, ShieldCheck, Shield, AlertTriangle, ClipboardPaste, Key, ExternalLink, Eye, EyeOff, Info } from 'lucide-react';
 import { useIsPWA } from '../hooks/useIsPWA';
+import { TutorialModal } from '../components/TutorialModal';
 
 export function Analyzer() {
   const navigate = useNavigate();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const isPWA = useIsPWA();
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const [scrapeUrls, setScrapeUrls] = useState<string[]>(['', '', '']);
   const [maxReviews, setMaxReviews] = useState(50);
@@ -210,18 +212,27 @@ export function Analyzer() {
             <span className="text-ink-subtle font-normal text-sm ml-1.5">TrueRating</span>
           </span>
         </div>
-        {!isPWA && (
-          <motion.button
-            onClick={() => navigate('/')}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-1.5 bg-surface-2 px-4 py-1.5 rounded-lg border border-hairline text-xs font-medium text-ink-subtle cursor-pointer hover:text-ink transition-colors"
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
+            title="使用教學"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            返回首頁
-          </motion.button>
-        )}
+            <Info className="w-3.5 h-3.5" />
+          </button>
+          {!isPWA && (
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-1.5 bg-surface-2 px-4 py-1.5 rounded border border-hairline text-xs font-medium text-ink-subtle cursor-pointer hover:text-ink transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              返回首頁
+            </button>
+          )}
+        </div>
       </header>
+
+      {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
 
       <div className="container mx-auto px-4 py-8 max-w-3xl">
 
