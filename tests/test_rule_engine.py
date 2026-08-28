@@ -24,7 +24,7 @@ class TestAuditReview:
         result = audit_review({'text': '', 'stars': 5})
         assert result['issueType'] == 'no_text'
         assert result['isWashed'] is False
-        assert result['confidenceScore'] == 50
+        assert result['confidenceScore'] == 85
 
     def test_incentive_keyword(self):
         result = audit_review({'text': '打卡送飲料很開心', 'stars': 5})

@@ -523,11 +523,15 @@ def audit_review(review, context=None, config: RuleConfig = None):
         stars = 0
 
     # 0. No-text reviews
+    # Most users simply tap a star without writing — this is normal behaviour,
+    # not a washing signal.  Only spike-period no-text 5-star reviews are
+    # escalated to 'template' downstream (run_stage1_audit), so here we treat
+    # everyday no-text reviews as near-normal weight.
     if text.strip() == '':
         return {
             'isWashed': False,
-            'reason': '評論未留下文字內容，僅提供星等，暫以中性權重採計。',
-            'confidenceScore': 50,
+            'reason': '評論未留下文字內容，僅提供星等，以近正常權重採計。',
+            'confidenceScore': 85,
             'issueType': 'no_text',
         }
 
