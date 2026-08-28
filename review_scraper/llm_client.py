@@ -10,7 +10,7 @@ import re
 import time
 import random
 
-from prompt_builder import build_prompt, build_qa_prompt
+from prompt_builder import build_prompt, build_qa_prompt, build_summary_prompt
 
 logger = logging.getLogger("ScraperServer")
 
@@ -270,5 +270,68 @@ def call_llm_qa(provider: str, client, store_name: str, reviews: list, question:
                 time.sleep((2 ** attempt) + random.uniform(0, 0.5))
             else:
                 break
-                
+
+    raise last_exception
+
+
+def parse_summary_llm_json(raw_text: str) -> dict:
+    """Parse LLM response for store summary into {warnings, recommendations}."""
+    cleaned = _extract_json_block(_strip_markdown_fences(raw_text or ''))
+    try:
+        parsed = json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        raise ValueError(f'LLM 回傳內容非合法 JSON：{e}') from e
+
+    if not isinstance(parsed, dict):
+        raise ValueError('LLM 回傳的內容不是有效的總結 JSON 格式')
+
+    warnings = parsed.get('warnings', [])
+    if not isinstance(warnings, list):
+        warnings = []
+    recommendations = parsed.get('recommendations', [])
+    if not isinstance(recommendations, list):
+        recommendations = []
+
+    return {'warnings': warnings, 'recommendations': recommendations}
+
+
+def call_llm_summary(provider: str, client, store_name: str, reviews: list,
+                     max_retries: int = 2) -> dict:
+    """Call LLM with summarize_prompt.txt, return {warnings, recommendations}."""
+    prompt = build_summary_prompt(store_name, reviews)
+
+    if provider not in ('gemini', 'deepseek'):
+        raise ValueError(f"Unknown LLM provider: {provider}")
+
+    last_exception = None
+    for attempt in range(max_retries + 1):
+        try:
+            if provider == 'gemini':
+                response = client.models.generate_content(
+                    model=MODEL_NAME_GEMINI,
+                    contents=prompt,
+                    config={'response_mime_type': 'application/json'},
+                )
+                raw_text = getattr(response, 'text', None)
+            elif provider == 'deepseek':
+                response = client.chat.completions.create(
+                    model=MODEL_NAME_DEEPSEEK,
+                    messages=[
+                        {"role": "system", "content": "你是一個餐廳評論分析師。直接輸出 JSON。"},
+                        {"role": "user", "content": prompt}
+                    ],
+                    response_format={'type': 'json_object'},
+                    timeout=60.0,
+                )
+                raw_text = response.choices[0].message.content
+
+            return parse_summary_llm_json(raw_text)
+
+        except Exception as e:
+            last_exception = e
+            if attempt < max_retries:
+                time.sleep((2 ** attempt) + random.uniform(0, 0.5))
+            else:
+                break
+
     raise last_exception

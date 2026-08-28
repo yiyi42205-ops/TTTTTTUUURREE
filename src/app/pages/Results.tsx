@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router';
 import {
   ArrowLeft, AlertTriangle, Shield, X, Database, MessageSquare, Send,
-  Loader2, Sparkles, Trophy
+  Loader2, Sparkles, Trophy, AlertCircle, ThumbsUp
 } from 'lucide-react';
 import { RESTAURANTS_DATA } from '../data/restaurantsData';
 import { parseReviews, Review } from '../utils/csvParser';
@@ -93,6 +93,10 @@ export function Results() {
   const [qaResults, setQaResults] = useState<{ [storeIdx: number]: any }>({});
   const [qaErrors, setQaErrors] = useState<{ [storeIdx: number]: string }>({});
 
+  // Store summary states
+  const [storeSummaries, setStoreSummaries] = useState<{ [storeIdx: number]: { warnings: any[]; recommendations: any[] } }>({});
+  const [isSummaryLoading, setIsSummaryLoading] = useState<{ [storeIdx: number]: boolean }>({});
+
   // 1. Initial Parse -> call backend /api/audit-rules for Stage 1 heuristics
   useEffect(() => {
     if (location.state?.cachedShopResults) {
@@ -111,9 +115,9 @@ export function Results() {
     }
 
     const runStage1 = async () => {
-      const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number } }>) || [];
+      const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number }; dataAsOf?: string }>) || [];
 
-      let shopsToProcess: { id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number } }[];
+      let shopsToProcess: { id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number }; dataAsOf?: string }[];
       if (customShops.length > 0) {
         shopsToProcess = customShops;
       } else {
@@ -157,6 +161,9 @@ export function Results() {
           }
           if (shop.metadata?.reviewsCount != null) {
             stats.googleReviewsCount = shop.metadata.reviewsCount;
+          }
+          if ((shop as any).dataAsOf) {
+            stats.dataAsOf = (shop as any).dataAsOf;
           }
           computed.push(stats);
           newSignals[shop.id] = data.signals;
@@ -215,35 +222,7 @@ export function Results() {
 
         const allAmbiguous = reviews.filter(r => r.stars === 5 && r.audit.issueType === null);
 
-        const auditMode = (import.meta.env.VITE_AUDIT_MODE || 'production').toLowerCase();
-        const STAGE2_CAP = 15;
-
-        let ambiguousReviews: typeof allAmbiguous;
-        if (auditMode === 'evaluate' || allAmbiguous.length <= STAGE2_CAP) {
-          ambiguousReviews = allAmbiguous;
-        } else {
-          const isReviewInSpike = (r: Review & { audit: AuditResult }) => {
-            const month = r.time ? r.time.substring(0, 7) : '';
-            return spikeMonthsSet.has(month);
-          };
-          const spikePool = allAmbiguous.filter(r => isReviewInSpike(r));
-          const normalPool = allAmbiguous.filter(r => !isReviewInSpike(r));
-
-          const spikeRatio = spikePool.length / allAmbiguous.length;
-          const spikeCount = Math.round(STAGE2_CAP * spikeRatio);
-          const normalCount = STAGE2_CAP - spikeCount;
-
-          const evenSample = (pool: typeof allAmbiguous, n: number) => {
-            if (n >= pool.length) return pool;
-            const step = pool.length / n;
-            return Array.from({ length: n }, (_, i) => pool[Math.floor(i * step)]);
-          };
-
-          ambiguousReviews = [
-            ...evenSample(spikePool, Math.min(spikeCount, spikePool.length)),
-            ...evenSample(normalPool, Math.min(normalCount, normalPool.length)),
-          ];
-        }
+        const ambiguousReviews = allAmbiguous;
 
         const stage2Sent = ambiguousReviews.length;
 
@@ -361,9 +340,57 @@ export function Results() {
     }
   };
 
+  // Auto-fetch store summary after audit completes
+  useEffect(() => {
+    if (isAiAuditing || shopResults.length === 0) return;
+
+    shopResults.forEach((shop, idx) => {
+      if (storeSummaries[idx] || isSummaryLoading[idx]) return;
+
+      const placeId = storeIds[idx] || '';
+      if (!placeId) return;
+
+      setIsSummaryLoading(prev => ({ ...prev, [idx]: true }));
+
+      const validReviews = shop.auditedReviews
+        .filter(r => !r.audit.isWashed && r.text && r.text.trim())
+        .map(r => ({
+          id: r.username,
+          username: r.username,
+          text: r.text,
+          stars: r.stars,
+          audit: r.audit,
+        }));
+
+      fetch('/api/store-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          placeId,
+          storeName: shop.storeName,
+          reviews: validReviews,
+        }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.warnings || data.recommendations) {
+            setStoreSummaries(prev => ({ ...prev, [idx]: data }));
+          }
+        })
+        .catch(e => console.error('Store summary failed:', e))
+        .finally(() => setIsSummaryLoading(prev => ({ ...prev, [idx]: false })));
+    });
+  }, [isAiAuditing, shopResults]);
+
   const handleQaSubmit = async (storeIdx: number) => {
     const question = qaInput[storeIdx]?.trim();
     if (!question) return;
+
+    const localApiKey = sessionStorage.getItem('truerating_gemini_api_key') || '';
+    if (!localApiKey) {
+      setQaErrors(prev => ({ ...prev, [storeIdx]: '請先在設定頁輸入您的 Gemini API Key 才能使用 AI 問答功能。' }));
+      return;
+    }
 
     const shop = shopResults[storeIdx];
     if (!shop) return;
@@ -384,7 +411,8 @@ export function Results() {
       const response = await fetch('/api/summarize', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Gemini-API-Key': localApiKey,
         },
         body: JSON.stringify({
           placeId: storeIds[storeIdx] || shop.storeName,
@@ -549,6 +577,73 @@ export function Results() {
               storeName={cleanStoreName(activeResult.storeName)}
             />
 
+            {/* 1.5. AI Store Summary */}
+            {isSummaryLoading[activeStoreTab] && (
+              <div className="bg-surface-1 border border-hairline rounded-xl p-5">
+                <div className="flex items-center gap-2 text-ink-subtle text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  正在生成 AI 總結...
+                </div>
+              </div>
+            )}
+            {storeSummaries[activeStoreTab] && (
+              <div className="bg-surface-1 border border-hairline rounded-xl p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-medium text-ink tracking-[-0.2px]">AI 總結</h3>
+                </div>
+
+                {storeSummaries[activeStoreTab].warnings.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-[var(--semantic-warning)]" />
+                      <span className="text-xs font-medium text-[var(--semantic-warning)]">避雷提示</span>
+                    </div>
+                    <div className="space-y-2">
+                      {storeSummaries[activeStoreTab].warnings.map((w: any, i: number) => (
+                        <div key={i} className="bg-[var(--semantic-warning)]/5 border border-[var(--semantic-warning)]/15 rounded-lg p-3">
+                          <p className="text-sm text-ink leading-relaxed">{w.summary}</p>
+                          {w.sourceReviewIds?.length > 0 && (
+                            <p className="text-[11px] text-ink-tertiary mt-1.5">
+                              來源：{w.sourceReviewIds.join('、')}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {storeSummaries[activeStoreTab].recommendations.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <ThumbsUp className="w-3.5 h-3.5 text-[var(--semantic-success)]" />
+                      <span className="text-xs font-medium text-[var(--semantic-success)]">推薦品項</span>
+                    </div>
+                    <div className="space-y-2">
+                      {storeSummaries[activeStoreTab].recommendations.map((r: any, i: number) => (
+                        <div key={i} className="bg-[var(--semantic-success)]/5 border border-[var(--semantic-success)]/15 rounded-lg p-3">
+                          <p className="text-sm text-ink leading-relaxed">
+                            <span className="font-medium">{r.item}</span>
+                            {r.reason && <span className="text-ink-muted"> — {r.reason}</span>}
+                          </p>
+                          {r.sourceReviewIds?.length > 0 && (
+                            <p className="text-[11px] text-ink-tertiary mt-1.5">
+                              來源：{r.sourceReviewIds.join('、')}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {storeSummaries[activeStoreTab].warnings.length === 0 && storeSummaries[activeStoreTab].recommendations.length === 0 && (
+                  <p className="text-sm text-ink-subtle">評論資料不足，無法生成總結。</p>
+                )}
+              </div>
+            )}
+
             {/* 2. Issue cards - three metric cards */}
             <IssueCards result={activeResult} />
 
@@ -591,7 +686,7 @@ export function Results() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleQaSubmit(activeStoreTab);
                   }}
-                  placeholder="例如：這家店推薦點什麼菜？服務態度好嗎？"
+                  placeholder={sessionStorage.getItem('truerating_gemini_api_key') ? "例如：這家店推薦點什麼菜？服務態度好嗎？" : "需要 Gemini API Key（設定頁輸入）"}
                   disabled={isQaLoading[activeStoreTab]}
                   className="flex-1 px-4 py-2 bg-surface-2 border border-hairline rounded-lg text-sm text-ink placeholder-ink-tertiary focus:outline-none focus:border-primary/50 font-sans disabled:opacity-50"
                 />

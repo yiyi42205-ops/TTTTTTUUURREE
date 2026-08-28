@@ -10,6 +10,7 @@ import secrets
 
 _TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'audit_prompt.txt')
 _QA_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'qa_prompt.txt')
+_SUMMARY_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'summarize_prompt.txt')
 
 # PROMPT_VERSION = first 8 hex chars of the prompt template's sha256.
 # Stored alongside cached scores so stale results from an older prompt
@@ -60,6 +61,29 @@ def build_prompt(store_name: str, reviews: list) -> str:
         .replace('</review_data>', f'</{random_tag}>')
         .replace('{store_name}', store_name or '待審查店家')
         .replace('{review_count}', str(len(payload)))
+        .replace('{reviews_json}', json.dumps(payload, ensure_ascii=False, indent=2))
+    )
+
+
+def load_summary_template() -> str:
+    with open(_SUMMARY_TEMPLATE_PATH, 'r', encoding='utf-8') as f:
+        return f.read()
+
+
+def build_summary_prompt(store_name: str, reviews: list) -> str:
+    template = load_summary_template()
+    payload = [
+        {
+            'id': str(r.get('id') or r.get('username') or f"r{i}"),
+            'username': str(r.get('username') or 'Anonymous'),
+            'stars': r.get('stars') or 5,
+            'text': str(r.get('text') or '')
+        }
+        for i, r in enumerate(reviews)
+    ]
+    return (
+        template
+        .replace('{store_name}', store_name or '待審查店家')
         .replace('{reviews_json}', json.dumps(payload, ensure_ascii=False, indent=2))
     )
 
