@@ -27,6 +27,41 @@ class TestAuditReview:
         assert result['isWashed'] is False
         assert result['confidenceScore'] == 85
 
+    def test_no_text_5star_spike_escalation(self):
+        """Blank 5-star review during spike → washed."""
+        result = audit_review({'text': '', 'stars': 5}, context={'isSpikePeriod': True})
+        assert result['issueType'] == 'no_text'
+        assert result['isWashed'] is True
+        assert result['confidenceScore'] == 75
+
+    def test_no_text_5star_high_count_escalation(self):
+        """Blank 5-star review when many blank 5-star exist → washed."""
+        result = audit_review({'text': '', 'stars': 5}, context={'noTextCount': 5})
+        assert result['issueType'] == 'no_text'
+        assert result['isWashed'] is True
+        assert result['confidenceScore'] == 75
+
+    def test_no_text_5star_low_count_no_escalation(self):
+        """Blank 5-star review with few blank 5-star reviews → not washed."""
+        result = audit_review({'text': '', 'stars': 5}, context={'noTextCount': 3})
+        assert result['issueType'] == 'no_text'
+        assert result['isWashed'] is False
+        assert result['confidenceScore'] == 85
+
+    def test_no_text_4star_spike_no_escalation(self):
+        """Blank 4-star review during spike → NOT escalated (only 5-star)."""
+        result = audit_review({'text': '', 'stars': 4}, context={'isSpikePeriod': True})
+        assert result['issueType'] == 'no_text'
+        assert result['isWashed'] is False
+        assert result['confidenceScore'] == 85
+
+    def test_no_text_confidence_lower_than_low_info(self):
+        """no_text escalated (75) should be less confident than low_info escalated (85),
+        because '好吃' is more suspicious than blank."""
+        no_text = audit_review({'text': '', 'stars': 5}, context={'isSpikePeriod': True})
+        low_info = audit_review({'text': '好吃', 'stars': 5}, context={'isSpikePeriod': True})
+        assert no_text['confidenceScore'] < low_info['confidenceScore']
+
     def test_incentive_keyword(self):
         result = audit_review({'text': '打卡送飲料很開心', 'stars': 5})
         assert result['issueType'] == 'incentive'

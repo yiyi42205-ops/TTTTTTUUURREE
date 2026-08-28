@@ -36,6 +36,7 @@ class RuleConfig:
     spike_multiplier: float = 3.0
     spike_min_count: int = 10
     spike_window_size: int = 20
+    no_text_escalation_count: int = 5
     structural_min_similarity: float = 0.55
     structural_min_similar_count: int = 2
     structural_min_hot_term_count: int = 2
@@ -412,11 +413,15 @@ def detect_language_ratio(reviews: list[dict]) -> float:
 def detect_spike_months(reviews, config: RuleConfig = None):
     """Detect review-density spikes using a sliding window over review order.
 
-    Instead of binning by calendar month (which misses bursts spanning month
-    boundaries and is too coarse for short campaigns), this uses a sliding
-    window of *spike_window_size* consecutive reviews.  If the time span of a
-    window is much shorter than expected (density > spike_multiplier × average
-    density), every review in that window is flagged as spike.
+    Reviews are assumed to arrive sorted by time (newest-first from the
+    scraper).  The function uses review *order* directly — no date parsing
+    or re-sorting — so it works even when date strings are imprecise
+    (e.g. relative dates converted to day-level resolution).
+
+    A sliding window of *spike_window_size* consecutive reviews is moved
+    across the list.  If the time span covered by that window is much
+    shorter than expected (density > spike_multiplier × overall density),
+    every review in the window is flagged as spike.
 
     Returns:
       - flags: list[bool] per review (True = in a spike region)
@@ -430,7 +435,8 @@ def detect_spike_months(reviews, config: RuleConfig = None):
     if n < config.spike_min_count:
         return [False] * n, set()
 
-    # Parse dates, keeping index alignment
+    # Parse dates in original order (no sorting — order is already
+    # newest-first from the scraper).
     dates = []
     for r in reviews:
         time_str = r.get('time', '') or ''
@@ -439,27 +445,29 @@ def detect_spike_months(reviews, config: RuleConfig = None):
         except (ValueError, TypeError):
             dates.append(None)
 
-    # Build list of (original_index, date) for reviews with valid dates,
-    # sorted by date ascending
-    dated = sorted(
-        [(i, d) for i, d in enumerate(dates) if d is not None],
-        key=lambda x: x[1],
-    )
+    # Keep only reviews with valid dates, preserving original indices.
+    dated = [(i, d) for i, d in enumerate(dates) if d is not None]
 
     if len(dated) < config.spike_min_count:
         return [False] * n, set()
 
-    # Overall density: reviews per day across the full time range
-    total_span_days = max((dated[-1][1] - dated[0][1]).days, 1)
+    # Overall density: reviews per day across the full time range.
+    # dated is newest-first, so first element is the latest date.
+    all_dates_only = [d for _, d in dated]
+    earliest = min(all_dates_only)
+    latest = max(all_dates_only)
+    total_span_days = max((latest - earliest).days, 1)
     overall_density = len(dated) / total_span_days  # reviews/day
 
-    # Sliding window
+    # Sliding window over the ordered list
     w = min(config.spike_window_size, len(dated))
     flags = [False] * n
 
     for start in range(len(dated) - w + 1):
         end = start + w - 1
-        window_days = max((dated[end][1] - dated[start][1]).days, 1)
+        # Window spans from dated[start] to dated[end]; take abs since
+        # order may be newest-first or oldest-first.
+        window_days = max(abs((dated[end][1] - dated[start][1]).days), 1)
         window_density = w / window_days
 
         if window_density > overall_density * config.spike_multiplier:
@@ -568,10 +576,20 @@ def audit_review(review, context=None, config: RuleConfig = None):
 
     # 0. No-text reviews
     # Most users simply tap a star without writing — this is normal behaviour,
-    # not a washing signal.  Only spike-period no-text 5-star reviews are
-    # escalated to 'template' downstream (run_stage1_audit), so here we treat
-    # everyday no-text reviews as near-normal weight.
+    # not a washing signal.  However, clusters of blank 5-star reviews during
+    # spike periods or when many such reviews exist are a classic wash pattern.
+    # Uses the same escalation framework as low_info (spike OR count ≥ threshold).
     if text.strip() == '':
+        if stars == 5:
+            is_escalated = bool(context.get('isSpikePeriod')) or \
+                (context.get('noTextCount', 0) >= config.no_text_escalation_count)
+            if is_escalated:
+                return {
+                    'isWashed': True,
+                    'reason': '⚠️ 評論未留下文字內容，且處於評論量異常暴增期間或店內無文字五星評論數量偏高，符合洗評典型特徵。',
+                    'confidenceScore': 75,
+                    'issueType': 'no_text',
+                }
         return {
             'isWashed': False,
             'reason': '評論未留下文字內容，僅提供星等，以近正常權重採計。',
@@ -717,6 +735,13 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
         if stars <= 3 and _check_incentive_semantic(text):
             whistleblower_indices.add(i)
 
+    # Count no-text 5-star reviews for escalation (same framework as low_info)
+    no_text_5star_count = sum(
+        1 for r in reviews
+        if not (r.get('text', '') or '').strip()
+        and int(r.get('stars') or 0) == 5
+    )
+
     # Per-review audit
     audited = []
     for i, review in enumerate(reviews):
@@ -726,6 +751,7 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
         audit = audit_review(review, {
             'isSpikePeriod': is_spike,
             'similarCount': sim_count,
+            'noTextCount': no_text_5star_count - 1,  # exclude self
         }, config)
 
         # Override: hard duplicate detection (only for 4+ stars — low-star
@@ -740,13 +766,6 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
                 'reason': '⚠️ 檢測到此評論內文與店內其他評論相似度大於 75%，高度疑似模板洗評。',
                 'confidenceScore': 90,
                 'issueType': 'template',
-            }
-        if audit['issueType'] == 'no_text' and stars == 5 and is_spike:
-            audit = {
-                'isWashed': True,
-                'reason': '⚠️ 評論未留下文字內容，且發布於評論量異常暴增期間，符合「無文字五星」集中出現的洗評典型特徵。',
-                'confidenceScore': 65,
-                'issueType': 'no_text',
             }
 
         # Rule 2.6: structural template — only for ambiguous reviews (issueType=null)
