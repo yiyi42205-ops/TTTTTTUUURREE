@@ -136,6 +136,7 @@ def _call_llm_raw(provider: str, client, prompt: str, model_name: str | None = N
             config={
                 'response_mime_type': 'application/json',
                 'max_output_tokens': 8192,
+                'thinking_config': {'thinking_budget': 0},
                 'http_options': {'timeout': 60_000},
             },
         )
@@ -263,7 +264,7 @@ def call_llm_qa(provider: str, client, store_name: str, reviews: list, question:
                 response = client.models.generate_content(
                     model=MODEL_NAME_GEMINI,
                     contents=prompt,
-                    config={'response_mime_type': 'application/json'},
+                    config={'response_mime_type': 'application/json', 'thinking_config': {'thinking_budget': 0}},
                 )
                 raw_text = getattr(response, 'text', None)
             else:  # deepseek / openai_compatible
@@ -327,7 +328,7 @@ def call_llm_summary(provider: str, client, store_name: str, reviews: list,
                 response = client.models.generate_content(
                     model=MODEL_NAME_GEMINI,
                     contents=prompt,
-                    config={'response_mime_type': 'application/json'},
+                    config={'response_mime_type': 'application/json', 'thinking_config': {'thinking_budget': 0}},
                 )
                 raw_text = getattr(response, 'text', None)
             else:  # deepseek / openai_compatible

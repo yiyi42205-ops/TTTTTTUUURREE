@@ -39,11 +39,12 @@ def load_qa_template() -> str:
 
 
 def build_review_payload(reviews: list) -> list:
-    """Shapes reviews into {id, text} as documented in the new audit_prompt.txt.
-    No stars, daysElapsed, isSpikePeriod, or signals — LLM only scores I/A/D."""
+    """Shapes reviews into {id, stars, text} for the audit prompt.
+    Stars are included so the LLM can detect star-text contradictions."""
     return [
         {
             'id': i,
+            'stars': r.get('stars', 5),
             'text': r.get('text', '') or '',
         }
         for i, r in enumerate(reviews)
