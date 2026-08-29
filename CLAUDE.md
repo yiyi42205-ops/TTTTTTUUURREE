@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 疑騙真星 TrueRating is a tool that audits Google Maps restaurant reviews for authenticity. Restaurants in Taiwan commonly run "check-in for a free dish" / "5-star review for a drink" promotions that inflate their star rating with non-experience-driven reviews. Given a Google Maps store URL, the app scrapes recent reviews, runs a two-stage audit pipeline (local heuristics + LLM semantic review) to flag likely "washed" reviews, and produces a trust-weighted "Filtered Rating" alongside the official rating. See [`docs/TRUE_RATING_LOGIC.md`](./docs/TRUE_RATING_LOGIC.md) for the exact scoring math (Stage 1 rules, Stage 2 confidence formula, Trust Score / Filtered Rating aggregation) — don't re-derive it from code, it's spelled out there.
 
+## Deployment
+
+- **Hosting**: Fly.io (`fly.toml`, app name `truerating`, region `nrt` Tokyo)
+- **CI**: `.github/workflows/ci.yml` — runs `pytest tests/` and `npm test` (vitest) on every push/PR to `main`
+- **CD**: `.github/workflows/deploy.yml` — on push to `main`, runs CI then `flyctl deploy --remote-only`
+- **Container**: `Dockerfile` at repo root; production serves the Vite-built frontend as static files from Flask
+- **Persistent storage**: Fly volume mounted at `/data`, `DB_PATH=/data/cache.db`
+
 ## Workflow
 
 This is a multi-contributor project. Push rules:
@@ -22,10 +30,10 @@ Standard PR flow:
 ## Commands
 
 - `npm i` — install frontend dependencies
-- `npm run dev:scraper` — start the Flask backend (`review_scraper/server.py`, port 5001), which serves `/api/scrape`, `/api/audit-rules`, and `/api/audit`. Must be running for Stage 1 heuristic audit, scraping, and Stage 2 Gemini audit to work (the frontend calls the backend for all three).
+- `npm run dev:scraper` — start the Flask backend (`review_scraper/server.py`, port 5001), which serves `/api/scrape`, `/api/audit-rules`, `/api/audit`, `/api/store-summary`, `/api/summarize`, `/api/stats`. Must be running for all backend features (the frontend calls the backend for everything).
 - `npm run dev` — start the Vite dev server. Vite proxies `/api/*` to `http://127.0.0.1:5001`, so `npm run dev:scraper` needs to be running alongside it (two terminals, or via `./run.sh`).
 - `npm run build` — production build (`vite build`)
-- `./run.sh` — interactive one-shot setup + run script (macOS-oriented): detects a compatible Python (3.9–3.13), creates `review_scraper/venv`, installs `review_scraper/requirements.txt`, installs the Playwright Chromium browser, prompts to set up `.env` (`GEMINI_API_KEY`, `APIFY_TOKEN`) if missing, then starts both `npm run dev:scraper` (backgrounded) and `npm run dev`. This is the recommended first-run path. (No longer mentions Ollama — that path was removed entirely.)
+- `./run.sh` — interactive one-shot setup + run script (macOS-oriented): detects a compatible Python (3.9–3.13), creates `review_scraper/venv`, installs `review_scraper/requirements.txt`, installs the Playwright Chromium browser, prompts to set up `.env` (`GEMINI_API_KEY`, `APIFY_TOKEN`) if missing, then starts both `npm run dev:scraper` (backgrounded) and `npm run dev`. This is the recommended first-run path.
 - `.env` (not committed) needs `GEMINI_API_KEY` (required — server.py refuses to start without it) and `APIFY_TOKEN` (optional — falls back to Playwright only if `ENABLE_PLAYWRIGHT_FALLBACK=true`, see Architecture). See `.env.example`.
 - Python offline evaluation scripts live in `eval/` (not a test suite — see below), run with the venv Python from the repo root, e.g. `review_scraper/venv/bin/python eval/evaluate.py restaurant_data`:
   - `eval/evaluate.py` — runs the Stage 1 rule engine over labeled CSVs in `restaurant_data/`, reports precision/recall/F1 against human labels
@@ -36,9 +44,9 @@ Standard PR flow:
 **Audit mode** (`VITE_AUDIT_MODE` env var): `production` (default) caps Stage 2 at 15 reviews with stratified sampling; `evaluate` removes the cap for full-coverage offline evaluation. Always use `evaluate` mode when running evaluation scripts against the frontend pipeline.
 
 **Testing:**
-- `npm test` — runs vitest (`src/app/utils/auditEngine.test.ts`): covers `aggregateAuditedReviews` weighting/Trust Score/Filtered Rating, `mergeStage2Results`, and `computeStage2Confidence` (structural vs. content routing).
-- `review_scraper/venv/bin/python -m pytest tests/` — pytest suite covering `/api/audit-rules` (Stage 1 rule engine endpoint), `/api/audit`, `/api/scrape` (Apify/Playwright/cache), `normalize_review`, `prompt_builder`, `gemini_client` batching, `rule_engine` unit tests (`audit_review`, `run_stage1_audit`, signal detection), and the cross-language signal fixture.
-- There is **no lint script and no `tsconfig.json`** in this repo, but there **is** a test suite (Vitest + pytest, see above) — don't assume untested just because there's no CI config visible.
+- `npm test` — runs vitest (`src/app/utils/auditEngine.test.ts`): covers `aggregateAuditedReviews` weighting/Trust Score/Filtered Rating (including unaudited weight path), `mergeStage2Results`, and `computeStage2Confidence` (structural vs. content routing).
+- `review_scraper/venv/bin/python -m pytest tests/` — pytest suite covering `/api/audit-rules`, `/api/audit`, `/api/scrape`, `/api/store-summary`, `/api/summarize`, `normalize_review`, `prompt_builder`, `llm_client` batching, `rule_engine` unit tests, `stage2_rules`, and the cross-language signal fixture.
+- CI runs both test suites automatically on push/PR to `main` (`.github/workflows/ci.yml`).
 
 ## Architecture
 
@@ -54,17 +62,23 @@ Known gotcha already hit once: `apify_client`'s `ApifyClient.actor(...).call(...
 ### (2) Audit: Gemini only, key server-side
 `POST /api/audit` in `server.py` is the only Stage 2 path — there is no local/Ollama option anymore (removed entirely) and Gemini is never called from the browser (moved server-side so the API key never reaches the client). `GEMINI_API_KEY` is read from `.env` at startup; missing it raises `RuntimeError` immediately (fail fast, not a silent no-op). Reviews are batched (`llm_client.make_batches`, ~40/batch, sorted by `daysElapsed`) and sent up to 5 batches concurrently via `ThreadPoolExecutor`. `prompt_builder.py` builds the prompt from `review_scraper/audit_prompt.txt`.
 
-**LLM-only-scores architecture**: The LLM only outputs I/A/D scores (1–5) + a short reasoning per review. `isWashed`, `issueType`, `reason`, and `confidenceScore` are all determined by `stage2_rules.py` on the server. The prompt sends only `{id, text}` per review — no stars, signals, or time info. This means changing thresholds only requires re-running the rule function against cached scores, no API calls needed.
+**LLM model**: `gemini-2.5-flash-lite` (also supports DeepSeek and OpenAI-compatible providers via `provider` parameter).
 
-I/A/D scores are cached in `stage2_scores` SQLite table (PK: `review_id, model, prompt_version`), where `review_id = "{place_id}:{username}"` and `prompt_version` is the sha256 prefix of `audit_prompt.txt`. Stale scores from older prompts are never mixed with newer ones.
+**LLM-only-scores architecture**: The LLM only outputs I/A/D scores (1–5) + a short reasoning per review. `isWashed`, `issueType`, `reason`, and `confidenceScore` are all determined by `stage2_rules.py` on the server. The prompt sends `{id, stars, text}` per review (stars included so LLM can detect star-text contradictions). This means changing thresholds only requires re-running the rule function against cached scores, no API calls needed.
+
+**LLM typo recovery**: `llm_client.py`'s `_validate_score_item()` has an extensive `_TYPO_MAP` that corrects common Gemini misspellings of field names (e.g. `descriptionGranarity` → `descriptionGranularity`, `incentiveIntegration` → `incentiveIntensity`). Also recovers missing `id` fields when all items lack `id` but count matches batch size (positional assignment).
+
+I/A/D scores are cached in `stage2_scores` SQLite table (PK: `review_id, model, prompt_version`), where `review_id = "{place_id}:{username}"` and `prompt_version` is the sha256 prefix of the **scoring criteria section** of `audit_prompt.txt` (everything before `# 輸出格式`). This way, changing output format instructions doesn't invalidate the score cache. Stale scores from older prompts are never mixed with newer ones.
 
 ### (3) Stage 2 confidence: content vs. structural, routed by `verdictBasis`
 `auditEngine.ts`'s `computeStage2Confidence(item, context)` branches on what actually triggered the verdict:
 - **`verdictBasis: "structural"`** (Stage 1 rule 2.6 only — structural template detection now happens entirely in Stage 1, not via LLM) — confidence is a weighted composite of `similarCount`, `hotTermMaxRatio`, `nearbyLongReviewCount`, mapped to **60–95**.
 - **`verdictBasis: "content"`** (all Stage 2 LLM results, plus Stage 1 incentive/content verdicts) — `agreement^1.5` formula. For Stage 2, confidence is now computed server-side in `stage2_rules.py` and returned in the API response; the frontend no longer calls `computeStage2Confidence` for Stage 2 items. The function is still used for Stage 1 structural routing in tests.
 
-### (4) Stage 1 `issueType` categories, including `low_info`
-`audit_review(review, context)` in `review_scraper/rule_engine.py` returns one of: `'incentive'` (explicit keyword match, including contextual "送" check), `'template'` (exact-duplicate 2-gram/75%, or an escalated short review, or Gemini's structural verdict), `'discrepancy'` (Gemini-only, semantic mismatch), `'no_text'` (star-only reviews), `'low_info'`, or `null` (genuinely ambiguous — the only case sent to Stage 2).
+### (4) Stage 1 `issueType` categories, including `low_info` and `unaudited`
+`audit_review(review, context)` in `review_scraper/rule_engine.py` returns one of: `'incentive'` (explicit keyword match, including contextual "送" check), `'template'` (exact-duplicate 2-gram/75%, or an escalated short review), `'no_text'` (star-only reviews), `'low_info'`, or `null` (genuinely ambiguous — the only case sent to Stage 2).
+
+After Stage 2 merge, `mergeStage2Results()` in `auditEngine.ts` marks any `issueType: null` review that Stage 2 didn't cover as `'unaudited'`. Unaudited reviews get a fixed weight of 0.65 in `aggregateAuditedReviews()`, decoupled from the confidence system (not derived from `confidenceScore`).
 
 `low_info`: a short/generic review (e.g. "好吃") defaults to `isWashed: false`, confidence 55 (weight 0.55) — short text alone is not washing evidence. It only escalates to a washed `'template'` verdict when *also* co-occurring with a review-volume spike period (`isSpikePeriod`) or a high cross-review `similarCount` (≥2) — i.e. only when there's a second, independent signal pointing at deliberate templating. `context: { isSpikePeriod?, similarCount? }` is threaded in by `run_stage1_audit`, which has the whole-store review list needed to derive them; `audit_review` can't determine either from a single review.
 
@@ -75,33 +89,47 @@ The Stage 1 rule engine lives in one place: `review_scraper/rule_engine.py`. Bot
 
 - `rule_engine.py` contains: `RuleConfig` dataclass (all thresholds), `audit_review()` (per-review heuristic), `run_stage1_audit()` (store-level orchestrator returning `auditedReviews` + `signals`), and all signal detection functions (`detect_templates`, `detect_similarity_signals`, `detect_hot_term_signals`, `detect_nearby_long_review_counts`, `detect_spike_months`, `detect_low_info_and_escalated`).
 - `evaluate_v2.py` imports `RuleConfig` and `run_stage1_audit` from `rule_engine`, calling the same orchestrator that powers `POST /api/audit-rules`. CSV PascalCase rows are converted to lowercase keys via `_normalize_csv_row()`. Evaluation-specific code (`confusion_matrix`, `run_param_sweep`, `sample_for_llm`, `run_llm_sample_mode`, `DEFAULT_SWEEP`) stays in evaluate_v2.
-- `auditEngine.ts` retains only types/interfaces (`AuditResult`, `ShopStats`, `SimilaritySignal`, `HotTermSignal`, `Stage2Item`, `Stage2SignalContext`) and Stage 2 functions (`computeStage2Confidence`, `mergeStage2Results`, `aggregateAuditedReviews`).
+- `auditEngine.ts` retains only types/interfaces (`AuditResult`, `ShopStats`, `SimilaritySignal`, `HotTermSignal`, `Stage2Item`, `Stage2SignalContext`) and Stage 2 functions (`computeStage2Confidence`, `mergeStage2Results`, `aggregateAuditedReviews`). All Stage 1 rule logic has been migrated to `review_scraper/rule_engine.py`.
 - Cross-language golden fixture: `tests/test_evaluate_v2_signal_mirrors.py` and `auditEngine.test.ts` still assert the same hardcoded expected values for `detect_hot_term_signals` / `computeNearbyLongReviewCounts`, but now the Python side is the single source and the TS side only validates the values that the frontend receives from the backend.
 
-### Frontend (`src/`)
-A flat 3-page React app (not a component-library-driven one, despite ~20 `@radix-ui/*`/`@mui/*` packages listed in `package.json` — they're unused scaffolding from the original Figma Make template and can be ignored).
+### (6) Store summary & QA
+- `POST /api/store-summary` — generates warnings + recommendations from non-washed reviews using `call_llm_summary()`. Caches results in `summary_cache` table. Filters out washed and empty reviews, caps at 150 sorted by text length.
+- `POST /api/summarize` — QA endpoint: answers user questions about a store's reviews using `call_llm_qa()`. Anonymizes usernames before sending to LLM, restores them in response. Cached in `qa_cache` table. Rate-limited per IP per store (`qa_rate_limit` table).
 
-- `src/app/routes.ts` — react-router v7 `createBrowserRouter`: `/` (`Home.tsx`), `/analyzer` (`Analyzer.tsx`), `/results` (`Results.tsx`). Data is passed between pages via `navigate(path, { state })`, not URL params.
+### Frontend (`src/`)
+A 5-page React app (not a component-library-driven one, despite ~20 `@radix-ui/*`/`@mui/*` packages listed in `package.json` — they're unused scaffolding from the original Figma Make template and can be ignored).
+
+- `src/app/routes.ts` — react-router v7 `createBrowserRouter`: `/` (`Home.tsx`), `/analyzer` (`Analyzer.tsx`), `/results` (`Results.tsx`), `/history` (`History.tsx`), `/settings` (`Settings.tsx`). Data is passed between pages via `navigate(path, { state })`, not URL params.
 - `src/app/pages/Analyzer.tsx` — input form: preset restaurants (bundled demo dataset) or paste Google Maps URLs (POSTed to `/api/scrape`). No API key input anywhere — the Gemini key lives server-side in `.env`.
-- `src/app/pages/Results.tsx` — Stage 1: calls `POST /api/audit-rules` to get audited reviews and precomputed signals from the backend, then `aggregateAuditedReviews()` to produce `ShopStats`. Stage 2: uses the backend signals (`similarity`, `hotTerm`, `nearbyLongReviewCounts`, `spikeMonths`) to build the Gemini payload for ambiguous reviews, routes each response through `computeStage2Confidence`, merges via `mergeStage2Results`, re-aggregates via `aggregateAuditedReviews`. UI: `low_info` reviews get a neutral gray badge (not the red "washed" style); a washed verdict below 50% confidence shows "疑似洗評" in muted amber instead of "判定：灌水洗評", and suppresses the "二階 AI 攔截" certainty chip.
-- `src/app/utils/auditEngine.ts` — types/interfaces (`AuditResult`, `ShopStats`, `SimilaritySignal`, `HotTermSignal`) and Stage 2 functions only (`computeStage2Confidence`, `mergeStage2Results`, `aggregateAuditedReviews`). All Stage 1 rule logic has been migrated to `review_scraper/rule_engine.py`.
+- `src/app/pages/Results.tsx` — Stage 1: calls `POST /api/audit-rules` to get audited reviews and precomputed signals from the backend, then `aggregateAuditedReviews()` to produce `ShopStats`. Stage 2: uses the backend signals (`similarity`, `hotTerm`, `nearbyLongReviewCounts`, `spikeMonths`) to build the Gemini payload for ambiguous reviews, merges via `mergeStage2Results`, re-aggregates via `aggregateAuditedReviews`. UI: `low_info` reviews get a neutral gray badge; `unaudited` reviews get a gray "未複審" badge without confidence display; a washed verdict below 50% confidence shows "疑似洗評" in muted amber.
+- `src/app/pages/History.tsx` — browsing history of previously analyzed stores.
+- `src/app/pages/Settings.tsx` — user settings (API keys, preferences).
+- `src/app/utils/auditEngine.ts` — types/interfaces (`AuditResult`, `ShopStats`, `SimilaritySignal`, `HotTermSignal`) and Stage 2 functions only (`computeStage2Confidence`, `mergeStage2Results`, `aggregateAuditedReviews`). `AuditResult.issueType` includes `'unaudited'` for reviews not covered by Stage 2.
+- `src/app/components/TutorialModal.tsx` — 5-step onboarding tutorial (input → analysis → report → Apify token → Gemini API key).
+- `src/app/components/results/ReviewInspector.tsx` — expandable review list with search and filter tabs (all, washed, Stage 1, Stage 2, clean, unaudited).
 - `src/app/utils/csvParser.ts` + `src/app/data/restaurantsData.ts` — hand-rolled CSV parser that loads 18 CSVs from `restaurant_data/` via Vite's `?raw` import (enabled by `assetsInclude` in `vite.config.ts`) to build the built-in demo dataset.
 - `vite.config.ts` — `@` alias → `src/`; a `figmaAssetResolver()` plugin (template leftover); dev-server proxy `/api` → `http://127.0.0.1:5001`.
 - Styling is Tailwind v4 via `@tailwindcss/vite` — `postcss.config.mjs` is intentionally empty (v4 doesn't need manual PostCSS config).
 
 ### Backend (`review_scraper/`)
-- `server.py` — Flask app (port 5001), `GET /`, `POST /api/scrape`, `POST /api/audit-rules`, `POST /api/audit`. See (1), (2), and (5) above.
+- `server.py` — Flask app (port 5001), `GET /`, `POST /api/scrape`, `POST /api/audit-rules`, `POST /api/audit`, `POST /api/store-summary`, `POST /api/summarize`, `GET /api/stats`. See (1), (2), (5), and (6) above.
 - `rule_engine.py` — the canonical Stage 1 rule engine. See (4) and (5) above.
 - `apify_scraper.py` — primary scraper, calls the Apify actor.
 - `scraper.py` — Playwright + BeautifulSoup4 + `playwright-stealth` fallback. Hardcoded Google Maps CSS selectors (`div.jftiEf`, `span.kvMYJc`, `span.rsqaWe`, `span.wiI7pd`), fragile to DOM changes. `parse_relative_time()` converts relative dates to absolute.
-- `cache_store.py` — SQLite cache layer (`cache.db`, gitignored). Three tables: `scrape_cache` (scraped reviews keyed by place_id), `search_query_map` (URL/query → place_id mapping), `audit_cache` (Stage 1 audit results keyed by place_id, 7-day TTL). See (1).
-- `batch_crawl.py` — local Playwright batch pre-crawl script (Issue #15). Supports `--resume`, `--split N`, `--merge-cache`, checkpoint-based progress. 1695 stores crawled.
+- `cache_store.py` — SQLite cache layer (`cache.db`, gitignored). Eight tables: `scrape_cache` (scraped reviews by place_id), `search_query_map` (URL/query → place_id), `audit_cache` (Stage 1 results by place_id, 7-day TTL), `stage2_scores` (I/A/D scores by review_id+model+prompt_version), `summary_cache` (store summary), `qa_cache` (QA answers), `qa_rate_limit` (per-IP rate limiting), `visitor_log` (analytics).
+- `batch_crawl.py` — local Playwright batch pre-crawl script (Issue #15). Supports `--resume`, `--split N`, `--merge-cache`, checkpoint-based progress.
 - `batch_audit.py` — batch Stage 1 audit script (Issue #16). Reads all entries from `scrape_cache`, runs `run_stage1_audit()`, writes results to `audit_cache`. Supports `--dry-run` and `--force`.
-- `normalize.py` — `normalize_review()`, unifies Playwright's PascalCase fields and the (future/current) Apify actor's lowercase `text`/`textTranslated` fields into one shape.
-- `prompt_builder.py` — builds the Stage 2 prompt from `audit_prompt.txt`. Each review is sent as `{id, text}` only (no signals). Exposes `get_prompt_version()` for cache keying.
-- `llm_client.py` — batching (time-sorted) + Gemini/DeepSeek response JSON parsing/repair + per-item validation (5 required fields, id range, score range 1–5).
+- `normalize.py` — `normalize_review()`, unifies Playwright's PascalCase fields and the Apify actor's lowercase `text`/`textTranslated` fields into one shape.
+- `prompt_builder.py` — builds the Stage 2 prompt from `audit_prompt.txt`. Each review is sent as `{id, stars, text}`. Exposes `get_prompt_version()` — hashes only the scoring criteria section (before `# 輸出格式`) for cache keying.
+- `llm_client.py` — batching (time-sorted) + Gemini/DeepSeek/OpenAI-compatible response JSON parsing/repair + per-item validation (5 required fields: `id`, `reasoning`, `incentiveIntensity`, `sentimentAuthenticity`, `descriptionGranularity`; id range, score range 1–5) + typo map for common LLM field name misspellings + missing-id positional recovery.
 - `stage2_rules.py` — post-LLM rule engine: `judge_from_scores(I, A, D, is_spike)` determines `(isWashed, issueType)`, `compute_content_confidence()` calculates confidence, `build_stage2_result()` composes the full result object.
 - `audit_prompt.txt` — the Stage 2 prompt template. LLM outputs only `{id, reasoning, I, A, D}` — no verdict, no issueType, no verdictBasis. Security directive wraps review data in randomized XML tags (Issue #22).
+
+### Scripts (`scripts/`)
+- `prerun_stage2.py` — batch Stage 2 prerun for all stores in scrape_cache. Runs Stage 1, identifies ambiguous reviews, sends uncached ones to Gemini, saves I/A/D scores. Supports `--dry-run`, `--force`, `--limit`, `--test`, `--batch-size`, `--delay`. Fail-fast on 3 consecutive store failures (to avoid burning API quota on outages). Summary distinguishes "完成" vs "中斷" on early termination.
+- `prerun_summary.py` — batch store summary prerun.
+- `validate_stage2_iad.py` — validation script for Stage 2 I/A/D scores.
+- `validate_structural_rule.py` — validation script for structural template rules.
 
 ### Data (`restaurant_data/`, `gemini_prompts/`)
 - `restaurant_data/` holds hand-labeled CSVs organized as `<類別>__<有洗|沒洗>/` (category, e.g. 餐廳/飲料店/觀光店/連鎖店, crossed with washed/clean). These back both the frontend demo dataset and the offline `eval/*.py` scripts.
@@ -116,11 +144,14 @@ A flat 3-page React app (not a component-library-driven one, despite ~20 `@radix
 Offline evaluation scripts (not part of the test suite). Run from the repo root with the venv Python, e.g. `review_scraper/venv/bin/python eval/evaluate.py restaurant_data`. Generated output files (`results.json`, `report.md`, `tune_results.json`, `llm_input.json`) are gitignored.
 
 ### Tests
-- `src/app/utils/auditEngine.test.ts` (Vitest) — `aggregateAuditedReviews` weighting/Trust Score/Filtered Rating, `mergeStage2Results` (Stage 1 verdict preservation), `computeStage2Confidence` (structural vs. content routing regression).
+- `src/app/utils/auditEngine.test.ts` (Vitest) — `aggregateAuditedReviews` weighting/Trust Score/Filtered Rating (including unaudited fixed-weight path), `mergeStage2Results` (Stage 1 verdict preservation, unaudited marking), `computeStage2Confidence` (structural vs. content routing regression).
 - `tests/` (pytest, run with the `review_scraper/venv` Python):
   - `test_rule_engine.py` — `audit_review` unit tests (keyword, "送" context, no_text, low_info, escalation), `run_stage1_audit` integration tests (duplicates, signals structure), `/api/audit-rules` endpoint tests (happy path, validation, incentive/duplicate detection).
   - `test_evaluate_v2_signal_mirrors.py` — cross-language golden fixture for `detect_hot_term_signals` / `detect_nearby_long_review_counts` (now imports directly from `rule_engine`).
   - `test_normalize.py`, `test_audit_api.py`, `test_apify_scraper.py` (incl. the `Run`-object regression test), `test_gemini_client.py`, `test_prompt_builder.py`.
+  - `test_stage2_rules.py` — `judge_from_scores`, `compute_content_confidence`, `build_stage2_result` unit tests.
+  - `test_summarize_api.py` — `/api/store-summary` endpoint tests (golden case, cache hit, validation, LLM failure, washed review filtering).
+  - `test_qa_api.py` — `/api/summarize` endpoint tests (success, validation, rate limiting, cache hit).
   - `tests/conftest.py` puts both `review_scraper/` and the repo root on `sys.path` and stubs `GEMINI_API_KEY` so importing `server` doesn't require a real key.
 
 ### Known limitations
@@ -136,4 +167,4 @@ Offline evaluation scripts (not part of the test suite). Run from the repo root 
 - **No dish-name dictionary** — `computeHotTermSignals`' "hot term" detection is a pure n-gram frequency heuristic, not real NLP/NER.
 - **`nearbyLongReviewCount` fidelity gap** — see Known limitations above.
 - **`similarCount >= 1` threshold in the structural-template rule** (`audit_prompt.txt` rule 4a) is intentionally permissive — not yet validated against a large enough labeled dataset.
-- **No CI configuration** — `npm run test` / `pytest tests/` exist and pass locally but nothing runs them automatically on push/PR.
+- **Unaudited weight is provisional** — the 0.65 fixed weight for unaudited reviews (`aggregateAuditedReviews`) is a placeholder pending parameter sweep with review-level ground truth (#67).
