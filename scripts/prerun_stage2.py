@@ -120,6 +120,7 @@ def main():
     total_ambiguous = 0
     total_to_send = 0
     total_cached = 0
+    stores_with_ambiguous = 0
     stores_processed = 0
     stores_failed = 0
     stores_skipped = 0
@@ -146,6 +147,8 @@ def main():
             if not ambiguous:
                 stores_skipped += 1
                 continue
+
+            stores_with_ambiguous += 1
 
             # Build review_ids and check cache
             review_ids = [f"{place_id}:{r.get('username', '')}" for _, r in ambiguous]
@@ -265,17 +268,24 @@ def main():
 
     elapsed = time.time() - start
     est_cost = total_to_send * COST_PER_REVIEW_USD
+    stores_iterated = stores_with_ambiguous + stores_skipped + stores_failed
+    aborted = stores_iterated < len(all_stores)
 
     print(f'\n{"=" * 60}')
     if args.dry_run:
         print('DRY RUN 完成')
+    elif aborted:
+        print(f'Stage 2 預跑中斷 ({elapsed:.1f}s)')
     else:
         print(f'Stage 2 預跑完成 ({elapsed:.1f}s)')
     print(f'{"=" * 60}')
     print(f'  店家總數:      {len(all_stores)}')
-    print(f'  有 ambiguous:  {stores_processed + stores_failed}')
-    print(f'  跳過(無/已快取): {stores_skipped}')
-    print(f'  ambiguous 總數: {total_ambiguous}')
+    print(f'  已遍歷:        {stores_iterated}/{len(all_stores)}')
+    if aborted:
+        print(f'  ⚠️  未遍歷:     {len(all_stores) - stores_iterated}')
+    print(f'  有 ambiguous:  {stores_with_ambiguous}')
+    print(f'  跳過(無 ambiguous): {stores_skipped}')
+    print(f'  ambiguous 總數: {total_ambiguous} (僅已遍歷的店家)')
     print(f'  已快取:        {total_cached}')
     print(f'  需送 LLM:      {total_to_send}')
     print(f'  成功:          {stores_processed}')

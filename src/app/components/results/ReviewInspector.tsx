@@ -15,9 +15,9 @@ interface ReviewInspectorProps {
   result: ShopStats;
   storeIndex: number;
   inspectSearch: string;
-  inspectFilter: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean';
+  inspectFilter: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' | 'unaudited';
   onSearchChange: (value: string) => void;
-  onFilterChange: (value: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean') => void;
+  onFilterChange: (value: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' | 'unaudited') => void;
   expandedCoT: { [key: string]: boolean };
   onToggleCoT: (storeIndex: number, reviewIndex: number) => void;
 }
@@ -48,6 +48,7 @@ export const ReviewInspector = forwardRef<ReviewInspectorHandle, ReviewInspector
 
   const stage1Count = result.auditedReviews.filter(r => r.audit.isWashed && !r.audit.reasoningPath).length;
   const stage2Count = result.auditedReviews.filter(r => r.audit.isWashed && Boolean(r.audit.reasoningPath)).length;
+  const unauditedCount = result.auditedReviews.filter(r => r.audit.issueType === 'unaudited').length;
 
   const filteredReviews = result.auditedReviews.filter(r => {
     const matchesSearch =
@@ -59,18 +60,22 @@ export const ReviewInspector = forwardRef<ReviewInspectorHandle, ReviewInspector
 
     if (inspectFilter === 'all') return true;
     if (inspectFilter === 'washed') return r.audit.isWashed;
-    if (inspectFilter === 'clean') return !r.audit.isWashed;
+    if (inspectFilter === 'clean') return !r.audit.isWashed && r.audit.issueType !== 'unaudited';
     if (inspectFilter === 'stage1') return r.audit.isWashed && !r.audit.reasoningPath;
     if (inspectFilter === 'stage2') return r.audit.isWashed && Boolean(r.audit.reasoningPath);
+    if (inspectFilter === 'unaudited') return r.audit.issueType === 'unaudited';
     return true;
   });
+
+  const cleanCount = result.auditedReviews.filter(r => !r.audit.isWashed && r.audit.issueType !== 'unaudited').length;
 
   const filterTabs: { id: typeof inspectFilter; label: string }[] = [
     { id: 'all', label: `全部 (${result.auditedReviews.length})` },
     { id: 'washed', label: `結構標記 (${result.suspiciousReviews})` },
     { id: 'stage1', label: `Stage 1 (${stage1Count})` },
     { id: 'stage2', label: `Stage 2 (${stage2Count})` },
-    { id: 'clean', label: `自然評論 (${result.totalReviews - result.suspiciousReviews})` },
+    { id: 'clean', label: `自然評論 (${cleanCount})` },
+    ...(unauditedCount > 0 ? [{ id: 'unaudited' as const, label: `未複審 (${unauditedCount})` }] : []),
   ];
 
   return (
@@ -177,6 +182,7 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
   const { audit } = review;
   const isWashed = audit.isWashed;
   const isLowInfo = audit.issueType === 'low_info';
+  const isUnaudited = audit.issueType === 'unaudited';
   const isLowConfidenceWashed = isWashed && audit.confidenceScore < 50;
   const hasCoT = !!audit.reasoningPath;
   // Unscored ambiguous review: Stage 1 found nothing, Stage 2 hasn't run yet
@@ -197,6 +203,9 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
       badgeBg = 'bg-[var(--semantic-danger)]/10 border-[var(--semantic-danger)]/20 text-[var(--semantic-danger)]';
       badgeLabel = '標記：符合結構特徵';
     }
+  } else if (isUnaudited) {
+    badgeBg = 'bg-surface-3 border-hairline text-ink-subtle';
+    badgeLabel = '未複審';
   } else if (isLowInfo) {
     badgeBg = 'bg-surface-3 border-hairline text-ink-subtle';
     badgeLabel = '低資訊';
@@ -214,7 +223,7 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
     auditBoxClass = isLowConfidenceWashed
       ? 'bg-[var(--semantic-warning)]/5 border-[var(--semantic-warning)]/15 text-[var(--semantic-warning)]'
       : 'bg-[var(--semantic-danger)]/5 border-[var(--semantic-danger)]/15 text-[var(--semantic-danger)]';
-  } else if (isLowInfo || isPendingReview) {
+  } else if (isUnaudited || isLowInfo || isPendingReview) {
     auditBoxClass = 'bg-surface-3 border-hairline text-ink-subtle';
   } else {
     auditBoxClass = 'bg-[var(--semantic-success)]/5 border-[var(--semantic-success)]/15 text-[var(--semantic-success)]';
@@ -222,12 +231,14 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
 
   const verdictIcon = isWashed
     ? <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-    : (isLowInfo || isPendingReview)
+    : (isUnaudited || isLowInfo || isPendingReview)
     ? <HelpCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
     : <Check className="w-3.5 h-3.5 shrink-0 mt-0.5" />;
 
   const verdictLabel = isWashed
     ? (isLowConfidenceWashed ? '疑似結構異常' : '標記：符合結構特徵')
+    : isUnaudited
+    ? '未經 AI 複審'
     : isPendingReview
     ? '待 AI 複審'
     : isLowInfo
@@ -265,7 +276,7 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
       <div className={`p-3 rounded-lg border text-xs leading-relaxed ${auditBoxClass}`}>
         <div className="flex items-start gap-1.5 font-medium flex-wrap mb-1">
           {verdictIcon}
-          <span>{verdictLabel}{!isPendingReview ? ` (${audit.confidenceScore}% 信心度)` : ''}</span>
+          <span>{verdictLabel}{(!isPendingReview && !isUnaudited) ? ` (${audit.confidenceScore}% 信心度)` : ''}</span>
           {isWashed && !isLowConfidenceWashed && (
             hasCoT ? (
               <span className="ml-1 bg-[var(--semantic-warning)]/15 text-[var(--semantic-warning)] text-[10px] font-medium px-1.5 py-0.5 rounded border border-[var(--semantic-warning)]/20">

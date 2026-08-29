@@ -58,7 +58,7 @@ export function Results() {
 
   // Review Inspector Search & Filter states for each shop index
   const [inspectSearch, setInspectSearch] = useState<{ [key: number]: string }>({});
-  const [inspectFilter, setInspectFilter] = useState<{ [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' }>({});
+  const [inspectFilter, setInspectFilter] = useState<{ [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' | 'unaudited' }>({});
 
   // Backend signals from /api/audit-rules, keyed by store ID
   const [shopSignals, setShopSignals] = useState<{ [storeId: string]: {
@@ -116,7 +116,7 @@ export function Results() {
       setShopResults(computed);
 
       const initialSearch: { [key: number]: string } = {};
-      const initialFilter: { [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' } = {};
+      const initialFilter: { [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' | 'unaudited' } = {};
       computed.forEach((_, idx) => {
         initialSearch[idx] = '';
         initialFilter[idx] = 'all';
@@ -189,7 +189,7 @@ export function Results() {
       setShopSignals(newSignals);
 
       const initialSearch: { [key: number]: string } = {};
-      const initialFilter: { [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' } = {};
+      const initialFilter: { [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' | 'unaudited' } = {};
       computed.forEach((_, idx) => {
         initialSearch[idx] = '';
         initialFilter[idx] = 'all';

@@ -12,9 +12,12 @@ _TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'audit_prompt.txt')
 _QA_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'qa_prompt.txt')
 _SUMMARY_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'summarize_prompt.txt')
 
-# PROMPT_VERSION = first 8 hex chars of the prompt template's sha256.
-# Stored alongside cached scores so stale results from an older prompt
-# are never mixed with results from a newer one.
+# PROMPT_VERSION = first 8 hex chars of the sha256 of the scoring-criteria
+# section of audit_prompt.txt (everything before "# 輸出格式").  Only changes
+# to the scoring rubric invalidate the cache; output-format tweaks (e.g.
+# reasoning length cap) do not.
+_SCORING_SECTION_END = '# 輸出格式'
+
 _template_cache: dict = {}
 
 
@@ -23,12 +26,14 @@ def load_template() -> str:
         with open(_TEMPLATE_PATH, 'r', encoding='utf-8') as f:
             text = f.read()
         _template_cache['text'] = text
-        _template_cache['version'] = hashlib.sha256(text.encode()).hexdigest()[:8]
+        # Hash only the scoring criteria (before output-format instructions)
+        scoring = text[:text.index(_SCORING_SECTION_END)]
+        _template_cache['version'] = hashlib.sha256(scoring.encode()).hexdigest()[:8]
     return _template_cache['text']
 
 
 def get_prompt_version() -> str:
-    """Return the 8-char sha256 prefix of the current audit_prompt.txt."""
+    """Return the 8-char sha256 prefix of the scoring criteria in audit_prompt.txt."""
     load_template()  # ensure cache is populated
     return _template_cache['version']
 

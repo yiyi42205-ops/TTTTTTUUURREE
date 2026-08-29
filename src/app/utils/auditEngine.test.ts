@@ -143,6 +143,23 @@ describe('aggregateAuditedReviews', () => {
     expect(result.trustScore).toBe(100);
     expect(result.suspiciousReviews).toBe(0);
   });
+
+  it('unaudited reviews use fixed 0.65 weight, not the confidence-based formula', () => {
+    const reviews = [
+      audited(review({ stars: 5 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: 'unaudited' }),
+      audited(review({ stars: 3 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: 'unaudited' }),
+      audited(review({ stars: 5 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
+    ];
+
+    const result = aggregateAuditedReviews('Unaudited Shop', reviews);
+
+    // unaudited weight = 0.65 (fixed), clean weight = 0.8
+    // weighted sum = 5*0.65 + 3*0.65 + 5*0.8 = 3.25 + 1.95 + 4.0 = 9.2
+    // weight total = 0.65 + 0.65 + 0.8 = 2.1
+    // filtered = 9.2 / 2.1 ≈ 4.38
+    expect(result.filteredRating).toBe(4.38);
+    expect(result.suspiciousReviews).toBe(0);
+  });
 });
 
 describe('mergeStage2Results', () => {
@@ -188,13 +205,14 @@ describe('mergeStage2Results', () => {
     expect(merged[0].audit).toEqual(geminiResult);
   });
 
-  it('leaves an issueType: null review unchanged when Gemini returned no matching result for it', () => {
+  it('marks an issueType: null review as unaudited when Gemini returned no matching result for it', () => {
     const stage1Audit: AuditResult = { isWashed: false, reason: 'stage1-none', confidenceScore: 80, issueType: null };
     const auditedReviews = [audited(review({ username: 'unmatched_user' }), stage1Audit)];
 
     const merged = mergeStage2Results(auditedReviews, {});
 
-    expect(merged[0].audit).toEqual(stage1Audit);
+    expect(merged[0].audit.issueType).toBe('unaudited');
+    expect(merged[0].audit.isWashed).toBe(false);
   });
 });
 

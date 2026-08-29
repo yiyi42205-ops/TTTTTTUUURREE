@@ -117,3 +117,54 @@ def test_store_summary_no_valid_reviews(client, monkeypatch):
     data = response.get_json()
     assert data["warnings"] == []
     assert data["recommendations"] == []
+
+
+def test_store_summary_missing_reviews(client):
+    response = client.post("/api/store-summary", json={"placeId": "ChIJ_test"})
+    assert response.status_code == 400
+    assert response.get_json()["code"] == "VALIDATION_ERROR"
+
+
+def test_store_summary_llm_failure(client, monkeypatch):
+    import server
+    monkeypatch.setattr(server, "get_cached_summary", lambda *args, **kwargs: None)
+    monkeypatch.setattr(server, "set_cached_summary", lambda *args, **kwargs: None)
+    monkeypatch.setattr(server, "call_llm_summary", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("API down")))
+
+    payload = {
+        "placeId": "ChIJ_fail",
+        "storeName": "失敗店",
+        "reviews": [{"text": "好吃的拉麵", "stars": 5}],
+    }
+
+    response = client.post("/api/store-summary", json=payload)
+    assert response.status_code == 502
+    assert response.get_json()["code"] == "LLM_FAILED"
+
+
+def test_store_summary_filters_washed_reviews(client, monkeypatch):
+    import server
+
+    captured_reviews = []
+    def fake_summary(provider, client, store_name, reviews, **kwargs):
+        captured_reviews.extend(reviews)
+        return {"warnings": [], "recommendations": []}
+
+    monkeypatch.setattr(server, "get_cached_summary", lambda *args, **kwargs: None)
+    monkeypatch.setattr(server, "set_cached_summary", lambda *args, **kwargs: None)
+    monkeypatch.setattr(server, "call_llm_summary", fake_summary)
+
+    payload = {
+        "placeId": "ChIJ_filter",
+        "storeName": "過濾測試店",
+        "reviews": [
+            {"text": "真的好吃", "stars": 4, "username": "clean_user"},
+            {"text": "好吃讚", "stars": 5, "username": "washed_user", "audit": {"isWashed": True}},
+            {"text": "", "stars": 5, "username": "empty_user"},
+        ],
+    }
+
+    response = client.post("/api/store-summary", json=payload)
+    assert response.status_code == 200
+    assert len(captured_reviews) == 1
+    assert captured_reviews[0].get("username") == "clean_user"
