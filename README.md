@@ -1,68 +1,59 @@
 # 疑騙真星 TrueRating
 
-> 一鍵分析 Google Maps 餐廳評論真實性,揪出「打卡送禮」換來的灌水五星,還原最接近真實體驗的星等。
+> 一鍵分析 Google Maps 餐廳評論真實性，揪出「打卡送禮」換來的灌水五星，還原最接近真實體驗的星等。
 
-許多餐廳透過「打卡送小菜」「五星送飲料」等行銷手法,換取大量非真實體驗導向的五星好評,導致 Google Maps 星級嚴重失真。本系統讓使用者只需貼上店家連結,即可在數十秒內獲得評價可信度分析、AI 濾水後的真實星等,以及重點負評摘要,降低踩雷機率。
+許多餐廳透過「打卡送小菜」「五星送飲料」等行銷手法，換取大量非體驗導向的五星好評，導致 Google Maps 星級嚴重失真。本系統讓使用者只需貼上店家連結或店名，即可秒出評價可信度分析、AI 濾水後的真實星等，以及重點負評摘要與推薦品項。
 
-![三種手法讓 Google Maps 星級嚴重失真:打卡換贈品、複製貼上刷評、空洞讚美與時間暴增](03-problem.png)
+![三種手法讓 Google Maps 星級嚴重失真](docs/images/03-problem.png)
 
 ---
 
 ## 核心功能
 
 - **評論真實性分析** — 偵測利益交換評論、樣板化評論與空洞短評
-- **真實星等還原** — 扣除可疑評論的權重後,重新計算 Filtered Rating
-- **信任度報告** — 輸出 Trust Score 與可解釋的判斷依據
-- **異常時間軸偵測** — 找出評論在特定期間異常暴增的洗評集中現象
-- **負評重點摘要** — 自動萃取低星評論中的真實痛點
-- **可視化呈現** — 以雷達圖、圓餅圖直觀展示分析結果
+- **真實星等還原** — 依信心指數加權，計算 Filtered Rating
+- **信任度評分** — Trust Score 量化整體評論生態可疑程度
+- **逐條判定理由** — 每則評論標註 issueType 與 I/A/D 語意維度分數
+- **店家總結** — AI 自動產出避雷提示與推薦品項
+- **AI 問答** — 根據真實評論回答使用者問題（支援 Gemini / DeepSeek / OpenAI 相容）
 
 ---
 
 ## 系統架構
 
-![系統架構總覽:PHASE A 資料前處理、PHASE B 兩階段混合審計、PHASE C 結果產出](01-architecture.png)
+![系統架構](docs/images/01-architecture.png)
 
-本系統採用兩階段混合式審計流水線(Two-Stage Hybrid Audit Pipeline):
+兩階段混合式審計流水線：
 
 ```
-使用者輸入 Google Maps 店家連結
+使用者輸入 Google Maps 店家連結或店名
         │
         ▼
 ┌─────────────────────────┐
-│  資料採集層               │  Apify（compass/Google-Maps-Reviews-Scraper，主要路徑）
-│  取得店家評論              │  失敗時 fallback 至本機 Playwright + BeautifulSoup（含 Stealth 反偵測補丁）
+│  資料層                   │  SQLite 快取（已收錄臺大周邊 1,500+ 家）
+│  Cache hit → 秒出結果     │  Cache miss → Apify 即時爬取
 └─────────────────────────┘
         │
         ▼
 ┌─────────────────────────┐
-│  資料清洗層               │  時間逆推演算法
-│  相對時間 → 絕對日期       │  「6 個月前」→ 2025-11-19
+│  Stage 1：規則引擎        │  促銷關鍵字、樣板相似度、
+│  Python (rule_engine.py) │  時間密度異常、low_info 偵測
+└─────────────────────────┘
+        │ (5 星 ambiguous 評論)
+        ▼
+┌─────────────────────────┐
+│  Stage 2：LLM 語意複審    │  Gemini 2.5 Flash Lite
+│  三維度 I/A/D 評分        │  server-side，key 不到前端
 └─────────────────────────┘
         │
         ▼
 ┌─────────────────────────┐
-│  Stage 1:本地規則引擎     │  關鍵字匹配 + 樣板相似度
-│  快速過濾顯性洗評          │  + 時間密度異常偵測
+│  加權計分引擎             │  confidence → weight
+│  aggregateAuditedReviews │  Filtered Rating / Trust Score
 └─────────────────────────┘
-        │ (邊界評論)
-        ▼
-┌─────────────────────────┐
-│  Stage 2:LLM 語意複審     │  Gemini 2.5 Flash（後端呼叫）
-│  深度分析模糊評論          │  三維度評分 + 思維鏈推理
-└─────────────────────────┘
-        │
-        ▼
-┌─────────────────────────┐
-│  加權計分引擎             │  Trust Score
-│  軟性篩選與星等還原        │  Filtered Rating
-└─────────────────────────┘
-        │
-        ▼
-   視覺化報告(前端渲染)
 ```
 
-判斷邏輯的完整數學公式與規則定義,請參閱 [`TRUE_RATING_LOGIC.md`](./docs/TRUE_RATING_LOGIC.md)。
+判斷邏輯的完整數學公式請參閱 [`docs/TRUE_RATING_LOGIC.md`](./docs/TRUE_RATING_LOGIC.md)。
 
 ---
 
@@ -70,54 +61,58 @@
 
 | 層級 | 技術 |
 |------|------|
-| 前端 | Vite + React (TypeScript)、Chart.js |
-| 後端 | Python |
-| 爬蟲 | Apify（compass/Google-Maps-Reviews-Scraper，主要路徑）；Playwright、BeautifulSoup、playwright-stealth（本機備援） |
-| AI 引擎 | Gemini 2.5 Flash(伺服器端呼叫) |
-| 資料格式 | JSON / CSV |
+| 前端 | Vite + React 18 (TypeScript)、Tailwind v4 |
+| 後端 | Flask (Python)、gunicorn |
+| 爬蟲 | Apify (主路徑)；Playwright + stealth (可選備援) |
+| AI 引擎 | Gemini 2.5 Flash Lite (預設)、DeepSeek、OpenAI 相容 |
+| 資料庫 | SQLite (8 tables, persistent volume) |
+| 部署 | Fly.io (CI via GitHub Actions, CD on push to main) |
 
 ---
 
 ## 快速開始
-### 快速啟動腳本（MacOS）
-```
+
+### 一鍵啟動 (macOS)
+
+```bash
 ./run.sh
 ```
 
-### 手動啟動 (Windows/MacOS/Linux)
-1. 複製 `.env.example` 為 `.env`，並填入 `GEMINI_API_KEY`（AI 審計用）與 `APIFY_TOKEN`（爬蟲主路徑用，至 [Apify Console](https://console.apify.com/) 取得）：
-   ```
-   cp .env.example .env
-   ```
-   若未填寫 `APIFY_TOKEN`，或 Apify 執行失敗（額度用盡、逾時等），系統會自動改用本機 Playwright 備援路徑爬取評論。
-2. 安裝並啟動前後端：
-   ```
-   npm i
-   npm run dev:scraper
-   npm run dev
-   ```
-   `npm run dev:scraper` 啟動 Flask 後端（爬蟲 + Gemini 審計，讀取 `.env` 中的 `GEMINI_API_KEY`），需與 `npm run dev` 同時執行。
+自動建立 Python venv、安裝依賴、提示設定 `.env`，然後同時啟動前後端。
 
-啟動後於瀏覽器開啟提示的本機網址,貼上 Google Maps 店家連結即可開始分析。
+### 手動啟動
 
-### 執行測試
+```bash
+# 1. 設定環境變數
+cp .env.example .env
+# 填入 GEMINI_API_KEY（必要）、APIFY_TOKEN（選填）
+
+# 2. 安裝
+npm i
+cd review_scraper && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ..
+
+# 3. 啟動（兩個 terminal）
+npm run dev:scraper   # Flask 後端 :5001
+npm run dev           # Vite 前端 (proxy /api → :5001)
 ```
-pytest tests/
+
+### 測試
+
+```bash
+npm test                                           # vitest (前端)
+review_scraper/venv/bin/python -m pytest tests/    # pytest (後端)
 ```
 
 ---
 
 ## 使用方式
 
-![三步看穿好評背後的真相:選擇/輸入店家、AI 審計執行、比較真實口碑](02-how-it-works.png)
+![使用流程](docs/images/02-how-it-works.png)
 
-1. 在首頁輸入框貼上 1 至 3 家 Google Maps 店家連結
-2. 點擊「開始分析」,系統自動爬取近期評論並執行兩階段審計
-3. 等待數十秒,檢視分析報告:
-   - 官方原始星等 vs AI 濾水後真實星等(雙軌並列)
-   - Trust Score 與判斷依據
-   - 評論時間分佈、樣板比例等視覺化圖表
-   - 可向下滾動查閱標註好絕對日期的原始評論清單,自行覆核 AI 判斷
+1. 輸入 Google Maps 網址、分享連結，或直接打店名
+2. 資料庫已收錄的店家秒出結果，不需要任何 API 金鑰
+3. 未收錄的店家需要 Apify Token（免費帳號每月 $5 額度）
+4. 報告包含：原始 vs 過濾後星等、Trust Score、評論成分、逐條判定
 
 ---
 
@@ -125,98 +120,50 @@ pytest tests/
 
 ```
 TrueRating/
-├── src/                    前端原始碼 (React + TypeScript)
-├── review_scraper/         評論爬蟲與後端 (Python，Flask + Apify/Playwright)
-├── restaurant_data/        標注資料集 (CSV,依類別與洗評狀態分層)
-│   ├── 餐廳__有洗/
-│   ├── 餐廳__沒洗/
-│   ├── 飲料店__有洗/
-│   └── 飲料店__沒洗/
-├── docs/                   專案文件
-│   ├── TRUE_RATING_LOGIC.md  判斷邏輯與數學公式說明
-│   ├── HANDOFF.md            期末版本改動交接
-│   └── TrueRating_發布前大方向.md
-├── eval/                   離線評估腳本
-│   ├── evaluate.py           Stage 1 規則引擎 F1 評估
-│   ├── evaluate_v2.py        超參數網格搜尋 + Stage 2 LLM 抽樣
-│   ├── sample_fp.py          False Positive 抽樣 → Gemini prompt
-│   └── check_data.py         CSV 資料品質檢查
-├── gemini_prompts/         預生成的 Gemini prompt (sample_fp.py 產出)
-├── guidelines/             開發規範文件
-├── tests/                  測試
-├── ATTRIBUTIONS.md         第三方資源致謝
-├── vite.config.ts          Vite 設定
-├── vercel.json             部署設定
-└── package.json
+├── src/                    前端 (React + TypeScript)
+│   ├── app/pages/          Analyzer, Results, History, Settings, Home
+│   ├── app/components/     TutorialModal, ReviewInspector, DisclaimerModal
+│   └── app/utils/          auditEngine.ts (types + Stage 2 functions)
+├── review_scraper/         後端 (Flask)
+│   ├── server.py           API endpoints
+│   ├── rule_engine.py      Stage 1 規則引擎（唯一實作）
+│   ├── llm_client.py       Gemini/DeepSeek/OpenAI batching + validation
+│   ├── stage2_rules.py     Stage 2 post-LLM 判定
+│   ├── cache_store.py      SQLite cache layer (8 tables)
+│   ├── prompt_builder.py   Prompt 建構 + randomized XML tags
+│   ├── apify_scraper.py    Apify actor wrapper
+│   ├── scraper.py          Playwright fallback
+│   └── normalize.py        Review 格式統一
+├── scripts/                批次腳本
+│   ├── prerun_stage2.py    Stage 2 預跑 (batch Gemini)
+│   └── prerun_summary.py   Store summary 預跑
+├── eval/                   離線評估（非測試套件）
+├── restaurant_data/        人工標注 CSV（18 家，6,000+ 則）
+├── tests/                  pytest + vitest
+├── docs/                   設計文件
+│   └── TRUE_RATING_LOGIC.md  判斷邏輯與數學公式
+├── fly.toml                Fly.io 部署設定
+├── Dockerfile              容器建構
+└── .github/workflows/      CI (pytest + vitest) / CD (Fly.io)
 ```
-
----
-
-## 評估成果
-
-本系統以 18 家餐廳、6,000 餘則人工標注評論進行系統性評估(資料集採類別 × 洗評狀態的分層平衡設計)。
-
-### Stage 1 規則引擎
-
-| 設定 | Precision | Recall | F1 |
-|------|-----------|--------|-----|
-| 原版門檻 (0.05) | 100% | 22.2% | 0.364 |
-| 調參後門檻 (0.01) | 69.2% | 100% | **0.818** |
-
-透過超參數網格搜尋,將判定門檻最佳化後,F1 提升 125%,且召回率達 100%(真實有洗評店家零漏網)。
-
-### Stage 2 LLM 雙向修正
-
-| 修正方向 | 成功率 |
-|---------|--------|
-| 補抓漏網洗評(提升 Recall) | 6 / 6 = 100% |
-| 平反被冤枉店家(提升 Precision) | 1 / 4 = 25% |
-
-整合系統 F1 預估介於 0.70 至 0.85。完整評估方法、失敗案例分析與限制,請參閱專案內的測試報告文件。
 
 ---
 
 ## 已知限制
 
-- **部署限制**:爬蟲主路徑已改為 Apify(雲端執行,不受此限制影響);僅當 Apify 失敗觸發本機 Playwright 備援路徑時,才需要模擬瀏覽器於本機執行,因此該備援路徑無法部署至 Serverless 平台(如 Vercel),但不影響主要爬蟲流程。
-- **樣本範圍**:為控制成本,單次分析最近約 100 則評論,可能錯過店家的長期評價趨勢。
-- **語言侷限**:規則庫與 prompt 專為繁體中文餐飲評論設計,對其他語言偵測率較低。
-- **邊界判定**:「真實但話少的客人」與「敷衍洗評」在文字特徵上難以區分,存在誤判風險。
-- **爬蟲永續性**:僅備援路徑(本機 Playwright)才需擔心此風險——其依賴的 CSS 定位器高度依賴 Google Maps 現行網頁結構,平台改版時可能失效;主路徑(Apify)由第三方代管維護,此風險由 Apify 端吸收。
+- **資料庫範圍**：目前收錄臺大周邊 1,500+ 家餐廳，其他區域需使用者提供 Apify Token 即時爬取。
+- **樣本範圍**：單次分析約 100–500 則最新評論。
+- **語言侷限**：規則與 prompt 專為繁體中文餐飲評論設計。
+- **邊界判定**：「真實但話少的客人」與「敷衍洗評」文字特徵難以區分，存在誤判風險。
 
 ---
 
-## 未來工作
+## License
 
-- **架構重構**:將爬蟲與後端拆分為獨立服務,改為前後端分離架構以支援雲端部署。
-- **評論者行為訊號**:引入評論者跨店歷史行為作為輔助判斷,降低誤判率。
-- **多模型投票**:結合多個 LLM 的判定結果,僅在多數同意時確認洗評。
-- **資料格式驗證**:於資料採集層加入 schema validation,杜絕格式異常。
-- **領域專用模型**:累積足量標注後,fine-tune 繁中餐飲評論專用分類器。
-
----
-
-## 開發團隊
-
-第 C 組|Web App 開發課程期末專題
-
-| 角色 | 負責項目 |
-|------|---------|
-| Project Manager | 專案進度控管、Prompt 測試腳本、API 管理 |
-| Data Scraper | Google Maps 爬蟲、資料清洗與過濾 |
-| Backend & Database | 伺服器搭建、LLM API 串接、資料儲存 |
-| Frontend UI/UX | 網頁主架構、頁面設計 |
-| Data Visualization | 資料視覺化圖表、風險雷達圖 |
-| QA & Deployment | 自動化測試、系統評估、部署 |
-
----
-
-## 致謝
-
-本專案使用多項開源工具,完整清單請見 [`ATTRIBUTIONS.md`](./ATTRIBUTIONS.md)。
+[MIT](LICENSE)
 
 ---
 
 ## 免責聲明
 
-本系統提供的分析結果僅供參考,屬於「評論行為模式分析」而非「食品品質鑑定」或對店家的最終定論。系統同時並列官方原始星等與分析後星等,並公開判斷依據,最終評斷權保留予使用者。
+本系統提供的分析結果僅供參考，屬於「評論行為模式分析」而非「食品品質鑑定」或對店家的最終定論。系統同時並列官方原始星等與分析後星等，並公開判斷依據，最終評斷權保留予使用者。

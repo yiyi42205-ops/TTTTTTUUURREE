@@ -28,4 +28,12 @@ results.json
 report.md
 tune_results.json
 llm_input.json
+eval/scrape_report.json
+eval/stage2_cost_report.json
+
+# One-off scraper data
+review_scraper/stores_discovered.json
+review_scraper/stores_recrawl_5.json
+review_scraper/recrawl_remaining.json
+review_scraper/stores_retry_low.json
 
