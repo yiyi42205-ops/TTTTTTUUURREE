@@ -87,8 +87,11 @@ def build_summary_prompt(store_name: str, reviews: list) -> str:
         }
         for i, r in enumerate(reviews)
     ]
+    random_tag = f"review_data_{secrets.token_hex(4)}"
     return (
         template
+        .replace('<review_data>', f'<{random_tag}>')
+        .replace('</review_data>', f'</{random_tag}>')
         .replace('{store_name}', store_name or '待審查店家')
         .replace('{reviews_json}', json.dumps(payload, ensure_ascii=False, indent=2))
     )
@@ -105,8 +108,14 @@ def build_qa_prompt(store_name: str, reviews: list, question: str) -> str:
         }
         for i, r in enumerate(reviews)
     ]
+    review_tag = f"review_data_{secrets.token_hex(4)}"
+    question_tag = f"user_question_{secrets.token_hex(4)}"
     return (
         template
+        .replace('<review_data>', f'<{review_tag}>')
+        .replace('</review_data>', f'</{review_tag}>')
+        .replace('<user_question>', f'<{question_tag}>')
+        .replace('</user_question>', f'</{question_tag}>')
         .replace('{store_name}', store_name or '待審查店家')
         .replace('{reviews_json}', json.dumps(payload, ensure_ascii=False, indent=2))
         .replace('{user_question}', question)
