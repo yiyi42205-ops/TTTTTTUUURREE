@@ -21,8 +21,6 @@
 
 ## 系統架構
 
-![系統架構](docs/images/01-architecture.png)
-
 兩階段混合式審計流水線：
 
 ```
