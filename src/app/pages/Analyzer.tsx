@@ -12,7 +12,7 @@ export function Analyzer() {
   const [showTutorial, setShowTutorial] = useState(false);
 
   const [scrapeUrls, setScrapeUrls] = useState<string[]>(['', '', '']);
-  const [maxReviews, setMaxReviews] = useState(50);
+  const [maxReviews, setMaxReviews] = useState(500);
   const [scrapeLoadingStep, setScrapeLoadingStep] = useState('');
   const [scrapeError, setScrapeError] = useState('');
 
@@ -144,7 +144,7 @@ export function Analyzer() {
             if (data?.code === 'CREDENTIALS_REQUIRED') {
               throw { credentialsRequired: true, message: data.error };
             }
-            throw new Error(data?.error || '伺服器爬取失敗，請確認本地爬蟲伺服器已開啟，且網址正確。');
+            throw new Error(data?.error || '伺服器爬取失敗，請確認網址正確或稍後再試。');
           }
 
           if (!data?.reviews || data.reviews.length === 0) {
@@ -167,7 +167,7 @@ export function Analyzer() {
           };
         } catch (e: any) {
           if (e.credentialsRequired) throw e;
-          throw new Error(`[${storeName}] 爬取失敗: ${e.message || '請確認本地後端服務已開啟'}`);
+          throw new Error(`[${storeName}] 爬取失敗: ${e.message || '請確認網址正確或稍後再試'}`);
         }
       });
 
@@ -182,7 +182,7 @@ export function Analyzer() {
         setShowCredentials(true);
         setScrapeError('此店家尚未收錄於資料庫，需要您提供 API 金鑰才能即時爬取。請在下方填入後重試。');
       } else {
-        setScrapeError(e.message || '爬取過程中發生未知錯誤，請確認本地爬蟲伺服器已開啟。');
+        setScrapeError(e.message || '爬取過程中發生未知錯誤，請稍後再試。');
       }
     } finally {
       clearInterval(interval);
@@ -279,7 +279,7 @@ export function Analyzer() {
                     <h3 className="text-sm font-medium text-ink">請提供您的 API 金鑰</h3>
                   </div>
                   <p className="text-xs text-ink-subtle leading-relaxed">
-                    此店家不在資料庫快取中，需透過 Apify 即時爬取評論。審計階段使用 Gemini AI（選填，不填則使用伺服器預設金鑰）。
+                    此店家不在資料庫快取中，需透過 Apify 即時爬取評論。AI 審計金鑰為選填，不填則使用伺服器預設金鑰。
                   </p>
 
                   {/* Apify Token */}
@@ -319,7 +319,7 @@ export function Analyzer() {
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="text-xs font-medium text-ink-subtle">
-                        Gemini API Key（選填）
+                        AI API Key（選填，Gemini / DeepSeek 等）
                       </label>
                       <a
                         href="https://aistudio.google.com/app/apikey"
@@ -436,9 +436,9 @@ export function Analyzer() {
             </div>
             <input
               type="range"
-              min="10"
-              max="200"
-              step="10"
+              min="50"
+              max="500"
+              step="50"
               value={maxReviews}
               onChange={(e) => setMaxReviews(parseInt(e.target.value))}
               className="w-full accent-primary h-1 bg-surface-3 rounded-lg appearance-none cursor-pointer"
@@ -480,7 +480,7 @@ export function Analyzer() {
                 雙階段審查：正則規則引擎 + AI 語意防護網
               </h3>
               <p className="text-sm text-ink-subtle leading-relaxed">
-                第一階段由 Python 規則引擎掃描評論結構特徵（促銷關鍵字、模板化用語等）進行初步分類；第二階段將模糊評論送至 Gemini 進行語意分析，識別不自然的評論模式。資料庫已收錄的店家可直接查詢；未收錄的店家需要您提供 Apify Token 即時爬取。
+                第一階段由 Python 規則引擎掃描評論結構特徵（促銷關鍵字、模板化用語等）進行初步分類；第二階段將模糊評論送至 AI 進行語意分析，識別不自然的評論模式。資料庫已收錄的店家可直接查詢；未收錄的店家需要您提供 Apify Token 即時爬取。
               </p>
             </div>
             <div className="shrink-0">
