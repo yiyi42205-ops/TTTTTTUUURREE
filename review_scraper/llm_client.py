@@ -101,7 +101,25 @@ def _validate_score_item(item: dict, max_id: int) -> bool:
     if not isinstance(item, dict):
         return False
     # Fix common LLM typos in field names
-    _TYPO_MAP = {'descriptionGranarity': 'descriptionGranularity'}
+    _TYPO_MAP = {
+        # D field typos
+        'descriptionGranarity': 'descriptionGranularity',
+        'descriptionAuthenticity': 'descriptionGranularity',
+        'description_granularity': 'descriptionGranularity',
+        'description.granularity': 'descriptionGranularity',
+        'descriptionFluency': 'descriptionGranularity',
+        'descriptionGranicity': 'descriptionGranularity',
+        'descriptionAnalyticity': 'descriptionGranularity',
+        'descriptionGranistry': 'descriptionGranularity',
+        'descriptionGainularity': 'descriptionGranularity',
+        'descriptionGranenity': 'descriptionGranularity',
+        'descriptionSyntacticGranularity': 'descriptionGranularity',
+        # I field typos
+        'incentive_intensity': 'incentiveIntensity',
+        'incentiveIntegration': 'incentiveIntensity',
+        # A field typos
+        'sentiment_authenticity': 'sentimentAuthenticity',
+    }
     for typo, correct in _TYPO_MAP.items():
         if typo in item and correct not in item:
             item[correct] = item.pop(typo)
@@ -178,6 +196,13 @@ def call_llm_batch(provider: str, client, store_name: str, batch: list,
         try:
             raw_text = _call_llm_raw(provider, client, prompt, model_name=model_name)
             items = parse_llm_json(raw_text)
+
+            # If all items are missing 'id' but count matches batch,
+            # assign ids by position
+            if (len(items) == n and
+                    all(isinstance(it, dict) and 'id' not in it for it in items)):
+                for idx, it in enumerate(items):
+                    it['id'] = idx
 
             # Validate and deduplicate
             seen_ids = set()

@@ -4,7 +4,7 @@ export interface AuditResult {
   isWashed: boolean;
   reason: string;
   confidenceScore: number;
-  issueType: 'incentive' | 'template' | 'discrepancy' | 'no_text' | 'low_info' | null;
+  issueType: 'incentive' | 'template' | 'discrepancy' | 'no_text' | 'low_info' | 'unaudited' | null;
   reasoningPath?: string;
   incentiveIntensity?: number;
   sentimentAuthenticity?: number;
@@ -136,7 +136,9 @@ export function mergeStage2Results(
     if (aiStoreMap[r.username]) {
       return { ...r, audit: aiStoreMap[r.username] };
     }
-    return r;
+    // Stage 2 didn't cover this review — mark as unaudited so it gets
+    // independent weight instead of masquerading as a confident clean verdict.
+    return { ...r, audit: { ...r.audit, issueType: 'unaudited' as const } };
   });
 }
 
@@ -182,11 +184,20 @@ export function aggregateAuditedReviews(
     vague: 0, // Maps to 'discrepancy'
   };
 
+  // Weight for unaudited reviews: not derived from confidence. These reviews
+  // were ambiguous enough to warrant Stage 2 but didn't get sent (production
+  // cap or LLM drop). Treat them as moderately trustworthy — higher than
+  // low_info (0.55) but lower than a reviewed clean verdict (0.8).
+  // TODO: 暫定值，待參數掃描
+  const UNAUDITED_WEIGHT = 0.65;
+
   auditedReviews.forEach(({ stars, audit }) => {
-    // Compute review weight based on confidence score (no binary hard cut-off!)
-    const weight = audit.isWashed
-      ? 1 - (audit.confidenceScore / 100)
-      : (audit.confidenceScore / 100);
+    // Unaudited reviews get a fixed weight, decoupled from the confidence system
+    const weight = audit.issueType === 'unaudited'
+      ? UNAUDITED_WEIGHT
+      : audit.isWashed
+        ? 1 - (audit.confidenceScore / 100)
+        : (audit.confidenceScore / 100);
 
     // Accumulate original stats
     originalSum += stars;

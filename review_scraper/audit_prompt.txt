@@ -62,7 +62,7 @@
 [
   {
     "id": 與輸入一致的整數,
-    "reasoning": "40 字內繁體中文，指出決定 D 與 A 的關鍵字句",
+    "reasoning": "≤40字，禁止超過，違者整筆作廢重送",
     "incentiveIntensity": 1-5 整數,
     "sentimentAuthenticity": 1-5 整數,
     "descriptionGranularity": 1-5 整數
