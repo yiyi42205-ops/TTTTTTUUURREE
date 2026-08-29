@@ -1,15 +1,25 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Loader2, X, Globe, Sliders, ShieldCheck, Shield, AlertTriangle, ClipboardPaste, Key, ExternalLink, Eye, EyeOff, Info } from 'lucide-react';
 import { useIsPWA } from '../hooks/useIsPWA';
-import { TutorialModal } from '../components/TutorialModal';
+import { TutorialModal, TUTORIAL_STORAGE_KEY } from '../components/TutorialModal';
+import { DisclaimerModal, DISCLAIMER_STORAGE_KEY } from '../components/DisclaimerModal';
 
 export function Analyzer() {
   const navigate = useNavigate();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const isPWA = useIsPWA();
+
+  // First visit: auto-show tutorial, then disclaimer after tutorial closes
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem(TUTORIAL_STORAGE_KEY)) {
+      setShowTutorial(true);
+    }
+  }, []);
 
   const [scrapeUrls, setScrapeUrls] = useState<string[]>(['', '', '']);
   const [maxReviews, setMaxReviews] = useState(500);
@@ -232,7 +242,16 @@ export function Analyzer() {
         </div>
       </header>
 
-      {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
+      {showTutorial && (
+        <TutorialModal onClose={() => {
+          setShowTutorial(false);
+          // Chain: show disclaimer after tutorial if not yet accepted
+          if (!localStorage.getItem(DISCLAIMER_STORAGE_KEY)) {
+            setShowDisclaimer(true);
+          }
+        }} />
+      )}
+      {showDisclaimer && <DisclaimerModal />}
 
       <div className="container mx-auto px-4 py-8 max-w-3xl">
 

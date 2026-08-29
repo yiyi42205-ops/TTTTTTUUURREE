@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 
-const STORAGE_KEY = 'truerating_disclaimer_accepted';
+export const DISCLAIMER_STORAGE_KEY = 'truerating_disclaimer_accepted';
 
 export function DisclaimerModal() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) {
+    if (!localStorage.getItem(DISCLAIMER_STORAGE_KEY)) {
       setShow(true);
     }
   }, []);
@@ -14,7 +14,7 @@ export function DisclaimerModal() {
   if (!show) return null;
 
   const handleAccept = () => {
-    localStorage.setItem(STORAGE_KEY, '1');
+    localStorage.setItem(DISCLAIMER_STORAGE_KEY, '1');
     setShow(false);
   };
 

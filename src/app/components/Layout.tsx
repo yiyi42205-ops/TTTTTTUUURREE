@@ -2,7 +2,6 @@ import { Outlet, useNavigate, useLocation } from 'react-router';
 import { Search, Clock, Settings } from 'lucide-react';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { Footer } from './Footer';
-import { DisclaimerModal } from './DisclaimerModal';
 
 export function Layout() {
   const navigate = useNavigate();
@@ -32,7 +31,6 @@ export function Layout() {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-background font-sans overflow-hidden">
-      <DisclaimerModal />
       {/* Content Viewport */}
       <div className="flex-1 overflow-y-auto">
         <Outlet />
