@@ -1,30 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { Shield, Star, AlertTriangle, ArrowRight, Search, FileText, Sparkles, Clock, Info } from 'lucide-react';
-import { useEffect } from 'react';
+import { motion, useInView } from 'motion/react';
+import { Shield, ArrowRight, Search, Info, Star, FileText } from 'lucide-react';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { TutorialModal } from '../components/TutorialModal';
 
+/* ── animated counter ─────────────────────────────────── */
+function Counter({ target, suffix = '' }: { target: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (!inView) return;
+    const duration = 1400;
+    const start = performance.now();
+    function tick(now: number) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 4);          // easeOutQuart
+      setCount(Math.round(eased * target));
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }, [inView, target]);
+
+  return <div ref={ref}>{count.toLocaleString()}{suffix}</div>;
+}
+
+/* ── motion variants ──────────────────────────────────── */
+const stagger  = { hidden: {}, show: { transition: { staggerChildren: 0.12 } } };
+const fadeUp   = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } } };
+const fadeIn   = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.6 } } };
+
+/* ── feature data ─────────────────────────────────────── */
+const features = [
+  { icon: Shield,   title: '結構健康度',  desc: '偵測時間爆發、利益交換、樣板短評' },
+  { icon: Star,     title: '真實星等還原', desc: '信心加權過濾，還原自然口碑評分' },
+  { icon: FileText, title: '語意透視',    desc: 'LLM 深度剖析每則評論真偽' },
+];
+
+/* ── page ─────────────────────────────────────────────── */
 export function Home() {
   const navigate = useNavigate();
   const isPWA = useIsPWA();
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
-    if (isPWA) {
-      navigate('/analyzer', { replace: true });
-    }
+    if (isPWA) navigate('/analyzer', { replace: true });
   }, [isPWA, navigate]);
 
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-ink/10">
-      {/* Navigation Header */}
-      <header className="sticky top-0 z-50 bg-background border-b border-hairline px-4 md:px-8 py-3.5 flex items-center justify-between">
+      {/* ── header ── */}
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-hairline px-4 md:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
           <div className="bg-ink text-background w-8 h-8 rounded flex items-center justify-center">
             <Shield className="w-4.5 h-4.5" />
           </div>
-          <span className="font-sans font-semibold text-base text-ink tracking-[-0.4px]">
+          <span className="font-semibold text-base text-ink tracking-[-0.4px]">
             疑騙真星
             <span className="text-ink-subtle font-normal text-sm ml-1.5">TrueRating</span>
           </span>
@@ -40,113 +73,103 @@ export function Home() {
 
       {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
 
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-16 max-w-5xl">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-semibold mb-4 text-ink tracking-[-1px] leading-tight">
-            一鍵將評價「結構校正」<br className="md:hidden" />看清自然口碑
-          </h1>
-
-          <p className="text-base md:text-lg text-ink-subtle mb-10 max-w-xl mx-auto leading-relaxed">
-            過濾打卡送小菜、行銷操作、敷衍模板等結構異常評論。<br />
-            調用語意一致性大模型，還原 Google 地圖自然評分。
-          </p>
-
-          <button
-            onClick={() => navigate('/analyzer')}
-            className="bg-ink hover:bg-ink-muted text-background px-10 py-4 rounded text-lg font-medium transition-colors flex items-center gap-3 mx-auto cursor-pointer tracking-[-0.2px]"
+      {/* ── hero ── */}
+      <section className="container mx-auto px-4 pt-28 pb-24 max-w-3xl">
+        <motion.div className="text-center" variants={stagger} initial="hidden" animate="show">
+          <motion.h1
+            variants={fadeUp}
+            className="text-5xl md:text-[3.75rem] font-semibold text-ink tracking-[-1.5px] leading-[1.08] mb-5"
           >
-            進入比對分析儀
-            <Search className="w-5 h-5" />
-          </button>
+            看穿灌水好評
+            <br />
+            <span className="text-ink-subtle">還原真實星等</span>
+          </motion.h1>
+
+          <motion.p variants={fadeUp} className="text-lg text-ink-subtle mb-12 max-w-sm mx-auto leading-relaxed">
+            AI 驅動的 Google Maps 評論審計引擎
+          </motion.p>
+
+          <motion.div variants={fadeUp}>
+            <button
+              onClick={() => navigate('/analyzer')}
+              className="group bg-ink hover:bg-ink-muted text-background px-10 py-4 rounded-lg text-lg font-medium transition-all inline-flex items-center gap-3 cursor-pointer"
+            >
+              開始分析
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ── stats strip ── */}
+      <motion.section
+        className="border-y border-hairline bg-surface-1"
+        variants={fadeIn}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: '-60px' }}
+      >
+        <div className="container mx-auto px-4 py-10 max-w-2xl grid grid-cols-3 text-center gap-6">
+          {[
+            { value: 1500, suffix: '+', label: '家餐廳已收錄' },
+            { value: 2,    suffix: '',  label: '階段審計流水線' },
+            { value: 3,    suffix: '',  label: '種異常偵測維度' },
+          ].map((s) => (
+            <div key={s.label}>
+              <div className="text-3xl md:text-4xl font-semibold text-ink tracking-[-1px]">
+                <Counter target={s.value} suffix={s.suffix} />
+              </div>
+              <div className="text-sm text-ink-subtle mt-1">{s.label}</div>
+            </div>
+          ))}
         </div>
+      </motion.section>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
-          <div className="bg-surface-1 rounded p-6 border border-hairline">
-            <div className="w-10 h-10 bg-surface-3 rounded flex items-center justify-center mb-4">
-              <Shield className="w-5 h-5 text-ink-subtle" />
-            </div>
-            <h3 className="text-base font-semibold mb-2 text-ink tracking-[-0.4px]">結構健康度評分</h3>
-            <p className="text-sm text-ink-subtle leading-relaxed">
-              基於發布時間密度、短評樣板以及贈送利益特徵，精準計算店家的結構健康度得分。
-            </p>
-          </div>
+      {/* ── features ── */}
+      <section className="container mx-auto px-4 py-24 max-w-3xl">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-5"
+          variants={stagger}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: '-80px' }}
+        >
+          {features.map((f) => (
+            <motion.div
+              key={f.title}
+              variants={fadeUp}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className="bg-surface-1 rounded-lg p-6 border border-hairline hover:border-hairline-strong hover:shadow-sm transition-[border-color,box-shadow] cursor-default"
+            >
+              <f.icon className="w-6 h-6 text-ink-subtle mb-4" />
+              <h3 className="text-base font-semibold text-ink mb-2 tracking-[-0.3px]">{f.title}</h3>
+              <p className="text-sm text-ink-subtle leading-relaxed">{f.desc}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </section>
 
-          <div className="bg-surface-1 rounded p-6 border border-hairline">
-            <div className="w-10 h-10 bg-surface-3 rounded flex items-center justify-center mb-4">
-              <Star className="w-5 h-5 text-ink-subtle" />
-            </div>
-            <h3 className="text-base font-semibold mb-2 text-ink tracking-[-0.4px]">自然有機評分</h3>
-            <p className="text-sm text-ink-subtle leading-relaxed">
-              自動過濾結構異常的 5 星好評，加入信譽懲罰係數，生成經演算法校正後的客觀用餐評分。
-            </p>
-          </div>
-
-          <div className="bg-surface-1 rounded p-6 border border-hairline">
-            <div className="w-10 h-10 bg-surface-3 rounded flex items-center justify-center mb-4">
-              <FileText className="w-5 h-5 text-ink-subtle" />
-            </div>
-            <h3 className="text-base font-semibold mb-2 text-ink tracking-[-0.4px]">深度語意透視</h3>
-            <p className="text-sm text-ink-subtle leading-relaxed">
-              整合 LLM 思維鏈 (CoT) 剖析，指出每一則評價的隱形風險因素，提供最透明的審計日誌。
-            </p>
-          </div>
-        </div>
-
-        {/* Problem Statement Panel */}
-        <div className="bg-surface-1 rounded p-8 border border-hairline mb-16">
-          <h2 className="text-xl font-semibold mb-6 text-ink text-center tracking-[-0.4px]">
-            常見的 Google 地圖結構異常評論手法
+      {/* ── bottom CTA ── */}
+      <section className="container mx-auto px-4 pb-28 max-w-3xl">
+        <motion.div
+          className="text-center bg-surface-1 border border-hairline rounded-lg py-14 px-6"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="text-2xl font-semibold text-ink tracking-[-0.6px] mb-6">
+            別再被灌水評價騙了
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-start gap-3 bg-surface-2 rounded p-4 border border-hairline">
-              <Clock className="w-4 h-4 text-ink-subtle shrink-0 mt-0.5" />
-              <div>
-                <div className="font-medium text-ink text-sm mb-1">時間爆發性集中</div>
-                <div className="text-xs text-ink-subtle leading-relaxed">在數天至一週內短時間內集中湧入數十則內容相似的五星評價。</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 bg-surface-2 rounded p-4 border border-hairline">
-              <FileText className="w-4 h-4 text-ink-subtle shrink-0 mt-0.5" />
-              <div>
-                <div className="font-medium text-ink text-sm mb-1">敷衍語意模版</div>
-                <div className="text-xs text-ink-subtle leading-relaxed">重複出現「服務很好，餐點好吃，推薦！」等缺乏具體餐點細節的空泛語句。</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 bg-surface-2 rounded p-4 border border-hairline">
-              <Sparkles className="w-4 h-4 text-ink-subtle shrink-0 mt-0.5" />
-              <div>
-                <div className="font-medium text-ink text-sm mb-1">打卡送小菜/優惠</div>
-                <div className="text-xs text-ink-subtle leading-relaxed">提及「打卡送飲料」、「好評送甜點」等，以利益交換引導非自發性高分。</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 bg-surface-2 rounded p-4 border border-hairline">
-              <AlertTriangle className="w-4 h-4 text-ink-subtle shrink-0 mt-0.5" />
-              <div>
-                <div className="font-medium text-ink text-sm mb-1">評分與內文割裂</div>
-                <div className="text-xs text-ink-subtle leading-relaxed">給予 5 星滿分，但文字卻包含「很難吃、态度差、等很久」等負向語意反饋。</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="text-center bg-surface-1 border border-hairline rounded p-12">
-          <h2 className="text-2xl font-semibold mb-4 text-ink tracking-[-0.6px]">準備好辨別地圖上的評論結構了嗎？</h2>
-          <p className="text-sm md:text-base mb-8 text-ink-subtle max-w-lg mx-auto leading-relaxed">
-            系統支援一次輸入最多 3 間同類型店家進行「結構校正」與「自然口碑對比」，助您找到最實在的聚餐去處。
-          </p>
           <button
             onClick={() => navigate('/analyzer')}
-            className="bg-ink hover:bg-ink-muted text-background px-8 py-3.5 rounded text-base font-medium transition-colors flex items-center gap-2 mx-auto cursor-pointer"
+            className="group bg-ink hover:bg-ink-muted text-background px-8 py-3.5 rounded-lg text-base font-medium transition-all inline-flex items-center gap-2.5 cursor-pointer"
           >
-            立即啟動對比
-            <ArrowRight className="w-5 h-5" />
+            立即開始
+            <Search className="w-4.5 h-4.5 group-hover:scale-110 transition-transform" />
           </button>
-        </div>
-
-      </div>
+        </motion.div>
+      </section>
     </div>
   );
 }
