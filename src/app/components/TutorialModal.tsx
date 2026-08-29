@@ -82,16 +82,16 @@ const steps = [
       <div className="space-y-2">
         <p>
           報告底部可以向 AI 提問（例如「這家店推薦點什麼？」）。
-          此功能需要你自己的 <span className="font-medium">Gemini API Key</span>。
+          此功能需要你自己的 <span className="font-medium">AI API Key</span>。
         </p>
         <div className="bg-surface-2 border border-hairline rounded p-3 text-xs space-y-2">
-          <p className="font-medium text-ink">如何取得 Gemini API Key（免費）：</p>
-          <ol className="list-decimal pl-4 space-y-1 text-ink-subtle">
-            <li>前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline text-ink">Google AI Studio</a></li>
-            <li>點「Create API Key」</li>
-            <li>複製金鑰，貼到本站設定頁</li>
-          </ol>
-          <p className="text-ink-tertiary">免費方案每分鐘 15 次請求，日常使用足夠。</p>
+          <p className="font-medium text-ink">支援的 AI 服務（擇一即可）：</p>
+          <ul className="list-disc pl-4 space-y-1 text-ink-subtle">
+            <li><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline text-ink">Gemini</a> — 免費方案每分鐘 15 次請求</li>
+            <li><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer" className="underline text-ink">DeepSeek</a></li>
+            <li>任何 OpenAI 相容 API</li>
+          </ul>
+          <p className="text-ink-tertiary">取得金鑰後，貼到本站設定頁即可使用。</p>
         </div>
       </div>
     ),
