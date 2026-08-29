@@ -5,6 +5,7 @@ primary_region = 'nrt'
 
 [env]
   DB_PATH = "/data/cache.db"
+  CORS_ORIGINS = "https://truerating.fly.dev"
 
 [http_service]
   internal_port = 8080

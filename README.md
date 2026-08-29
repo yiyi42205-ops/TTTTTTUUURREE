@@ -124,7 +124,7 @@ pytest tests/
 ## 專案結構
 
 ```
-Google-Map-TrueRating/
+TrueRating/
 ├── src/                    前端原始碼 (React + TypeScript)
 ├── review_scraper/         評論爬蟲與後端 (Python，Flask + Apify/Playwright)
 ├── restaurant_data/        標注資料集 (CSV,依類別與洗評狀態分層)

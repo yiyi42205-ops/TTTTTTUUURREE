@@ -89,7 +89,13 @@ if DEEPSEEK_API_KEY:
         logger.warning("openai package not installed. DeepSeek backend will be unavailable.")
 
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
-CORS(app)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB request body limit
+
+_CORS_ORIGINS = os.getenv("CORS_ORIGINS", "").strip()
+if _CORS_ORIGINS:
+    CORS(app, origins=[o.strip() for o in _CORS_ORIGINS.split(",")])
+else:
+    CORS(app)  # dev fallback: allow all origins
 
 # Rate limiter — per IP, in-memory storage (resets on deploy, fine for basic protection)
 _limiter_enabled = os.getenv("TESTING") != "1"
@@ -211,11 +217,23 @@ def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tup
         base_url = headers.get("X-Custom-Base-URL", "").strip()
         if not user_api_key or not base_url:
             return None, ({"error": "自訂模型需要提供 API Key 與 Base URL。", "code": "CREDENTIALS_REQUIRED"}, 400)
+        # SSRF guard: only allow https:// base URLs to public hosts
+        try:
+            parsed_base = urlparse(base_url)
+        except Exception:
+            return None, ({"error": "Base URL 格式無效。", "code": "VALIDATION_ERROR"}, 400)
+        if parsed_base.scheme != "https":
+            return None, ({"error": "Base URL 必須使用 https://。", "code": "VALIDATION_ERROR"}, 400)
+        _host = (parsed_base.hostname or "").lower()
+        if _host in ("localhost", "") or _host.startswith("127.") or _host.startswith("10.") \
+                or _host.startswith("192.168.") or _host.startswith("169.254.") \
+                or _host.startswith("172.") and 16 <= int(_host.split(".")[1]) <= 31:
+            return None, ({"error": "Base URL 不可指向內部網路位址。", "code": "VALIDATION_ERROR"}, 400)
         try:
             return openai.OpenAI(api_key=user_api_key, base_url=base_url), None
         except Exception as e:
             logger.error(f"Failed to init custom OpenAI-compatible client: {e}")
-            return None, ({"error": f"無法初始化自訂模型 Client：{e}", "code": "INVALID_API_KEY"}, 400)
+            return None, ({"error": "無法初始化自訂模型 Client，請確認 API Key 與 Base URL。", "code": "INVALID_API_KEY"}, 400)
 
     return None, ({"error": f"不支援的 AI 模型：{provider}", "code": "VALIDATION_ERROR"}, 400)
 
@@ -253,10 +271,9 @@ def resolve_short_url(url: str) -> str:
     CID URLs (maps.google.com/?cid=) are NOT resolved here — Google requires
     JS rendering, so they fall through to Apify which handles them natively.
     """
-    _REDIRECT_HOSTS = {"share.google", "goo.gl", "maps.app.goo.gl"}
     try:
         parsed = urlparse(url)
-        if parsed.hostname in _REDIRECT_HOSTS:
+        if parsed.hostname in {"share.google", "goo.gl", "maps.app.goo.gl"}:
             req = urllib.request.Request(
                 url,
                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"},
@@ -270,6 +287,24 @@ def resolve_short_url(url: str) -> str:
         logger.warning(f"Failed to resolve short URL {url}: {e}")
     return url
 
+_ALLOWED_FETCH_HOSTS = {
+    "www.google.com", "google.com", "maps.google.com", "google.com.tw",
+    "www.google.com.tw", "maps.app.goo.gl", "goo.gl", "share.google",
+}
+
+
+def _is_allowed_url(url: str) -> bool:
+    """Reject URLs that could hit internal/private hosts (SSRF protection)."""
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return False
+        hostname = (parsed.hostname or "").lower()
+        return hostname in _ALLOWED_FETCH_HOSTS
+    except Exception:
+        return False
+
+
 def extract_place_id(url: str) -> str | None:
     # Fast path: check URL string itself for ChIJ (e.g. query_place_id=ChIJxxx, or /place/...ChIJ)
     url_match = re.search(r'(ChIJ[\w-]+)', url)
@@ -279,6 +314,11 @@ def extract_place_id(url: str) -> str | None:
         return place_id
 
     # Slow path: fetch the page HTML and search for ChIJ
+    # SSRF guard: only fetch from Google domains
+    if not _is_allowed_url(url):
+        logger.warning(f"extract_place_id rejected non-Google URL: {url}")
+        return None
+
     try:
         req = urllib.request.Request(
             url,
@@ -341,8 +381,8 @@ def scrape():
     
     max_reviews = data.get("maxReviews") or 50
     try:
-        max_reviews = int(max_reviews)
-    except ValueError:
+        max_reviews = min(max(int(max_reviews), 1), 500)
+    except (ValueError, TypeError):
         logger.warning(f"Invalid maxReviews value received: {data.get('maxReviews')}. Defaulting to 50.")
         max_reviews = 50
 
@@ -794,11 +834,7 @@ def store_summary():
 @limiter.limit("10 per minute")
 def summarize():
     start_time = time.time()
-    
-    # Extract real client IP in case server is behind a proxy (like Nginx)
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    ip = forwarded_for.split(",")[0].strip() if forwarded_for else request.remote_addr
-    
+    ip = request.remote_addr
     logger.info(f"POST /api/summarize request from IP: {ip}")
 
     data = request.get_json() or {}
