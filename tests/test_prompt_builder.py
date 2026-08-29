@@ -2,8 +2,8 @@ import re
 from prompt_builder import build_review_payload, build_prompt, get_prompt_version
 
 
-def test_build_review_payload_includes_id_and_text_only():
-    """New payload format: LLM only sees {id, text}, no signals."""
+def test_build_review_payload_includes_id_stars_and_text():
+    """Payload format: LLM sees {id, stars, text}, no signals."""
     reviews = [
         {
             'username': 'alice',
@@ -18,10 +18,10 @@ def test_build_review_payload_includes_id_and_text_only():
     payload = build_review_payload(reviews)
 
     assert payload[0]['id'] == 0
+    assert payload[0]['stars'] == 5
     assert payload[0]['text'] == '好吃'
     # No signals in payload
     assert 'username' not in payload[0]
-    assert 'stars' not in payload[0]
     assert 'maxSimilarity' not in payload[0]
     assert 'daysElapsed' not in payload[0]
 
