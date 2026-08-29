@@ -35,7 +35,7 @@ const fadeIn   = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { dur
 /* ── feature data ─────────────────────────────────────── */
 const features = [
   { icon: Shield,   title: '結構健康度',  desc: '偵測時間爆發、利益交換、樣板短評' },
-  { icon: Star,     title: '真實星等還原', desc: '信心加權過濾，還原自然口碑評分' },
+  { icon: Star,     title: '自然星等還原', desc: '信心加權過濾，還原自然口碑評分' },
   { icon: FileText, title: '語意透視',    desc: 'LLM 深度剖析每則評論真偽' },
 ];
 
@@ -82,7 +82,7 @@ export function Home() {
           >
             看穿灌水好評
             <br />
-            <span className="text-ink-subtle">還原真實星等</span>
+            <span className="text-ink-subtle">還原自然星等</span>
           </motion.h1>
 
           <motion.p variants={fadeUp} className="text-lg text-ink-subtle mb-12 max-w-sm mx-auto leading-relaxed">
@@ -109,19 +109,13 @@ export function Home() {
         whileInView="show"
         viewport={{ once: true, margin: '-60px' }}
       >
-        <div className="container mx-auto px-4 py-10 max-w-2xl grid grid-cols-3 text-center gap-6">
-          {[
-            { value: 1500, suffix: '+', label: '家餐廳已收錄' },
-            { value: 2,    suffix: '',  label: '階段審計流水線' },
-            { value: 3,    suffix: '',  label: '種異常偵測維度' },
-          ].map((s) => (
-            <div key={s.label}>
-              <div className="text-3xl md:text-4xl font-semibold text-ink tracking-[-1px]">
-                <Counter target={s.value} suffix={s.suffix} />
-              </div>
-              <div className="text-sm text-ink-subtle mt-1">{s.label}</div>
+        <div className="container mx-auto px-4 py-10 max-w-2xl flex justify-center">
+          <div className="text-center">
+            <div className="text-3xl md:text-4xl font-semibold text-ink tracking-[-1px]">
+              <Counter target={1500} suffix="+" />
             </div>
-          ))}
+            <div className="text-sm text-ink-subtle mt-1">家餐廳已收錄</div>
+          </div>
         </div>
       </motion.section>
 
@@ -159,7 +153,7 @@ export function Home() {
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-2xl font-semibold text-ink tracking-[-0.6px] mb-6">
-            別再被灌水評價騙了
+            別再被灌水評價騙了！
           </h2>
           <button
             onClick={() => navigate('/analyzer')}
