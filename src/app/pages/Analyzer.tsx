@@ -32,6 +32,7 @@ export function Analyzer() {
   const [geminiKey, setGeminiKey] = useState(() => sessionStorage.getItem('truerating_gemini_api_key') || '');
   const [showApifyToken, setShowApifyToken] = useState(false);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showKeyGuide, setShowKeyGuide] = useState(false);
 
   const handlePasteFromClipboard = useCallback(async () => {
     try {
@@ -293,12 +294,45 @@ export function Analyzer() {
                 className="overflow-hidden mb-6"
               >
                 <div className="bg-surface-2 rounded-xl p-5 border border-hairline space-y-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Key className="w-4 h-4 text-primary" />
-                    <h3 className="text-sm font-medium text-ink">請提供您的 API 金鑰</h3>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <Key className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-medium text-ink">自訂爬取設定</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowKeyGuide(v => !v)}
+                      className="w-6 h-6 rounded-full border border-hairline flex items-center justify-center text-ink-tertiary hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
+                      title="如何取得金鑰？"
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
                   </div>
+
+                  <AnimatePresence>
+                    {showKeyGuide && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="bg-surface-3 rounded-lg p-4 text-xs text-ink-subtle leading-relaxed space-y-2 mb-2">
+                          <p className="font-medium text-ink text-sm">如何查詢未收錄的店家？</p>
+                          <p>資料庫目前收錄臺大周邊 1,500+ 家餐廳。查詢其他地區的店家需要免費的 Apify Token 即時爬取評論。</p>
+                          <ol className="list-decimal list-inside space-y-1">
+                            <li>前往 <a href="https://apify.com/sign-up" target="_blank" rel="noreferrer" className="text-primary hover:text-primary-hover underline">apify.com</a> 註冊免費帳號（每月 $5 美元免費額度）</li>
+                            <li>到 <a href="https://console.apify.com/account/integrations" target="_blank" rel="noreferrer" className="text-primary hover:text-primary-hover underline">帳號設定 → Integrations</a> 複製 API Token</li>
+                            <li>貼到下方「Apify Token」欄位，點擊重試即可</li>
+                          </ol>
+                          <p>AI 審計金鑰為選填，不填則使用伺服器預設的免費模型。</p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <p className="text-xs text-ink-subtle leading-relaxed">
-                    此店家不在資料庫快取中，需透過 Apify 即時爬取評論。AI 審計金鑰為選填，不填則使用伺服器預設金鑰。
+                    此店家尚未收錄，需提供 Apify Token 即時爬取。
                   </p>
 
                   {/* Apify Token */}
@@ -365,6 +399,28 @@ export function Analyzer() {
                         {showGeminiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
+                  </div>
+
+                  {/* Max reviews slider */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="text-xs font-medium text-ink-subtle flex items-center gap-1.5">
+                        <Sliders className="w-3 h-3" />
+                        抓取評論筆數（每間商家）
+                      </label>
+                      <span className="text-[11px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                        {maxReviews} 筆
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="50"
+                      max="500"
+                      step="50"
+                      value={maxReviews}
+                      onChange={(e) => setMaxReviews(parseInt(e.target.value))}
+                      className="w-full accent-primary h-1 bg-surface-3 rounded-lg appearance-none cursor-pointer"
+                    />
                   </div>
 
                   <motion.button
@@ -441,27 +497,6 @@ export function Analyzer() {
                 </motion.div>
               );
             })}
-          </div>
-
-          <div className="rounded-xl p-4 bg-surface-2 border border-hairline mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-sm font-medium text-ink flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-ink-subtle" />
-                抓取評論筆數（每間商家）
-              </label>
-              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                {maxReviews} 筆
-              </span>
-            </div>
-            <input
-              type="range"
-              min="50"
-              max="500"
-              step="50"
-              value={maxReviews}
-              onChange={(e) => setMaxReviews(parseInt(e.target.value))}
-              className="w-full accent-primary h-1 bg-surface-3 rounded-lg appearance-none cursor-pointer"
-            />
           </div>
 
           <motion.button
