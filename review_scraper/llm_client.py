@@ -319,12 +319,25 @@ def call_llm_qa(provider: str, client, store_name: str, reviews: list, question:
 
 def parse_summary_llm_json(raw_text: str) -> dict:
     """Parse LLM response for store summary into {warnings, recommendations}."""
-    cleaned = _extract_json_block(_strip_markdown_fences(raw_text or ''))
+    stripped = _strip_markdown_fences(raw_text or '')
+    # For summary responses (dict with nested arrays), extract the outermost {...}
+    # instead of using _extract_json_block which prefers array matches.
+    obj_match = re.search(r'\{[\s\S]*\}', stripped)
+    cleaned = obj_match.group(0) if obj_match else stripped
     try:
         parsed = json.loads(cleaned)
     except json.JSONDecodeError as e:
-        raise ValueError(f'LLM 回傳內容非合法 JSON：{e}') from e
+        # LLM sometimes returns multiple JSON objects concatenated —
+        # try parsing just the first one via raw_decode
+        decoder = json.JSONDecoder()
+        try:
+            parsed, _ = decoder.raw_decode(cleaned.lstrip())
+        except (json.JSONDecodeError, ValueError):
+            raise ValueError(f'LLM 回傳內容非合法 JSON：{e}') from e
 
+    # LLM sometimes wraps the result in a list
+    if isinstance(parsed, list) and len(parsed) == 1 and isinstance(parsed[0], dict):
+        parsed = parsed[0]
     if not isinstance(parsed, dict):
         raise ValueError('LLM 回傳的內容不是有效的總結 JSON 格式')
 
