@@ -593,6 +593,9 @@ def navigate_to_place_reviews(page, url: str) -> bool:
     # If URL contains a bare place_id (no query name), visit Maps homepage
     # first (to get cookies/bypass bot detection), then navigate to the place.
     place_id_match = re.search(r'place_id:(ChIJ[\w-]+)', url)
+    # Also match bare ChIJ place_id strings (e.g. from batch_crawl merge)
+    if not place_id_match and re.fullmatch(r'ChIJ[\w-]+', url.strip()):
+        place_id_match = re.fullmatch(r'(ChIJ[\w-]+)', url.strip())
     if place_id_match:
         place_id = place_id_match.group(1)
         print(f"[Python Scraper] place_id URL detected: {place_id}")
