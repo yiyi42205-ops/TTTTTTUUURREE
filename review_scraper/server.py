@@ -24,7 +24,7 @@ from cache_store import (
     get_cached_summary, set_cached_summary,
     get_cached_scores, set_cached_scores,
     get_last_checked_at, set_last_checked_at, get_fetched_at,
-    log_visitor, get_visitor_stats,
+    log_visitor, get_visitor_stats, update_cached_metadata,
 )
 from prompt_builder import get_prompt_version
 from stage2_rules import build_stage2_result
@@ -399,8 +399,13 @@ def scrape():
             cached_meta = get_cached_metadata(target_place_id)
             logger.info(f"Cache hit for place_id: {target_place_id} ({len(cached)} reviews)")
             response = {"reviews": cached, "source": "cache", "place_id": target_place_id}
-            if cached_meta:
-                response["metadata"] = cached_meta
+            if not cached_meta:
+                cached_meta = {}
+            # Backfill title from original query if missing and query is a store name
+            if "title" not in cached_meta and not is_url and not original_query.startswith("ChIJ"):
+                cached_meta["title"] = original_query
+                update_cached_metadata(target_place_id, {"title": original_query})
+            response["metadata"] = cached_meta
 
             # Attach last_checked_at as dataAsOf for the frontend
             last_checked = get_last_checked_at(target_place_id)
