@@ -224,7 +224,8 @@ export function Results() {
 
       for (let idx = 0; idx < activeShopResults.length; idx++) {
         const result = activeShopResults[idx];
-        const id = storeIds[idx] || `custom_${idx}`;
+        const customShopsRef = (location.state?.customShops as Array<{ id: string }>) || [];
+        const id = storeIds[idx] || customShopsRef[idx]?.id || `custom_${idx}`;
         const reviews = result.auditedReviews;
 
         const signals = shopSignals[id];
@@ -265,7 +266,8 @@ export function Results() {
             };
           });
 
-          const placeId = storeIds[idx] || '';
+          const customShopsForId = (location.state?.customShops as Array<{ id: string }>) || [];
+          const placeId = storeIds[idx] || customShopsForId[idx]?.id || '';
           const llm = getLLMSettings();
           const response = await fetch('/api/audit', {
             method: 'POST',
@@ -331,7 +333,8 @@ export function Results() {
       setAiAuditResults(newAiResults);
 
       const updatedResults = activeShopResults.map((shop, idx) => {
-        const matchingId = storeIds[idx] || `custom_${idx}`;
+        const customShopsMatch = (location.state?.customShops as Array<{ id: string }>) || [];
+        const matchingId = storeIds[idx] || customShopsMatch[idx]?.id || `custom_${idx}`;
 
         if (!newAiResults[matchingId]) return shop;
 
@@ -360,7 +363,8 @@ export function Results() {
     shopResults.forEach((shop, idx) => {
       if (storeSummaries[idx] || isSummaryLoading[idx]) return;
 
-      const placeId = storeIds[idx] || '';
+      const customShops = (location.state?.customShops as Array<{ id: string }>) || [];
+      const placeId = storeIds[idx] || customShops[idx]?.id || '';
       if (!placeId) return;
 
       setIsSummaryLoading(prev => ({ ...prev, [idx]: true }));
@@ -430,7 +434,7 @@ export function Results() {
           ...llm.headers,
         },
         body: JSON.stringify({
-          placeId: storeIds[storeIdx] || shop.storeName,
+          placeId: storeIds[storeIdx] || ((location.state?.customShops as Array<{ id: string }>) || [])[storeIdx]?.id || shop.storeName,
           storeName: shop.storeName,
           reviews: validReviews,
           question: question,
