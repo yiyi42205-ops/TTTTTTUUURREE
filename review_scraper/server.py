@@ -240,8 +240,6 @@ def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tup
 
 @app.route("/", methods=["GET"])
 def index():
-    # Log visitor
-    log_visitor(request.remote_addr, "/")
     # Serve the SPA frontend if dist/ exists, otherwise return API status
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
@@ -257,10 +255,8 @@ def catch_all(path):
     static_file = os.path.join(STATIC_DIR, path)
     if os.path.exists(static_file) and not os.path.isdir(static_file):
         return app.send_static_file(path)
-    # SPA route (not a real file) — log as page visit
     index_path = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_path):
-        log_visitor(request.remote_addr, f"/{path}")
         return app.send_static_file("index.html")
     return jsonify({"error": "Not found", "code": "NOT_FOUND"}), 404
 
@@ -944,6 +940,12 @@ def summarize():
         logger.error(f"LLM QA ({provider}) failed: {e}")
         logger.error(traceback.format_exc())
         return jsonify({"error": "分析回答失敗，請稍後再試。", "code": "LLM_FAILED"}), 502
+
+@app.route("/api/log-visit", methods=["POST"])
+@limiter.exempt
+def log_visit():
+    log_visitor(request.remote_addr, "/analyzer")
+    return jsonify({"ok": True})
 
 @app.route("/api/stats", methods=["GET"])
 @limiter.exempt
