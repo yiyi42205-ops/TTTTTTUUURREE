@@ -52,7 +52,7 @@ Standard PR flow:
 
 ### (1) Scraper: Apify primary, Playwright fallback, SQLite cache
 `POST /api/scrape` in `review_scraper/server.py`:
-1. Checks the SQLite cache first (`review_scraper/cache_store.py`, `cache.db` at repo root, gitignored) — keyed by `place_id`, 7-day TTL (`CACHE_TTL_SECONDS`). A hit returns immediately with `source: "cache"`. `?force=true` bypasses the lookup (but still refreshes the cache afterward).
+1. Checks the SQLite cache first (`review_scraper/cache_store.py`, `cache.db` at repo root, gitignored) — keyed by `place_id`, no TTL (permanent until overwritten). A hit returns immediately with `source: "cache"`. `?force=true` bypasses the lookup (but still refreshes the cache afterward).
 2. On a miss, tries `apify_scraper.scrape_via_apify()` (actor `compass/Google-Maps-Reviews-Scraper`, `reviewsSort: "newest"`, `language: "zh-TW"`) — this is the primary path. Returns `source: "apify"`.
 3. Only if that raises, and **only if `ENABLE_PLAYWRIGHT_FALLBACK=true`** (default is disabled — an Apify failure returns its error as a 500 by default, Playwright is never silently invoked), falls back to `scraper.py`'s Playwright scraper. Returns `source: "playwright_fallback"`.
 4. Both scraper paths normalize their raw output through `normalize.py`'s `normalize_review()` before returning, so the frontend always gets the same shape (`username/stars/time/text/images/hasText/imageCount`) regardless of source.
@@ -116,7 +116,7 @@ A 5-page React app (not a component-library-driven one, despite ~20 `@radix-ui/*
 - `rule_engine.py` — the canonical Stage 1 rule engine. See (4) and (5) above.
 - `apify_scraper.py` — primary scraper, calls the Apify actor.
 - `scraper.py` — Playwright + BeautifulSoup4 + `playwright-stealth` fallback. Hardcoded Google Maps CSS selectors (`div.jftiEf`, `span.kvMYJc`, `span.rsqaWe`, `span.wiI7pd`), fragile to DOM changes. `parse_relative_time()` converts relative dates to absolute.
-- `cache_store.py` — SQLite cache layer (`cache.db`, gitignored). Eight tables: `scrape_cache` (scraped reviews by place_id), `search_query_map` (URL/query → place_id), `audit_cache` (Stage 1 results by place_id, 7-day TTL), `stage2_scores` (I/A/D scores by review_id+model+prompt_version), `summary_cache` (store summary), `qa_cache` (QA answers), `qa_rate_limit` (per-IP rate limiting), `visitor_log` (analytics).
+- `cache_store.py` — SQLite cache layer (`cache.db`, gitignored). Eight tables: `scrape_cache` (scraped reviews by place_id), `search_query_map` (URL/query → place_id), `audit_cache` (Stage 1 results by place_id, no TTL), `stage2_scores` (I/A/D scores by review_id+model+prompt_version), `summary_cache` (store summary), `qa_cache` (QA answers), `qa_rate_limit` (per-IP rate limiting), `visitor_log` (analytics).
 - `batch_crawl.py` — local Playwright batch pre-crawl script (Issue #15). Supports `--resume`, `--split N`, `--merge-cache`, checkpoint-based progress.
 - `batch_audit.py` — batch Stage 1 audit script (Issue #16). Reads all entries from `scrape_cache`, runs `run_stage1_audit()`, writes results to `audit_cache`. Supports `--dry-run` and `--force`.
 - `normalize.py` — `normalize_review()`, unifies Playwright's PascalCase fields and the Apify actor's lowercase `text`/`textTranslated` fields into one shape.
