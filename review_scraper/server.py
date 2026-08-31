@@ -398,7 +398,7 @@ def scrape():
         if cached is not None:
             cached_meta = get_cached_metadata(target_place_id)
             logger.info(f"Cache hit for place_id: {target_place_id} ({len(cached)} reviews)")
-            response = {"reviews": cached, "source": "cache"}
+            response = {"reviews": cached, "source": "cache", "place_id": target_place_id}
             if cached_meta:
                 response["metadata"] = cached_meta
 
@@ -518,6 +518,8 @@ def scrape():
             set_last_checked_at(final_place_id)
 
         logger.info(f"Apify scrape succeeded: {len(response['reviews'])} reviews in {time.time() - start_time:.2f}s.")
+        if final_place_id:
+            response["place_id"] = final_place_id
         if metadata:
             response["metadata"] = metadata
 
@@ -559,7 +561,10 @@ def scrape():
                 if is_url and url_to_scrape != original_query:
                     set_query_place_id_mapping(url_to_scrape, target_place_id)
             logger.info(f"Playwright fallback succeeded: {len(records)} reviews in {time.time() - start_time:.2f}s.")
-            return jsonify({"reviews": records, "source": "playwright_fallback"})
+            pw_response = {"reviews": records, "source": "playwright_fallback"}
+            if target_place_id:
+                pw_response["place_id"] = target_place_id
+            return jsonify(pw_response)
         except Exception as playwright_err:
             logger.error(f"Both Apify and Playwright scraping failed for {url}.")
             logger.error(f"Apify error: {apify_err}")

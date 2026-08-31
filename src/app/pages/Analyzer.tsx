@@ -171,11 +171,16 @@ export function Analyzer() {
             images: Array.isArray(item.images) ? item.images : []
           }));
 
+          const meta = data.metadata || {};
+          const displayName = meta.title || storeName;
+          const categoryTag = meta.categoryName ? ` (${meta.categoryName})` : '';
+
           return {
-            id: `custom_scraped_shop_${i}`,
-            name: storeName,
+            id: data.place_id || `custom_scraped_shop_${i}`,
+            name: displayName + categoryTag,
             reviews: mappedReviews,
-            metadata: data.metadata || {}
+            metadata: meta,
+            dataAsOf: data.dataAsOf,
           };
         } catch (e: any) {
           if (e.credentialsRequired) throw e;
