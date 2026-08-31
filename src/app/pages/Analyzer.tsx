@@ -19,6 +19,7 @@ export function Analyzer() {
     if (!localStorage.getItem(TUTORIAL_STORAGE_KEY)) {
       setShowTutorial(true);
     }
+    fetch('/api/log-visit', { method: 'POST' }).catch(() => {});
   }, []);
 
   const [scrapeUrls, setScrapeUrls] = useState<string[]>(['', '', '']);
