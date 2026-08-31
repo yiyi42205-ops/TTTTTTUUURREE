@@ -307,7 +307,7 @@ def set_cached_reviews(place_id: str, reviews: list, source: str, db_path: str =
                 reviews_json = excluded.reviews_json,
                 source = excluded.source,
                 fetched_at = excluded.fetched_at,
-                metadata_json = excluded.metadata_json
+                metadata_json = COALESCE(excluded.metadata_json, scrape_cache.metadata_json)
             """,
             (place_id, json.dumps(reviews, ensure_ascii=False), source, time.time(), meta_json),
         )
