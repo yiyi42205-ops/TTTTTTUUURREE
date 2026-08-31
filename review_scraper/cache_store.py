@@ -430,16 +430,15 @@ def get_visitor_stats(db_path: str = None) -> dict:
         day_ago = now - 86400
         week_ago = now - 604800
 
-        total = conn.execute("SELECT COUNT(DISTINCT ip) FROM visitor_log").fetchone()[0]
+        total = conn.execute("SELECT COUNT(*) FROM visitor_log").fetchone()[0]
         today = conn.execute(
-            "SELECT COUNT(DISTINCT ip) FROM visitor_log WHERE visited_at >= ?", (day_ago,)
+            "SELECT COUNT(*) FROM visitor_log WHERE visited_at >= ?", (day_ago,)
         ).fetchone()[0]
         week = conn.execute(
-            "SELECT COUNT(DISTINCT ip) FROM visitor_log WHERE visited_at >= ?", (week_ago,)
+            "SELECT COUNT(*) FROM visitor_log WHERE visited_at >= ?", (week_ago,)
         ).fetchone()[0]
-        total_hits = conn.execute("SELECT COUNT(*) FROM visitor_log").fetchone()[0]
 
-        return {"unique_total": total, "unique_today": today, "unique_week": week, "total_hits": total_hits}
+        return {"total": total, "today": today, "week": week}
     finally:
         conn.close()
 

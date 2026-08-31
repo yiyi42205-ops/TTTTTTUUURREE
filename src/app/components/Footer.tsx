@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Github, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface VisitorStats {
-  unique_total: number;
-  unique_today: number;
-  total_hits: number;
+  total: number;
+  today: number;
+  week: number;
 }
 
 export function Footer() {
@@ -39,7 +39,7 @@ export function Footer() {
             </a>
             {stats && (
               <span className="font-mono tabular-nums">
-                {stats.unique_total.toLocaleString()} 位訪客
+                {stats.total.toLocaleString()} 次使用
               </span>
             )}
           </div>
