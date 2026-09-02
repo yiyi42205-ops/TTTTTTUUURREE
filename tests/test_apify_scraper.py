@@ -22,6 +22,14 @@ def isolated_cache_db(tmp_path, monkeypatch):
     db_path = str(tmp_path / "test_cache.db")
     monkeypatch.setattr(cache_store, "DB_PATH", db_path)
     monkeypatch.setenv("APIFY_TOKEN", "test-token")
+    # Prevent extract_place_id from making real HTTP requests in tests.
+    # Its slow path fetches maps.google.com HTML to find ChIJ patterns, which
+    # can non-deterministically skip the probe call and shift mock call counts.
+    import re as _re
+    monkeypatch.setattr(
+        server, "extract_place_id",
+        lambda url: (m.group(1) if (m := _re.search(r'(ChIJ[\w-]+)', url)) else None),
+    )
     yield db_path
 
 
