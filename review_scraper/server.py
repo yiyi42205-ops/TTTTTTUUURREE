@@ -171,20 +171,17 @@ def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tup
     Returns: (client_instance, error_tuple_if_any)
     """
     if provider == "gemini":
-        user_api_key = headers.get("X-Gemini-API-Key")
-        if user_api_key:
-            user_api_key = user_api_key.strip()
-            if not user_api_key.startswith("AIzaSy") or len(user_api_key) < 35:
-                logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
-                return None, ({"error": "無效的用戶 Gemini API Key 格式", "code": "INVALID_API_KEY"}, 400)
-            try:
-                return genai.Client(api_key=user_api_key), None
-            except Exception as e:
-                logger.error(f"Failed to init Gemini client: {e}")
-                return None, ({"error": "無法初始化 Gemini Client", "code": "INVALID_API_KEY"}, 400)
-        if not genai_client:
-            return None, ({"error": "伺服器未設定 Gemini API Key，請在設定頁提供您的金鑰。", "code": "CREDENTIALS_REQUIRED"}, 403)
-        return genai_client, None
+        user_api_key = (headers.get("X-Gemini-API-Key") or "").strip()
+        if not user_api_key:
+            return None, ({"error": "AI 語意分析需要您的 Gemini API Key。請到 Google AI Studio 免費申請後，在下方填入金鑰。", "code": "CREDENTIALS_REQUIRED"}, 403)
+        if not user_api_key.startswith("AIzaSy") or len(user_api_key) < 35:
+            logger.warning(f"Invalid X-Gemini-API-Key format from IP: {ip}")
+            return None, ({"error": "無效的用戶 Gemini API Key 格式", "code": "INVALID_API_KEY"}, 400)
+        try:
+            return genai.Client(api_key=user_api_key), None
+        except Exception as e:
+            logger.error(f"Failed to init Gemini client: {e}")
+            return None, ({"error": "無法初始化 Gemini Client", "code": "INVALID_API_KEY"}, 400)
 
     elif provider == "deepseek":
         try:

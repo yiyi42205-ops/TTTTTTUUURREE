@@ -40,8 +40,7 @@ export function getLLMSettings(): LLMSettings {
 export function hasLLMKey(): boolean {
   const provider = (sessionStorage.getItem('truerating_llm_provider') || 'gemini') as ProviderType;
   if (provider === 'gemini') {
-    // Gemini works without a user key (server has default)
-    return true;
+    return !!sessionStorage.getItem('truerating_gemini_api_key');
   }
   if (provider === 'deepseek') {
     return !!sessionStorage.getItem('truerating_deepseek_api_key');
