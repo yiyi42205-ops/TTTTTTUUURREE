@@ -197,7 +197,7 @@ export function aggregateAuditedReviews(
       ? UNAUDITED_WEIGHT
       : audit.isWashed
         ? 1 - (audit.confidenceScore / 100)
-        : (audit.confidenceScore / 100);
+        : 1.0;
 
     // Accumulate original stats
     originalSum += stars;
@@ -232,7 +232,7 @@ export function aggregateAuditedReviews(
   // washed reviews are already down-weighted via the confidence-based weight
   // formula, so applying an additional star deduction from the same signal
   // would be double-punishment (removed in this version; see commit history).
-  const trustScore = Math.max(0, 100 - (suspiciousReviewsCount / totalReviews) * 100 * 2.0);
+  const trustScore = Math.max(0, 100 - (suspiciousReviewsCount / totalReviews) * 100);
 
   return {
     storeName,
