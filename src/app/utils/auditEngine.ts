@@ -136,7 +136,14 @@ export function mergeStage2Results(
     if (aiStoreMap[r.username]) {
       return { ...r, audit: aiStoreMap[r.username] };
     }
-    // Stage 2 didn't cover this review — mark as unaudited so it gets
+    // Only 5-star reviews are Stage 2 candidates. Non-5-star reviews with
+    // issueType null are genuinely clean — leave them at weight 1.0.
+    // Marking them as unaudited (weight 0.65) would incorrectly downweight
+    // low-star genuine reviews, pulling filteredRating above originalRating.
+    if (r.stars !== 5) {
+      return r;
+    }
+    // Stage 2 didn't cover this 5-star review — mark as unaudited so it gets
     // independent weight instead of masquerading as a confident clean verdict.
     return { ...r, audit: { ...r.audit, issueType: 'unaudited' as const } };
   });
