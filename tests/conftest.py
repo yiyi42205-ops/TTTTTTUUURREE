@@ -10,3 +10,6 @@ sys.path.insert(0, str(ROOT))  # so tests can `import evaluate_v2`
 # tests never call the real Gemini API, so a placeholder key is enough.
 os.environ.setdefault("GEMINI_API_KEY", "test-key-for-pytest")
 os.environ["TESTING"] = "1"
+
+# Valid-format fake Gemini key for tests (must start with AIzaSy, >=35 chars)
+TEST_GEMINI_KEY = "AIzaSyFakeTestKeyForPytestOnly000000000"

@@ -1,13 +1,29 @@
 import pytest
 from flask import json
 from server import app
+from conftest import TEST_GEMINI_KEY
+
+
+class _GeminiClient:
+    """Wraps Flask test client to auto-attach X-Gemini-API-Key header."""
+    def __init__(self, inner):
+        self._inner = inner
+
+    def post(self, *args, **kwargs):
+        headers = dict(kwargs.get("headers") or {})
+        headers.setdefault("X-Gemini-API-Key", TEST_GEMINI_KEY)
+        kwargs["headers"] = headers
+        return self._inner.post(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
 
 
 @pytest.fixture
 def client():
     app.config["TESTING"] = True
     with app.test_client() as client:
-        yield client
+        yield _GeminiClient(client)
 
 
 def test_store_summary_golden_case(client, monkeypatch):
