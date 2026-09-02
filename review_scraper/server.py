@@ -145,7 +145,17 @@ def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
             by_username[r["username"]] = r  # newer version wins
 
         if new_count > 0:
-            merged = list(by_username.values())
+            # New reviews first (from this refresh), then existing in original order.
+            # Since Apify returns newest-first, this preserves recency ordering.
+            seen = set()
+            merged = []
+            for r in list(new_reviews) + list(existing):
+                u = r["username"]
+                if u not in seen:
+                    seen.add(u)
+                    merged.append(by_username[u])  # use newest version
+            # Cap at 500 reviews, dropping the oldest (tail)
+            merged = merged[:500]
             logger.info(
                 f"[refresh] {place_id}: {new_count} new reviews found, "
                 f"merged {len(existing)} → {len(merged)}"

@@ -23,16 +23,18 @@ export function Analyzer() {
   }, []);
 
   const [scrapeUrls, setScrapeUrls] = useState<string[]>(['', '', '']);
-  const [maxReviews, setMaxReviews] = useState(500);
   const [scrapeLoadingStep, setScrapeLoadingStep] = useState('');
   const [scrapeError, setScrapeError] = useState('');
 
   // Credentials prompt — shown only when a cache miss requires user keys
   const [showCredentials, setShowCredentials] = useState(false);
   const [apifyToken, setApifyToken] = useState(() => sessionStorage.getItem('truerating_apify_token') || '');
-  const [geminiKey, setGeminiKey] = useState(() => sessionStorage.getItem('truerating_gemini_api_key') || '');
+  const [aiKey, setAiKey] = useState(() =>
+    sessionStorage.getItem('truerating_gemini_api_key') ||
+    sessionStorage.getItem('truerating_deepseek_api_key') || ''
+  );
   const [showApifyToken, setShowApifyToken] = useState(false);
-  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showAiKey, setShowAiKey] = useState(false);
   const [showKeyGuide, setShowKeyGuide] = useState(false);
 
   const handlePasteFromClipboard = useCallback(async () => {
@@ -81,8 +83,21 @@ export function Analyzer() {
     if (apifyToken.trim()) {
       sessionStorage.setItem('truerating_apify_token', apifyToken.trim());
     }
-    if (geminiKey.trim()) {
-      sessionStorage.setItem('truerating_gemini_api_key', geminiKey.trim());
+    const key = aiKey.trim();
+    if (key) {
+      if (key.startsWith('AIzaSy')) {
+        sessionStorage.setItem('truerating_llm_provider', 'gemini');
+        sessionStorage.setItem('truerating_gemini_api_key', key);
+        sessionStorage.removeItem('truerating_deepseek_api_key');
+      } else if (key.startsWith('sk-')) {
+        sessionStorage.setItem('truerating_llm_provider', 'deepseek');
+        sessionStorage.setItem('truerating_deepseek_api_key', key);
+        sessionStorage.removeItem('truerating_gemini_api_key');
+      } else {
+        // Default to Gemini — server will validate
+        sessionStorage.setItem('truerating_llm_provider', 'gemini');
+        sessionStorage.setItem('truerating_gemini_api_key', key);
+      }
     }
   };
 
@@ -122,9 +137,15 @@ export function Analyzer() {
     // Build headers with user credentials if available
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const savedApify = sessionStorage.getItem('truerating_apify_token');
-    const savedGemini = sessionStorage.getItem('truerating_gemini_api_key');
     if (savedApify) headers['X-Apify-Token'] = savedApify;
-    if (savedGemini) headers['X-Gemini-API-Key'] = savedGemini;
+    const savedProvider = sessionStorage.getItem('truerating_llm_provider') || 'gemini';
+    if (savedProvider === 'deepseek') {
+      const k = sessionStorage.getItem('truerating_deepseek_api_key');
+      if (k) headers['X-DeepSeek-API-Key'] = k;
+    } else {
+      const k = sessionStorage.getItem('truerating_gemini_api_key');
+      if (k) headers['X-Gemini-API-Key'] = k;
+    }
 
     try {
       const promises = activeUrls.map(async (currentUrl, i) => {
@@ -146,7 +167,7 @@ export function Analyzer() {
           const response = await fetch('/api/scrape', {
             method: 'POST',
             headers,
-            body: JSON.stringify({ url: currentUrl, maxReviews })
+            body: JSON.stringify({ url: currentUrl, maxReviews: 500 })
           });
 
           const data = await response.json().catch(() => null);
@@ -331,7 +352,7 @@ export function Analyzer() {
                             <li>到 <a href="https://console.apify.com/account/integrations" target="_blank" rel="noreferrer" className="text-primary hover:text-primary-hover underline">帳號設定 → Integrations</a> 複製 API Token</li>
                             <li>貼到下方「Apify Token」欄位，點擊重試即可</li>
                           </ol>
-                          <p>AI 審計金鑰為選填，不填則使用伺服器預設的免費模型。</p>
+                          <p>AI 審計需要您自己的 Gemini 或 DeepSeek API Key（<a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-primary hover:text-primary-hover underline">Gemini 免費申請</a>），系統會自動辨識金鑰類型。</p>
                         </div>
                       </motion.div>
                     )}
@@ -374,11 +395,11 @@ export function Analyzer() {
                     </div>
                   </div>
 
-                  {/* Gemini Key */}
+                  {/* AI API Key */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="text-xs font-medium text-ink-subtle">
-                        AI API Key（選填，Gemini / DeepSeek 等）
+                        AI API Key <span className="text-[var(--semantic-danger)]">*</span>
                       </label>
                       <a
                         href="https://aistudio.google.com/app/apikey"
@@ -386,52 +407,36 @@ export function Analyzer() {
                         rel="noreferrer"
                         className="text-[11px] text-primary hover:text-primary-hover flex items-center gap-1"
                       >
-                        取得金鑰 <ExternalLink className="w-3 h-3" />
+                        免費申請 Gemini Key <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
                     <div className="relative">
                       <input
-                        type={showGeminiKey ? 'text' : 'password'}
-                        value={geminiKey}
-                        onChange={(e) => setGeminiKey(e.target.value)}
-                        placeholder="AIzaSy...（不填則使用免費 Flash Lite）"
+                        type={showAiKey ? 'text' : 'password'}
+                        value={aiKey}
+                        onChange={(e) => setAiKey(e.target.value)}
+                        placeholder="AIzaSy... 或 sk-...（自動辨識 Gemini / DeepSeek）"
                         className="w-full bg-surface-3 border border-hairline rounded-lg px-3 py-2.5 text-sm text-ink placeholder-ink-tertiary focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none pr-10 transition-all"
                       />
                       <button
                         type="button"
-                        onClick={() => setShowGeminiKey(!showGeminiKey)}
+                        onClick={() => setShowAiKey(!showAiKey)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-tertiary hover:text-ink-subtle cursor-pointer"
                       >
-                        {showGeminiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showAiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
 
-                  {/* Max reviews slider */}
-                  <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                      <label className="text-xs font-medium text-ink-subtle flex items-center gap-1.5">
-                        <Sliders className="w-3 h-3" />
-                        抓取評論筆數（每間商家）
-                      </label>
-                      <span className="text-[11px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                        {maxReviews} 筆
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min="50"
-                      max="500"
-                      step="50"
-                      value={maxReviews}
-                      onChange={(e) => setMaxReviews(parseInt(e.target.value))}
-                      className="w-full accent-primary h-1 bg-surface-3 rounded-lg appearance-none cursor-pointer"
-                    />
+                  {/* Time estimate warning */}
+                  <div className="bg-[var(--semantic-warning,#f59e0b)]/10 border border-[var(--semantic-warning,#f59e0b)]/20 rounded-lg p-3 text-xs text-ink-subtle leading-relaxed flex items-start gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[var(--semantic-warning,#f59e0b)]" />
+                    <span>即時爬取每間店家約需 <strong className="text-ink">1～3 分鐘</strong>，視評論數量而定。爬取期間請勿關閉頁面。Apify 每次爬取約 $0.05 美元，AI 審計約 $0.01 美元。</span>
                   </div>
 
                   <motion.button
                     onClick={handleRetryWithCredentials}
-                    disabled={!apifyToken.trim()}
+                    disabled={!apifyToken.trim() || !aiKey.trim()}
                     whileTap={{ scale: 0.98 }}
                     className="w-full bg-primary hover:bg-primary-hover text-white font-medium text-sm py-2.5 rounded-lg disabled:bg-surface-3 disabled:text-ink-tertiary disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2"
                   >

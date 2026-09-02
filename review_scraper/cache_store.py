@@ -332,8 +332,10 @@ def set_cached_reviews(place_id: str, reviews: list, source: str, db_path: str =
             """,
             (place_id, json.dumps(reviews, ensure_ascii=False), source, time.time(), meta_json),
         )
-        # Invalidate stale audit cache when reviews are refreshed
+        # Invalidate stale caches when reviews are refreshed
         conn.execute("DELETE FROM audit_cache WHERE place_id = ?", (place_id,))
+        conn.execute("DELETE FROM summary_cache WHERE place_id = ?", (place_id,))
+        conn.execute("DELETE FROM qa_cache WHERE place_id = ?", (place_id,))
         conn.commit()
     finally:
         conn.close()
