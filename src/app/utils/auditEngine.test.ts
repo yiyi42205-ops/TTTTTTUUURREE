@@ -209,14 +209,50 @@ describe('mergeStage2Results', () => {
     expect(merged[0].audit).toEqual(geminiResult);
   });
 
-  it('marks an issueType: null review as unaudited when Gemini returned no matching result for it', () => {
+  it('marks a 5-star issueType: null review as unaudited when Gemini returned no matching result for it', () => {
     const stage1Audit: AuditResult = { isWashed: false, reason: 'stage1-none', confidenceScore: 80, issueType: null };
-    const auditedReviews = [audited(review({ username: 'unmatched_user' }), stage1Audit)];
+    const auditedReviews = [audited(review({ username: 'unmatched_user', stars: 5 }), stage1Audit)];
 
     const merged = mergeStage2Results(auditedReviews, {});
 
     expect(merged[0].audit.issueType).toBe('unaudited');
     expect(merged[0].audit.isWashed).toBe(false);
+  });
+
+  it('does NOT mark non-5-star issueType: null reviews as unaudited (they are clean, weight 1.0)', () => {
+    const stage1Audit: AuditResult = { isWashed: false, reason: 'stage1-none', confidenceScore: 80, issueType: null };
+    const auditedReviews = [
+      audited(review({ username: 'low_star_clean', stars: 3 }), stage1Audit),
+      audited(review({ username: 'four_star_clean', stars: 4 }), stage1Audit),
+      audited(review({ username: 'one_star_clean', stars: 1 }), stage1Audit),
+    ];
+
+    const merged = mergeStage2Results(auditedReviews, {});
+
+    merged.forEach(r => {
+      expect(r.audit.issueType).toBeNull();
+      expect(r.audit.isWashed).toBe(false);
+    });
+  });
+
+  it('regression: non-5-star clean reviews at weight 1.0 prevent filteredRating from exceeding originalRating', () => {
+    // Scenario: store with some washed 5-star + genuine low-star reviews.
+    // Without the fix, non-5-star reviews get marked unaudited (weight 0.65),
+    // downweighting genuine low-star reviews and inflating filteredRating.
+    const stage1Audit: AuditResult = { isWashed: false, reason: '', confidenceScore: 80, issueType: null };
+    const auditedReviews = [
+      audited(review({ username: 'w1', stars: 5 }), { isWashed: true, reason: '', confidenceScore: 90, issueType: 'template' }),
+      audited(review({ username: 'c1', stars: 5 }), stage1Audit),
+      audited(review({ username: 'c2', stars: 4 }), stage1Audit),
+      audited(review({ username: 'c3', stars: 3 }), stage1Audit),
+      audited(review({ username: 'c4', stars: 2 }), stage1Audit),
+    ];
+
+    const merged = mergeStage2Results(auditedReviews, {});
+    const result = aggregateAuditedReviews('Test Shop', merged);
+
+    // filteredRating must not exceed originalRating when washed reviews are 5-star
+    expect(result.filteredRating).toBeLessThanOrEqual(result.originalRating);
   });
 });
 

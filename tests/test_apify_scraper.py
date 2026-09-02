@@ -5,11 +5,26 @@ import cache_store
 import server
 
 
+class _TokenClient:
+    """Wraps Flask test client to auto-attach X-Apify-Token header."""
+    def __init__(self, inner):
+        self._inner = inner
+
+    def post(self, *args, **kwargs):
+        headers = dict(kwargs.get("headers") or {})
+        headers.setdefault("X-Apify-Token", "test-user-token")
+        kwargs["headers"] = headers
+        return self._inner.post(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
 @pytest.fixture
 def client():
     server.app.config["TESTING"] = True
     with server.app.test_client() as c:
-        yield c
+        yield _TokenClient(c)
 
 
 @pytest.fixture(autouse=True)
@@ -518,6 +533,22 @@ def test_scrape_probe_rejects_non_restaurant_before_full_scrape(client, monkeypa
     assert resp.status_code == 400
     assert "本系統僅適用於餐飲店家" in resp.get_json()["error"]
     assert not full_scrape_called["called"], "Full scrape should not run after probe rejects"
+
+
+def test_new_store_without_user_token_returns_credentials_required(client, monkeypatch):
+    """New stores (not in cache) must require a user-provided Apify token.
+    The server-side APIFY_TOKEN is reserved for probes and background refresh."""
+    def fake_scrape(url, max_reviews=50, token=None):
+        return "ChIJ_newstore", [
+            {"username": "u1", "stars": 5, "time": "2025-01-01", "text": "讚", "images": [], "hasText": True, "imageCount": 0},
+        ], {"totalScore": 4.0}
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape)
+
+    # POST without X-Apify-Token header (server token still exists in env)
+    resp = client._inner.post("/api/scrape", json={"url": "https://maps.google.com/?cid=brandnew"})
+    assert resp.status_code == 403
+    assert resp.get_json()["code"] == "CREDENTIALS_REQUIRED"
 
 
 def test_is_food_category_helper():
