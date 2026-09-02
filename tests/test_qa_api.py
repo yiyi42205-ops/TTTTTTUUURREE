@@ -1,11 +1,28 @@
 import pytest
 import server
+from conftest import TEST_GEMINI_KEY
+
+
+class _GeminiClient:
+    """Wraps Flask test client to auto-attach X-Gemini-API-Key header."""
+    def __init__(self, inner):
+        self._inner = inner
+
+    def post(self, *args, **kwargs):
+        headers = dict(kwargs.get("headers") or {})
+        headers.setdefault("X-Gemini-API-Key", TEST_GEMINI_KEY)
+        kwargs["headers"] = headers
+        return self._inner.post(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
 
 @pytest.fixture
 def client():
     server.app.config["TESTING"] = True
     with server.app.test_client() as c:
-        yield c
+        yield _GeminiClient(c)
 
 def make_review(i, text="好吃，推薦"):
     return {"id": f"user{i}", "stars": 5, "text": text}
