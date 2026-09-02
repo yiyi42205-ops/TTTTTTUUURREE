@@ -58,15 +58,17 @@ describe('aggregateAuditedReviews', () => {
     const result = aggregateAuditedReviews('Mixed Shop', reviews);
 
     expect(result.originalRating).toBe(4.00);
-    expect(result.filteredRating).toBe(3.36);
-    expect(result.trustScore).toBe(0);
+    // washed(5,conf100)=w0 + clean(5)=w1 + clean(1)=w1 + washed(5,conf65)=w0.35
+    // weightedSum = 0+5+1+1.75=7.75, weightTotal = 0+1+1+0.35=2.35 → 3.3
+    expect(result.filteredRating).toBe(3.3);
+    expect(result.trustScore).toBe(50);
     expect(result.suspiciousReviews).toBe(2);
     expect(result.issues.timeAnomaly).toBe(1);
     expect(result.issues.templateText).toBe(0);
     expect(result.issues.vague).toBe(0);
   });
 
-  it('store with no_text reviews: neutral 0.5 weight is applied distinctly from normal clean reviews', () => {
+  it('store with no_text reviews: non-washed reviews always get weight 1.0 so filteredRating equals originalRating', () => {
     const reviews = [
       audited(review({ stars: 5, text: '' }), { isWashed: false, reason: '', confidenceScore: 50, issueType: 'no_text' }),
       audited(review({ stars: 3, text: '' }), { isWashed: false, reason: '', confidenceScore: 50, issueType: 'no_text' }),
@@ -76,7 +78,7 @@ describe('aggregateAuditedReviews', () => {
     const result = aggregateAuditedReviews('No-text Shop', reviews);
 
     expect(result.originalRating).toBe(4.33);
-    expect(result.filteredRating).toBe(4.44);
+    expect(result.filteredRating).toBe(4.33);
     expect(result.trustScore).toBe(100);
     expect(result.suspiciousReviews).toBe(0);
   });
@@ -125,12 +127,14 @@ describe('aggregateAuditedReviews', () => {
 
     const result = aggregateAuditedReviews('Penalty-Free Shop', reviews);
 
-    const expectedWeightedAvg = 3.92;
+    // 3 washed(5,conf90)=w0.1 + 7 clean=w1.0 each
+    // weightedSum = 1.5+27=28.5, weightTotal = 0.3+7=7.3 → 3.9
+    const expectedWeightedAvg = 3.9;
     expect(result.filteredRating).toBe(expectedWeightedAvg);
-    expect(result.trustScore).toBe(40);
+    expect(result.trustScore).toBe(70);
   });
 
-  it('store with low_info reviews: neutral 0.55 weight is distinct from no_text (0.5) and clean (0.8)', () => {
+  it('store with low_info reviews: non-washed so weight 1.0, filteredRating equals originalRating', () => {
     const reviews = [
       audited(review({ stars: 1, text: '好吃' }), { isWashed: false, reason: '', confidenceScore: 55, issueType: 'low_info' }),
       audited(review({ stars: 5 }), { isWashed: false, reason: '', confidenceScore: 80, issueType: null }),
@@ -139,7 +143,7 @@ describe('aggregateAuditedReviews', () => {
     const result = aggregateAuditedReviews('Low Info Shop', reviews);
 
     expect(result.originalRating).toBe(3.00);
-    expect(result.filteredRating).toBe(3.37);
+    expect(result.filteredRating).toBe(3);
     expect(result.trustScore).toBe(100);
     expect(result.suspiciousReviews).toBe(0);
   });
@@ -153,11 +157,11 @@ describe('aggregateAuditedReviews', () => {
 
     const result = aggregateAuditedReviews('Unaudited Shop', reviews);
 
-    // unaudited weight = 0.65 (fixed), clean weight = 0.8
-    // weighted sum = 5*0.65 + 3*0.65 + 5*0.8 = 3.25 + 1.95 + 4.0 = 9.2
-    // weight total = 0.65 + 0.65 + 0.8 = 2.1
-    // filtered = 9.2 / 2.1 ≈ 4.38
-    expect(result.filteredRating).toBe(4.38);
+    // unaudited weight = 0.65 (fixed), clean weight = 1.0
+    // weighted sum = 5*0.65 + 3*0.65 + 5*1.0 = 3.25 + 1.95 + 5.0 = 10.2
+    // weight total = 0.65 + 0.65 + 1.0 = 2.3
+    // filtered = 10.2 / 2.3 ≈ 4.43
+    expect(result.filteredRating).toBe(4.43);
     expect(result.suspiciousReviews).toBe(0);
   });
 });

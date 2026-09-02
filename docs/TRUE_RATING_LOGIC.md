@@ -123,15 +123,16 @@ I／A／D 分數寫入 SQLite `stage2_scores` 表（主鍵：`review_id, model, 
     *   若判定為洗評 (`isWashed = true`)：
         $$Weight = 1 - \frac{Confidence}{100}$$
     *   若判定為真實 (`isWashed = false`)：
-        $$Weight = \frac{Confidence}{100}$$
-    *(例如：一則被 99% 信心判定為洗評的評論，其評分權重僅佔 1%，接近被完全過濾)*
+        $$Weight = 1.0$$
+    *   未複審 (`unaudited`)：固定 $Weight = 0.65$
+    *(例如：一則被 99% 信心判定為洗評的評論，其評分權重僅佔 1%，接近被完全過濾；真實評論不降權)*
 
 *   **過濾後之真實星等 (Filtered Rating)**：
     $$Filtered\ Rating = \frac{\sum (Stars \times Weight)}{\sum Weight}$$
     純加權平均，無額外扣減。
 
 *   **商家真實信譽評分 (Trust Score)**：
-    $$Trust\ Score = \max\!\left(0,\ 100 - \frac{Suspicious\ Reviews}{Total\ Reviews} \times 200\right)$$
+    $$Trust\ Score = \max\!\left(0,\ 100 - \frac{Suspicious\ Reviews}{Total\ Reviews} \times 100\right)$$
     Trust Score 為**獨立顯示指標**，反映「這家店的評論生態有多可疑」，**不參與 Filtered Rating 的計算**。UI 上與 Filtered Rating 並列呈現，供使用者自行參考。
 
 > **歷史紀錄：trustPenalty 移除說明**
