@@ -384,8 +384,11 @@ def scrape():
 
     force = request.args.get("force", "false").lower() == "true"
 
-    # Resolve Apify token: prefer user-provided header, fall back to env
-    apify_token = (request.headers.get("X-Apify-Token") or "").strip() or os.getenv("APIFY_TOKEN") or None
+    # Resolve Apify tokens: user-provided (for new store scraping) vs server
+    # (for cheap probes and background refresh of existing cached data).
+    user_apify_token = (request.headers.get("X-Apify-Token") or "").strip() or None
+    server_apify_token = os.getenv("APIFY_TOKEN") or None
+    apify_token = user_apify_token or server_apify_token
 
     # Helper: save all known query/URL → place_id mappings
     def _save_mappings(place_id):
@@ -426,7 +429,7 @@ def scrape():
 
             return jsonify(response)
 
-    # Cache is permanent — if we reach here, the store genuinely isn't in the DB.
+    # No token at all → can't even probe
     if not apify_token:
         logger.info(f"No cached data for {url_to_scrape}, no Apify token available — requesting credentials")
         return jsonify({
@@ -484,8 +487,20 @@ def scrape():
 
                     return jsonify(response)
 
+        # Full scrape is expensive (~$0.20-0.40 for 500 reviews). For new
+        # stores (no existing cache), require the user's own Apify token.
+        # Server token is reserved for cheap probes and background refresh.
+        existing_cache = get_cached_reviews(target_place_id) if target_place_id else None
+        if not existing_cache and not user_apify_token:
+            logger.info(f"New store {url_to_scrape}, no user Apify token — requesting credentials")
+            return jsonify({
+                "error": "此店家尚未收錄於資料庫，需要 Apify Token 進行即時爬取。請在下方填入您的 API 金鑰。",
+                "code": "CREDENTIALS_REQUIRED",
+            }), 403
+
+        scrape_token = user_apify_token or apify_token
         logger.info(f"Starting Apify scrape for URL: {url_to_scrape} (limit: {max_reviews})")
-        apify_place_id, records, metadata = scrape_via_apify(url_to_scrape, max_reviews=max_reviews, token=apify_token)
+        apify_place_id, records, metadata = scrape_via_apify(url_to_scrape, max_reviews=max_reviews, token=scrape_token)
 
         # Category gate for full scrape (covers the path where we already had
         # a place_id and skipped the probe above).
