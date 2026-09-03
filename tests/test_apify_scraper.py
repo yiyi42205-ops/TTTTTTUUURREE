@@ -575,6 +575,8 @@ def test_is_food_category_helper():
     assert _is_food_category("Bakery")
     assert _is_food_category("Bar")
     assert _is_food_category("素食餐廳")
+    assert _is_food_category("快餐店")
+    assert _is_food_category("Fast food restaurant")
 
     # Non-food venues
     assert not _is_food_category("公園")
