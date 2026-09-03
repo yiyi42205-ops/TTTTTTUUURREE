@@ -186,7 +186,8 @@ function ReviewCard({ review, storeIndex, reviewIndex, isCoTExpanded, onToggleCo
   const isLowConfidenceWashed = isWashed && audit.confidenceScore < 50;
   const hasCoT = !!audit.reasoningPath;
   // Unscored ambiguous review: Stage 1 found nothing, Stage 2 hasn't run yet
-  const isPendingReview = !isWashed && audit.issueType === null && !audit.verdictBasis;
+  // Only 5-star reviews are Stage 2 candidates; non-5-star with null issueType are clean
+  const isPendingReview = review.stars === 5 && !isWashed && audit.issueType === null && !audit.verdictBasis;
 
   const starArr = Array.from({ length: review.stars });
 
