@@ -202,6 +202,7 @@ export function Analyzer() {
             reviews: mappedReviews,
             metadata: meta,
             dataAsOf: data.dataAsOf,
+            scrapeSource: data.source || '',
           };
         } catch (e: any) {
           if (e.credentialsRequired) throw e;

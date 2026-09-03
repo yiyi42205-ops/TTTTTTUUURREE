@@ -116,6 +116,99 @@ REFRESH_COOLDOWN_SECONDS = 604800
 REFRESH_REVIEW_COUNT = 20
 
 
+def _background_audit(place_id: str, reviews: list, metadata: dict) -> None:
+    """Re-run Stage 1 + Stage 2 on merged reviews using the server-side Gemini key.
+
+    Called after _background_refresh finds new reviews. Scores are saved to
+    stage2_scores so the next user query gets a full cache hit.
+    """
+    if not genai_client:
+        logger.info(f"[refresh-audit] Skipping Stage 2 for {place_id}: no server GEMINI_API_KEY")
+        return
+
+    try:
+        store_name = (metadata or {}).get("title", place_id)
+
+        # Stage 1: run rule engine
+        normalized = [normalize_review(r) for r in reviews]
+        stage1 = run_stage1_audit(normalized)
+        set_cached_audit(place_id, stage1)
+        logger.info(f"[refresh-audit] Stage 1 done for {place_id}: {len(stage1['auditedReviews'])} reviews")
+
+        # Stage 2: find ambiguous 5-star reviews, score uncached ones
+        ambiguous = [
+            r for r in stage1["auditedReviews"]
+            if r.get("stars") == 5 and r.get("audit", {}).get("issueType") is None
+        ]
+        if not ambiguous:
+            logger.info(f"[refresh-audit] No ambiguous reviews for {place_id}, skipping Stage 2")
+            return
+
+        model_name = MODEL_NAME_GEMINI
+        prompt_version = get_prompt_version()
+
+        review_ids = [f"{place_id}:{r['username']}" for r in ambiguous]
+        cached_scores = get_cached_scores(review_ids, model_name, prompt_version)
+        spike_months = set(stage1.get("signals", {}).get("spikeMonths", []))
+
+        uncached = []
+        uncached_indices = []
+        for i, r in enumerate(ambiguous):
+            if review_ids[i] not in cached_scores:
+                month = (r.get("time") or "")[:7]
+                uncached.append({
+                    "username": r["username"],
+                    "text": r.get("text", "") or "",
+                    "isSpikePeriod": month in spike_months,
+                    "daysElapsed": 0,
+                })
+                uncached_indices.append(i)
+
+        if not uncached:
+            logger.info(f"[refresh-audit] All {len(ambiguous)} ambiguous reviews already cached for {place_id}")
+            return
+
+        logger.info(f"[refresh-audit] Scoring {len(uncached)}/{len(ambiguous)} uncached reviews for {place_id}")
+        batches = make_batches(uncached)
+        scored = {}
+        with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_BATCHES) as executor:
+            futures = {
+                executor.submit(call_llm_batch, "gemini", genai_client, store_name, batch): (bi, batch)
+                for bi, batch in enumerate(batches)
+            }
+            batch_results = {}
+            for future in as_completed(futures):
+                bi, batch = futures[future]
+                try:
+                    batch_results[bi] = future.result()
+                except Exception as e:
+                    logger.error(f"[refresh-audit] Batch {bi} failed for {place_id}: {e}")
+                    batch_results[bi] = []
+
+            offset = 0
+            for bi in range(len(batches)):
+                for item in batch_results.get(bi, []):
+                    scored[offset + item["id"]] = item
+                offset += len(batches[bi])
+
+        # Save to stage2_scores
+        to_cache = []
+        for local_idx, item in scored.items():
+            orig_idx = uncached_indices[local_idx]
+            to_cache.append({
+                "review_id": review_ids[orig_idx],
+                "I": item["incentiveIntensity"],
+                "A": item["sentimentAuthenticity"],
+                "D": item["descriptionGranularity"],
+                "reasoning": item.get("reasoning", ""),
+            })
+        if to_cache:
+            set_cached_scores(to_cache, model_name, prompt_version)
+            logger.info(f"[refresh-audit] Cached {len(to_cache)} new Stage 2 scores for {place_id}")
+    except Exception as e:
+        logger.warning(f"[refresh-audit] Background audit failed for {place_id}: {e}")
+
+
 def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
     """Background task: fetch newest reviews from Apify, dedup, merge into cache.
 
@@ -162,6 +255,9 @@ def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
             )
             set_cached_reviews(place_id, merged, source="refresh", metadata=metadata)
             # set_cached_reviews already invalidates audit_cache
+
+            # Re-run Stage 1 + Stage 2 on the full merged set using server key
+            _background_audit(place_id, merged, metadata)
         else:
             logger.info(f"[refresh] {place_id}: no new reviews (all {len(new_reviews)} already cached)")
 
@@ -649,10 +745,6 @@ def audit():
     provider = data.get("provider", "gemini")
     custom_model_name = data.get("modelName")  # user-specified model for openai_compatible
 
-    client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
-    if err_resp:
-        return jsonify(err_resp[0]), err_resp[1]
-
     store_name = data.get("storeName") or "待審查店家"
     place_id = data.get("placeId") or ""
     raw_reviews = data.get("reviews")
@@ -700,7 +792,18 @@ def audit():
     # ── 2. Call LLM for uncached reviews ─────────────────────────
     llm_scores = {}  # index-in-uncached → score dict
     errors = []
+    client_to_use = None
     if uncached_reviews:
+        # DB stores (source="cache") use server-side key; new stores require user key
+        scrape_source = data.get("scrapeSource", "")
+        if scrape_source == "cache" and genai_client and provider == "gemini":
+            client_to_use = genai_client
+            logger.info(f"Using server-side Gemini key for DB store '{store_name}'")
+        else:
+            client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
+            if err_resp:
+                return jsonify(err_resp[0]), err_resp[1]
+
         batches = make_batches(uncached_reviews)
         logger.info(f"Sending {len(uncached_reviews)} reviews across {len(batches)} batch(es)...")
 

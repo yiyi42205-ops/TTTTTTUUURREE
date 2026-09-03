@@ -127,9 +127,9 @@ export function Results() {
     }
 
     const runStage1 = async () => {
-      const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number }; dataAsOf?: string }>) || [];
+      const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number }; dataAsOf?: string; scrapeSource?: string }>) || [];
 
-      let shopsToProcess: { id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number }; dataAsOf?: string }[];
+      let shopsToProcess: { id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number }; dataAsOf?: string; scrapeSource?: string }[];
       if (customShops.length > 0) {
         shopsToProcess = customShops;
       } else {
@@ -266,8 +266,9 @@ export function Results() {
             };
           });
 
-          const customShopsForId = (location.state?.customShops as Array<{ id: string }>) || [];
+          const customShopsForId = (location.state?.customShops as Array<{ id: string; scrapeSource?: string }>) || [];
           const placeId = storeIds[idx] || customShopsForId[idx]?.id || '';
+          const scrapeSource = customShopsForId[idx]?.scrapeSource || '';
           const llm = getLLMSettings();
           const response = await fetch('/api/audit', {
             method: 'POST',
@@ -279,6 +280,7 @@ export function Results() {
               storeName: result.storeName,
               placeId,
               reviews: reviewsPayload,
+              scrapeSource,
               ...llm.body,
             })
           });

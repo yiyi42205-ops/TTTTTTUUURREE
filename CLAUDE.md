@@ -34,7 +34,7 @@ Standard PR flow:
 - `npm run dev` — start the Vite dev server. Vite proxies `/api/*` to `http://127.0.0.1:5001`, so `npm run dev:scraper` needs to be running alongside it (two terminals, or via `./run.sh`).
 - `npm run build` — production build (`vite build`)
 - `./run.sh` — interactive one-shot setup + run script (macOS-oriented): detects a compatible Python (3.9–3.13), creates `review_scraper/venv`, installs `review_scraper/requirements.txt`, installs the Playwright Chromium browser, prompts to set up `.env` (`GEMINI_API_KEY`, `APIFY_TOKEN`) if missing, then starts both `npm run dev:scraper` (backgrounded) and `npm run dev`. This is the recommended first-run path.
-- `.env` (not committed) needs `GEMINI_API_KEY` (required — server.py refuses to start without it) and `APIFY_TOKEN` (optional — falls back to Playwright only if `ENABLE_PLAYWRIGHT_FALLBACK=true`, see Architecture). See `.env.example`.
+- `.env` (not committed) needs `GEMINI_API_KEY` (optional but recommended — used for DB store Stage 2 audits and background refresh audits; if missing, server starts in cache-only mode and Stage 2 falls back to requiring user-provided keys) and `APIFY_TOKEN` (optional — falls back to Playwright only if `ENABLE_PLAYWRIGHT_FALLBACK=true`, see Architecture). See `.env.example`.
 - Python offline evaluation scripts live in `eval/` (not a test suite — see below), run with the venv Python from the repo root, e.g. `review_scraper/venv/bin/python eval/evaluate.py restaurant_data`:
   - `eval/evaluate.py` — runs the Stage 1 rule engine over labeled CSVs in `restaurant_data/`, reports precision/recall/F1 against human labels
   - `eval/evaluate_v2.py` — parameter-sweep evaluator; `--window N` limits to newest N reviews (default 100), `--sweep-config file.json` for a custom combo list, `--holdout N` splits N stores into a holdout set (stratified by 有洗/沒洗, deterministic via `--holdout-seed`, or manually via `--holdout-stores`), `--llm-sample N` for the opt-in real-Gemini small-sample mode (costs real API quota — not run automatically)
@@ -59,8 +59,12 @@ Standard PR flow:
 
 Known gotcha already hit once: `apify_client`'s `ApifyClient.actor(...).call(...)` returns a `Run` object (a Pydantic model — attribute access: `run.status`, `run.default_dataset_id`), **not a dict**. Using `.get(...)` on it raises `AttributeError` even when the Apify run succeeded (see the regression test in `tests/test_apify_scraper.py` that deliberately uses a `.get()`-less fake to catch this).
 
-### (2) Audit: Gemini only, key server-side
-`POST /api/audit` in `server.py` is the only Stage 2 path — there is no local/Ollama option anymore (removed entirely) and Gemini is never called from the browser (moved server-side so the API key never reaches the client). `GEMINI_API_KEY` is read from `.env` at startup; missing it raises `RuntimeError` immediately (fail fast, not a silent no-op). Reviews are batched (`llm_client.make_batches`, ~40/batch, sorted by `daysElapsed`) and sent up to 5 batches concurrently via `ThreadPoolExecutor`. `prompt_builder.py` builds the prompt from `review_scraper/audit_prompt.txt`.
+### (2) Audit: two-tier key strategy
+`POST /api/audit` in `server.py` is the only Stage 2 path. It uses a two-tier key strategy based on whether the store is already in the database:
+- **DB stores** (`scrapeSource: "cache"`): uses the server-side `GEMINI_API_KEY` — users see full Stage 2 results without providing any key. Background refresh (`_background_refresh`) also triggers `_background_audit()` which re-runs Stage 1 + Stage 2 on merged reviews using the server key, so the next user query gets a full cache hit.
+- **New stores** (`scrapeSource` is not `"cache"`): requires the user's own API key (Gemini / DeepSeek / OpenAI-compatible via header). Results are saved to `stage2_scores`, so subsequent queries for the same store use the server key path.
+
+`GEMINI_API_KEY` is read from `.env` at startup; if missing, the server still starts (cache-only mode) but Stage 2 for DB stores falls back to requiring user keys. Reviews are batched (`llm_client.make_batches`, ~40/batch, sorted by `daysElapsed`) and sent up to 5 batches concurrently via `ThreadPoolExecutor`. `prompt_builder.py` builds the prompt from `review_scraper/audit_prompt.txt`.
 
 **LLM model**: `gemini-2.5-flash-lite` (also supports DeepSeek and OpenAI-compatible providers via `provider` parameter).
 
@@ -100,12 +104,12 @@ The Stage 1 rule engine lives in one place: `review_scraper/rule_engine.py`. Bot
 A 5-page React app (not a component-library-driven one, despite ~20 `@radix-ui/*`/`@mui/*` packages listed in `package.json` — they're unused scaffolding from the original Figma Make template and can be ignored).
 
 - `src/app/routes.ts` — react-router v7 `createBrowserRouter`: `/` (`Home.tsx`), `/analyzer` (`Analyzer.tsx`), `/results` (`Results.tsx`), `/history` (`History.tsx`), `/settings` (`Settings.tsx`). Data is passed between pages via `navigate(path, { state })`, not URL params.
-- `src/app/pages/Analyzer.tsx` — input form: preset restaurants (bundled demo dataset) or paste Google Maps URLs (POSTed to `/api/scrape`). No API key input anywhere — the Gemini key lives server-side in `.env`.
+- `src/app/pages/Analyzer.tsx` — input form: preset restaurants (bundled demo dataset) or paste Google Maps URLs (POSTed to `/api/scrape`). Passes `scrapeSource` (from `/api/scrape` response `source` field) through to Results for the two-tier key strategy.
 - `src/app/pages/Results.tsx` — Stage 1: calls `POST /api/audit-rules` to get audited reviews and precomputed signals from the backend, then `aggregateAuditedReviews()` to produce `ShopStats`. Stage 2: uses the backend signals (`similarity`, `hotTerm`, `nearbyLongReviewCounts`, `spikeMonths`) to build the Gemini payload for ambiguous reviews, merges via `mergeStage2Results`, re-aggregates via `aggregateAuditedReviews`. UI: `low_info` reviews get a neutral gray badge; `unaudited` reviews get a gray "未複審" badge without confidence display; a washed verdict below 50% confidence shows "疑似洗評" in muted amber.
 - `src/app/pages/History.tsx` — browsing history of previously analyzed stores.
 - `src/app/pages/Settings.tsx` — user settings (API keys, preferences).
 - `src/app/utils/auditEngine.ts` — types/interfaces (`AuditResult`, `ShopStats`, `SimilaritySignal`, `HotTermSignal`) and Stage 2 functions only (`computeStage2Confidence`, `mergeStage2Results`, `aggregateAuditedReviews`). `AuditResult.issueType` includes `'unaudited'` for reviews not covered by Stage 2.
-- `src/app/components/TutorialModal.tsx` — 5-step onboarding tutorial (input → analysis → report → Apify token → Gemini API key).
+- `src/app/components/TutorialModal.tsx` — branching onboarding tutorial: "near NTU" path (no keys needed for full report, AI QA is optional) vs. "other area" path (needs Apify Token + AI API Key for first-time audit; stores are saved to DB so subsequent visits need no keys).
 - `src/app/components/results/ReviewInspector.tsx` — expandable review list with search and filter tabs (all, washed, Stage 1, Stage 2, clean, unaudited).
 - `src/app/utils/csvParser.ts` + `src/app/data/restaurantsData.ts` — hand-rolled CSV parser that loads 18 CSVs from `restaurant_data/` via Vite's `?raw` import (enabled by `assetsInclude` in `vite.config.ts`) to build the built-in demo dataset.
 - `vite.config.ts` — `@` alias → `src/`; a `figmaAssetResolver()` plugin (template leftover); dev-server proxy `/api` → `http://127.0.0.1:5001`.

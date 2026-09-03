@@ -28,7 +28,7 @@ const nearNtuSteps = [
     content: (
       <div className="space-y-2">
         <p>
-          資料庫已收錄的店家<span className="font-medium text-ink">不需要任何 API 金鑰</span>，輸入店名或 Google Maps 網址即可秒出報告。
+          資料庫已收錄的店家<span className="font-medium text-ink">不需要任何 API 金鑰</span>，輸入店名或 Google Maps 網址即可秒出完整報告，包含 AI 語意審計結果。
         </p>
         <div className="bg-surface-2 border border-hairline rounded p-3 text-xs text-ink-subtle space-y-1.5">
           <p>支援的輸入格式：</p>
@@ -59,22 +59,31 @@ const nearNtuSteps = [
 
 const otherSteps = [
   {
-    title: '其他地區的店 — 需要 Apify Token',
+    title: '其他地區的店 — 需要兩把金鑰',
     content: (
       <div className="space-y-2">
         <p>
-          不在資料庫中的店家需要即時爬取評論，
-          系統會請你提供自己的 <span className="font-medium">Apify Token</span>（免費）。
+          不在資料庫中的店家需要即時爬取評論並進行 AI 語意審計，
+          系統會請你提供：
         </p>
         <div className="bg-surface-2 border border-hairline rounded p-3 text-xs space-y-2">
-          <p className="font-medium text-ink">如何取得 Apify Token（免費）：</p>
+          <p className="font-medium text-ink">1. Apify Token — 爬取評論（免費）</p>
           <ol className="list-decimal pl-4 space-y-1 text-ink-subtle">
             <li>前往 <a href="https://console.apify.com/sign-up" target="_blank" rel="noreferrer" className="underline text-ink">apify.com</a> 註冊帳號</li>
             <li>進入 Settings → Integrations</li>
             <li>複製 Personal API Token</li>
-            <li>貼回本站的輸入框</li>
           </ol>
           <p className="text-ink-tertiary">免費帳號每月有 $5 USD 額度，約可查 100 家店。</p>
+        </div>
+        <div className="bg-surface-2 border border-hairline rounded p-3 text-xs space-y-2">
+          <p className="font-medium text-ink">2. AI API Key — 語意審計（免費）</p>
+          <p className="text-ink-subtle">支援以下任一服務：</p>
+          <ul className="list-disc pl-4 space-y-1 text-ink-subtle">
+            <li><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline text-ink">Gemini</a> — 免費方案每分鐘 15 次請求</li>
+            <li><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer" className="underline text-ink">DeepSeek</a></li>
+            <li>任何 OpenAI 相容 API</li>
+          </ul>
+          <p className="text-ink-tertiary">取得後貼到本站設定頁即可。查過一次的店會存入資料庫，之後不再需要金鑰。</p>
         </div>
       </div>
     ),
@@ -95,7 +104,7 @@ const otherSteps = [
   },
 ];
 
-const aiStep = {
+const aiStepNearNtu = {
   title: 'AI 問答功能（選用）',
   content: (
     <div className="space-y-2">
@@ -110,8 +119,20 @@ const aiStep = {
           <li><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer" className="underline text-ink">DeepSeek</a></li>
           <li>任何 OpenAI 相容 API</li>
         </ul>
-        <p className="text-ink-tertiary">取得金鑰後，貼到本站設定頁即可使用。</p>
+        <p className="text-ink-tertiary">取得金鑰後，貼到本站設定頁即可使用。審計報告本身不需要金鑰。</p>
       </div>
+    </div>
+  ),
+};
+
+const aiStepOther = {
+  title: 'AI 問答功能（選用）',
+  content: (
+    <div className="space-y-2">
+      <p>
+        報告底部可以向 AI 提問（例如「這家店推薦點什麼？」）。
+        如果你已在上一步填入 AI API Key，問答功能會直接可用。
+      </p>
     </div>
   ),
 };
@@ -172,8 +193,9 @@ export function TutorialModal({ onClose }: TutorialModalProps) {
     );
   }
 
-  // Path-specific steps + shared AI step at the end
+  // Path-specific steps + path-specific AI step at the end
   const pathSteps = path === 'near_ntu' ? nearNtuSteps : otherSteps;
+  const aiStep = path === 'near_ntu' ? aiStepNearNtu : aiStepOther;
   const allSteps = [...pathSteps, aiStep];
   const current = allSteps[step];
   const isLast = step === allSteps.length - 1;
