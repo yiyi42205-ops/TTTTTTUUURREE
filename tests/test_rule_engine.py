@@ -34,16 +34,16 @@ class TestAuditReview:
         assert result['isWashed'] is True
         assert result['confidenceScore'] == 75
 
-    def test_no_text_5star_high_count_escalation(self):
-        """Blank 5-star review when many blank 5-star exist → washed."""
-        result = audit_review({'text': '', 'stars': 5}, context={'noTextCount': 5})
+    def test_no_text_5star_high_ratio_escalation(self):
+        """Blank 5-star review when no-text 5-star ratio >= 20% → washed."""
+        result = audit_review({'text': '', 'stars': 5}, context={'noTextRatio': 0.25})
         assert result['issueType'] == 'no_text'
         assert result['isWashed'] is True
         assert result['confidenceScore'] == 75
 
-    def test_no_text_5star_low_count_no_escalation(self):
-        """Blank 5-star review with few blank 5-star reviews → not washed."""
-        result = audit_review({'text': '', 'stars': 5}, context={'noTextCount': 3})
+    def test_no_text_5star_low_ratio_no_escalation(self):
+        """Blank 5-star review with low no-text ratio → not washed."""
+        result = audit_review({'text': '', 'stars': 5}, context={'noTextRatio': 0.10})
         assert result['issueType'] == 'no_text'
         assert result['isWashed'] is False
         assert result['confidenceScore'] == 85
