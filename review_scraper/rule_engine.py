@@ -36,7 +36,7 @@ class RuleConfig:
     spike_multiplier: float = 3.0
     spike_min_count: int = 10
     spike_window_size: int = 20
-    no_text_escalation_count: int = 5
+    no_text_escalation_ratio: float = 0.20
     structural_min_similarity: float = 0.55
     structural_min_similar_count: int = 2
     structural_min_hot_term_count: int = 2
@@ -582,7 +582,7 @@ def audit_review(review, context=None, config: RuleConfig = None):
     if text.strip() == '':
         if stars == 5:
             is_escalated = bool(context.get('isSpikePeriod')) or \
-                (context.get('noTextCount', 0) >= config.no_text_escalation_count)
+                (context.get('noTextRatio', 0) >= config.no_text_escalation_ratio)
             if is_escalated:
                 return {
                     'isWashed': True,
@@ -735,12 +735,14 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
         if stars <= 3 and _check_incentive_semantic(text):
             whistleblower_indices.add(i)
 
-    # Count no-text 5-star reviews for escalation (same framework as low_info)
+    # Ratio of no-text 5-star reviews for escalation
+    total_reviews = len(reviews)
     no_text_5star_count = sum(
         1 for r in reviews
         if not (r.get('text', '') or '').strip()
         and int(r.get('stars') or 0) == 5
     )
+    no_text_5star_ratio = no_text_5star_count / total_reviews if total_reviews > 0 else 0
 
     # Per-review audit
     audited = []
@@ -751,7 +753,7 @@ def run_stage1_audit(reviews, config: RuleConfig = None):
         audit = audit_review(review, {
             'isSpikePeriod': is_spike,
             'similarCount': sim_count,
-            'noTextCount': no_text_5star_count - 1,  # exclude self
+            'noTextRatio': no_text_5star_ratio,
         }, config)
 
         # Override: hard duplicate detection (only for 4+ stars — low-star
