@@ -205,8 +205,38 @@ def _background_audit(place_id: str, reviews: list, metadata: dict) -> None:
         if to_cache:
             set_cached_scores(to_cache, model_name, prompt_version)
             logger.info(f"[refresh-audit] Cached {len(to_cache)} new Stage 2 scores for {place_id}")
+
+        # Regenerate store summary so it stays fresh after review changes
+        _background_summary(place_id, stage1, metadata)
     except Exception as e:
         logger.warning(f"[refresh-audit] Background audit failed for {place_id}: {e}")
+
+
+def _background_summary(place_id: str, stage1: dict, metadata: dict | None) -> None:
+    """Regenerate store summary after background audit updates reviews."""
+    if not genai_client:
+        return
+    try:
+        store_name = (metadata or {}).get("title", place_id)
+        # Filter: non-washed reviews with text, sorted by length, cap 150
+        valid = []
+        for r in stage1.get("auditedReviews", []):
+            audit = r.get("audit") or {}
+            if audit.get("isWashed"):
+                continue
+            text = (r.get("text") or "").strip()
+            if not text:
+                continue
+            valid.append(r)
+        valid.sort(key=lambda x: len(x.get("text", "")), reverse=True)
+        valid = valid[:150]
+        if not valid:
+            return
+        result = call_llm_summary("gemini", genai_client, store_name, valid)
+        set_cached_summary(place_id, result)
+        logger.info(f"[refresh-summary] Regenerated summary for {place_id} ({len(valid)} reviews)")
+    except Exception as e:
+        logger.warning(f"[refresh-summary] Summary regen failed for {place_id}: {e}")
 
 
 def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
