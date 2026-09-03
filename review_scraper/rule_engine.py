@@ -33,7 +33,7 @@ class RuleConfig:
     similarity_ngram: int = 3
     similarity_threshold: float = 0.45
     low_info_escalation_similar_count: int = 2
-    spike_multiplier: float = 3.0
+    spike_threshold: float = 0.80
     spike_min_count: int = 10
     spike_window_size: int = 20
     no_text_escalation_ratio: float = 0.20
@@ -416,12 +416,15 @@ def detect_spike_months(reviews, config: RuleConfig = None):
     Reviews are assumed to arrive sorted by time (newest-first from the
     scraper).  The function uses review *order* directly — no date parsing
     or re-sorting — so it works even when date strings are imprecise
-    (e.g. relative dates converted to day-level resolution).
+    (e.g. Apify's relative dates like "一年前" all mapping to the same day).
+
+    A review is considered "suspicious" if it is 5-star AND has ≤4 chars
+    of text (i.e. empty or near-empty positive reviews).
 
     A sliding window of *spike_window_size* consecutive reviews is moved
-    across the list.  If the time span covered by that window is much
-    shorter than expected (density > spike_multiplier × overall density),
-    every review in the window is flagged as spike.
+    across the list.  If the fraction of suspicious reviews in the window
+    meets or exceeds *spike_threshold*, every review in the window is
+    flagged as part of a spike.
 
     Returns:
       - flags: list[bool] per review (True = in a spike region)
@@ -435,50 +438,44 @@ def detect_spike_months(reviews, config: RuleConfig = None):
     if n < config.spike_min_count:
         return [False] * n, set()
 
-    # Parse dates in original order (no sorting — order is already
-    # newest-first from the scraper).
-    dates = []
+    # Mark each review as suspicious (5-star + effectively empty text)
+    suspicious = []
     for r in reviews:
-        time_str = r.get('time', '') or ''
         try:
-            dates.append(datetime.strptime(time_str[:10], '%Y-%m-%d'))
+            stars = int(r.get('stars') or 0)
         except (ValueError, TypeError):
-            dates.append(None)
+            stars = 0
+        text = (r.get('text', '') or '').strip()
+        suspicious.append(stars == 5 and len(text) <= 4)
 
-    # Keep only reviews with valid dates, preserving original indices.
-    dated = [(i, d) for i, d in enumerate(dates) if d is not None]
-
-    if len(dated) < config.spike_min_count:
-        return [False] * n, set()
-
-    # Overall density: reviews per day across the full time range.
-    # dated is newest-first, so first element is the latest date.
-    all_dates_only = [d for _, d in dated]
-    earliest = min(all_dates_only)
-    latest = max(all_dates_only)
-    total_span_days = max((latest - earliest).days, 1)
-    overall_density = len(dated) / total_span_days  # reviews/day
-
-    # Sliding window over the ordered list
-    w = min(config.spike_window_size, len(dated))
+    # Sliding window — count suspicious reviews in each window position
+    w = min(config.spike_window_size, n)
+    threshold_count = math.ceil(w * config.spike_threshold)
     flags = [False] * n
 
-    for start in range(len(dated) - w + 1):
-        end = start + w - 1
-        # Window spans from dated[start] to dated[end]; take abs since
-        # order may be newest-first or oldest-first.
-        window_days = max(abs((dated[end][1] - dated[start][1]).days), 1)
-        window_density = w / window_days
+    # Initial window count
+    sus_count = sum(suspicious[:w])
 
-        if window_density > overall_density * config.spike_multiplier:
-            for j in range(start, end + 1):
-                flags[dated[j][0]] = True
+    for start in range(n - w + 1):
+        if start > 0:
+            # Slide: remove left, add right
+            sus_count -= suspicious[start - 1]
+            sus_count += suspicious[start + w - 1]
 
-    # Build spike_months set for backward compat
+        if sus_count >= threshold_count:
+            for j in range(start, start + w):
+                flags[j] = True
+
+    # Build spike_months set for backward compat (parse dates where available)
     spike_months = set()
     for i, flagged in enumerate(flags):
-        if flagged and dates[i]:
-            spike_months.add(dates[i].strftime('%Y-%m'))
+        if flagged:
+            time_str = (reviews[i].get('time', '') or '')[:10]
+            try:
+                dt = datetime.strptime(time_str, '%Y-%m-%d')
+                spike_months.add(dt.strftime('%Y-%m'))
+            except (ValueError, TypeError):
+                pass
 
     return flags, spike_months
 
