@@ -944,9 +944,15 @@ def store_summary():
         result = {"warnings": [], "recommendations": []}
         return jsonify(result)
 
-    client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
-    if err_resp:
-        return jsonify(err_resp[0]), err_resp[1]
+    # DB stores use server-side key; new stores require user key
+    scrape_source = data.get("scrapeSource", "")
+    if scrape_source == "cache" and genai_client and provider == "gemini":
+        client_to_use = genai_client
+        logger.info(f"Using server-side Gemini key for summary of DB store '{store_name}'")
+    else:
+        client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
+        if err_resp:
+            return jsonify(err_resp[0]), err_resp[1]
 
     try:
         logger.info(f"Generating summary for '{store_name}' with {len(valid_reviews)} reviews...")

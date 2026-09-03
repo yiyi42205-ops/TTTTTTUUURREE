@@ -382,6 +382,7 @@ export function Results() {
         }));
 
       const summaryLlm = getLLMSettings();
+      const summarySource = (location.state?.customShops as Array<{ id: string; scrapeSource?: string }>)?.[idx]?.scrapeSource || '';
       fetch('/api/store-summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...summaryLlm.headers },
@@ -389,6 +390,7 @@ export function Results() {
           placeId,
           storeName: shop.storeName,
           reviews: validReviews,
+          scrapeSource: summarySource,
           ...summaryLlm.body,
         }),
       })
