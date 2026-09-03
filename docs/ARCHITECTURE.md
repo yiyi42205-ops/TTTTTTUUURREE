@@ -95,6 +95,8 @@ flowchart TD
 2. **Trust Score 不參與星等計算** — `trustScore` 是獨立的信譽展示指標，`filteredRating` 純粹由加權平均決定。早期的 `trustPenalty` 機制因重複懲罰已移除，不應重新引入。
 3. **Structural 訊號不依賴內容判斷** — 時間暴增 (`isSpikePeriod`)、相似度 (`similarCount`)、附近長評數 (`nearbyLongReviewCount`) 等結構訊號由本機預計算後傳給 Gemini 作為上下文，而非由 Gemini 自行計算。
 
+4. **非餐飲店家提前攔截** — `/api/scrape` 在執行完整爬取前，會先以 Apify probe 回傳的 `categoryName` 和 `title` 做兩層檢查：(a) 類別關鍵字匹配（`_is_food_category`，~60+ 個中英文餐飲類別詞）；(b) 店名 fallback（`_name_looks_like_food`，偵測 Google Maps 分類錯誤的餐飲店，如咖啡館被標為「時裝店」）。兩者皆未命中則回傳 `NOT_RESTAURANT`，前端顯示回報按鈕，使用者可透過 `POST /api/report-category` 回報類別錯誤（存入 `category_reports` 表 + Discord webhook 通知）。
+
 **暫定參數（待調校或已在 grid search 中）：**
 
 | 參數 | 目前值 | 所在位置 | 說明 |

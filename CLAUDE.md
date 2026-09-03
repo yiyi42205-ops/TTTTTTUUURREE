@@ -34,7 +34,7 @@ Standard PR flow:
 - `npm run dev` — start the Vite dev server. Vite proxies `/api/*` to `http://127.0.0.1:5001`, so `npm run dev:scraper` needs to be running alongside it (two terminals, or via `./run.sh`).
 - `npm run build` — production build (`vite build`)
 - `./run.sh` — interactive one-shot setup + run script (macOS-oriented): detects a compatible Python (3.9–3.13), creates `review_scraper/venv`, installs `review_scraper/requirements.txt`, installs the Playwright Chromium browser, prompts to set up `.env` (`GEMINI_API_KEY`, `APIFY_TOKEN`) if missing, then starts both `npm run dev:scraper` (backgrounded) and `npm run dev`. This is the recommended first-run path.
-- `.env` (not committed) needs `GEMINI_API_KEY` (optional but recommended — used for DB store Stage 2 audits and background refresh audits; if missing, server starts in cache-only mode and Stage 2 falls back to requiring user-provided keys) and `APIFY_TOKEN` (optional — falls back to Playwright only if `ENABLE_PLAYWRIGHT_FALLBACK=true`, see Architecture). See `.env.example`.
+- `.env` (not committed) needs `GEMINI_API_KEY` (optional but recommended — used for DB store Stage 2 audits and background refresh audits; if missing, server starts in cache-only mode and Stage 2 falls back to requiring user-provided keys), `APIFY_TOKEN` (optional — falls back to Playwright only if `ENABLE_PLAYWRIGHT_FALLBACK=true`, see Architecture), and `DISCORD_WEBHOOK_URL` (optional — category mismatch reports are sent here; if missing, reports are still saved to DB but no notification is sent). See `.env.example`.
 - Python offline evaluation scripts live in `eval/` (not a test suite — see below), run with the venv Python from the repo root, e.g. `review_scraper/venv/bin/python eval/evaluate.py restaurant_data`:
   - `eval/evaluate.py` — runs the Stage 1 rule engine over labeled CSVs in `restaurant_data/`, reports precision/recall/F1 against human labels
   - `eval/evaluate_v2.py` — parameter-sweep evaluator; `--window N` limits to newest N reviews (default 100), `--sweep-config file.json` for a custom combo list, `--holdout N` splits N stores into a holdout set (stratified by 有洗/沒洗, deterministic via `--holdout-seed`, or manually via `--holdout-stores`), `--llm-sample N` for the opt-in real-Gemini small-sample mode (costs real API quota — not run automatically)
@@ -100,11 +100,18 @@ The Stage 1 rule engine lives in one place: `review_scraper/rule_engine.py`. Bot
 - `POST /api/store-summary` — generates warnings + recommendations from non-washed reviews using `call_llm_summary()`. Caches results in `summary_cache` table. Filters out washed and empty reviews, caps at 150 sorted by text length.
 - `POST /api/summarize` — QA endpoint: answers user questions about a store's reviews using `call_llm_qa()`. Anonymizes usernames before sending to LLM, restores them in response. Cached in `qa_cache` table. Rate-limited per IP per store (`qa_rate_limit` table).
 
+### (7) Food category gate & user report
+`POST /api/scrape` rejects non-restaurant venues before performing a full scrape. Detection uses a two-tier approach:
+1. **Category keywords** (`_is_food_category`): ~60+ keywords covering Chinese/English food venue types (餐廳, 咖啡廳, 快餐店, bakery, bar, etc.).
+2. **Store name fallback** (`_name_looks_like_food`): catches misclassified venues (e.g. a café listed as "時裝店" on Google Maps) by checking the store name for food-related keywords (咖啡, cafe, 麵, 串燒, pizza, kitchen, etc.).
+
+If both checks fail, the endpoint returns `400` with `code: "NOT_RESTAURANT"` and includes `categoryName`, `storeName`, `placeId` in the response. The frontend (`Analyzer.tsx`) shows a report button — clicking it POSTs to `POST /api/report-category` (rate-limited 5/hr), which saves to the `category_reports` SQLite table and sends a Discord webhook notification (via `DISCORD_WEBHOOK_URL` env var / Fly.io secret).
+
 ### Frontend (`src/`)
 A 5-page React app (not a component-library-driven one, despite ~20 `@radix-ui/*`/`@mui/*` packages listed in `package.json` — they're unused scaffolding from the original Figma Make template and can be ignored).
 
 - `src/app/routes.ts` — react-router v7 `createBrowserRouter`: `/` (`Home.tsx`), `/analyzer` (`Analyzer.tsx`), `/results` (`Results.tsx`), `/history` (`History.tsx`), `/settings` (`Settings.tsx`). Data is passed between pages via `navigate(path, { state })`, not URL params.
-- `src/app/pages/Analyzer.tsx` — input form: preset restaurants (bundled demo dataset) or paste Google Maps URLs (POSTed to `/api/scrape`). Passes `scrapeSource` (from `/api/scrape` response `source` field) through to Results for the two-tier key strategy.
+- `src/app/pages/Analyzer.tsx` — input form: preset restaurants (bundled demo dataset) or paste Google Maps URLs (POSTed to `/api/scrape`). Passes `scrapeSource` (from `/api/scrape` response `source` field) through to Results for the two-tier key strategy. Handles `NOT_RESTAURANT` error with an in-line report button (see (7) above).
 - `src/app/pages/Results.tsx` — Stage 1: calls `POST /api/audit-rules` to get audited reviews and precomputed signals from the backend, then `aggregateAuditedReviews()` to produce `ShopStats`. Stage 2: uses the backend signals (`similarity`, `hotTerm`, `nearbyLongReviewCounts`, `spikeMonths`) to build the Gemini payload for ambiguous reviews, merges via `mergeStage2Results`, re-aggregates via `aggregateAuditedReviews`. UI: `low_info` reviews get a neutral gray badge; `unaudited` reviews get a gray "未複審" badge without confidence display; a washed verdict below 50% confidence shows "疑似洗評" in muted amber.
 - `src/app/pages/History.tsx` — browsing history of previously analyzed stores.
 - `src/app/pages/Settings.tsx` — user settings (API keys, preferences).
@@ -116,11 +123,11 @@ A 5-page React app (not a component-library-driven one, despite ~20 `@radix-ui/*
 - Styling is Tailwind v4 via `@tailwindcss/vite` — `postcss.config.mjs` is intentionally empty (v4 doesn't need manual PostCSS config).
 
 ### Backend (`review_scraper/`)
-- `server.py` — Flask app (port 5001), `GET /`, `POST /api/scrape`, `POST /api/audit-rules`, `POST /api/audit`, `POST /api/store-summary`, `POST /api/summarize`, `GET /api/stats`. See (1), (2), (5), and (6) above.
+- `server.py` — Flask app (port 5001), `GET /`, `POST /api/scrape`, `POST /api/audit-rules`, `POST /api/audit`, `POST /api/store-summary`, `POST /api/summarize`, `POST /api/report-category`, `GET /api/stats`. See (1), (2), (5), (6), and (7) above.
 - `rule_engine.py` — the canonical Stage 1 rule engine. See (4) and (5) above.
 - `apify_scraper.py` — primary scraper, calls the Apify actor.
 - `scraper.py` — Playwright + BeautifulSoup4 + `playwright-stealth` fallback. Hardcoded Google Maps CSS selectors (`div.jftiEf`, `span.kvMYJc`, `span.rsqaWe`, `span.wiI7pd`), fragile to DOM changes. `parse_relative_time()` converts relative dates to absolute.
-- `cache_store.py` — SQLite cache layer (`cache.db`, gitignored). Eight tables: `scrape_cache` (scraped reviews by place_id), `search_query_map` (URL/query → place_id), `audit_cache` (Stage 1 results by place_id, no TTL), `stage2_scores` (I/A/D scores by review_id+model+prompt_version), `summary_cache` (store summary), `qa_cache` (QA answers), `qa_rate_limit` (per-IP rate limiting), `visitor_log` (analytics). When `set_cached_reviews` updates a store's reviews, it invalidates `audit_cache` and `qa_cache` for that store but **preserves `summary_cache`** (expensive LLM output); summaries are regenerated by `_background_summary()` after background audit completes.
+- `cache_store.py` — SQLite cache layer (`cache.db`, gitignored). Nine tables: `scrape_cache` (scraped reviews by place_id), `search_query_map` (URL/query → place_id), `audit_cache` (Stage 1 results by place_id, no TTL), `stage2_scores` (I/A/D scores by review_id+model+prompt_version), `summary_cache` (store summary), `qa_cache` (QA answers), `qa_rate_limit` (per-IP rate limiting), `visitor_log` (analytics), `category_reports` (user-submitted category mismatch reports). When `set_cached_reviews` updates a store's reviews, it invalidates `audit_cache` and `qa_cache` for that store but **preserves `summary_cache`** (expensive LLM output); summaries are regenerated by `_background_summary()` after background audit completes.
 - `batch_crawl.py` — local Playwright batch pre-crawl script (Issue #15). Supports `--resume`, `--split N`, `--merge-cache`, checkpoint-based progress.
 - `batch_audit.py` — batch Stage 1 audit script (Issue #16). Reads all entries from `scrape_cache`, runs `run_stage1_audit()`, writes results to `audit_cache`. Supports `--dry-run` and `--force`.
 - `normalize.py` — `normalize_review()`, unifies Playwright's PascalCase fields and the Apify actor's lowercase `text`/`textTranslated` fields into one shape.
@@ -152,7 +159,7 @@ Offline evaluation scripts (not part of the test suite). Run from the repo root 
 - `tests/` (pytest, run with the `review_scraper/venv` Python):
   - `test_rule_engine.py` — `audit_review` unit tests (keyword, "送" context, no_text, low_info, escalation), `run_stage1_audit` integration tests (duplicates, signals structure), `/api/audit-rules` endpoint tests (happy path, validation, incentive/duplicate detection).
   - `test_evaluate_v2_signal_mirrors.py` — cross-language golden fixture for `detect_hot_term_signals` / `detect_nearby_long_review_counts` (now imports directly from `rule_engine`).
-  - `test_normalize.py`, `test_audit_api.py`, `test_apify_scraper.py` (incl. the `Run`-object regression test), `test_gemini_client.py`, `test_prompt_builder.py`.
+  - `test_normalize.py`, `test_audit_api.py`, `test_apify_scraper.py` (incl. the `Run`-object regression test, food category gate, name fallback, category report endpoint), `test_gemini_client.py`, `test_prompt_builder.py`.
   - `test_stage2_rules.py` — `judge_from_scores`, `compute_content_confidence`, `build_stage2_result` unit tests.
   - `test_summarize_api.py` — `/api/store-summary` endpoint tests (golden case, cache hit, validation, LLM failure, washed review filtering).
   - `test_qa_api.py` — `/api/summarize` endpoint tests (success, validation, rate limiting, cache hit).
