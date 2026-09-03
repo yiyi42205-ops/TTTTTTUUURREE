@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router';
 import {
   ArrowLeft, AlertTriangle, Shield, X, Database, MessageSquare, Send,
-  Loader2, Sparkles, Trophy, AlertCircle, ThumbsUp, Info
+  Loader2, Sparkles, Trophy, AlertCircle, ThumbsUp, Info, Megaphone
 } from 'lucide-react';
 import { RESTAURANTS_DATA } from '../data/restaurantsData';
 import { parseReviews, Review } from '../utils/csvParser';
@@ -97,7 +97,7 @@ export function Results() {
   const [qaErrors, setQaErrors] = useState<{ [storeIdx: number]: string }>({});
 
   // Store summary states
-  const [storeSummaries, setStoreSummaries] = useState<{ [storeIdx: number]: { warnings: any[]; recommendations: any[] } }>({});
+  const [storeSummaries, setStoreSummaries] = useState<{ [storeIdx: number]: { warnings: any[]; recommendations: any[]; promotionGap?: { summary: string; sourceReviewIds: string[] } | null } }>({});
   const [isSummaryLoading, setIsSummaryLoading] = useState<{ [storeIdx: number]: boolean }>({});
 
   const [showTutorial, setShowTutorial] = useState(false);
@@ -168,6 +168,7 @@ export function Results() {
           }));
 
           const stats = aggregateAuditedReviews(shop.name, auditedReviews);
+          stats.reviewAvgRating = stats.originalRating;
           if (shop.metadata?.totalScore != null) {
             stats.originalRating = shop.metadata.totalScore;
           }
@@ -689,7 +690,33 @@ export function Results() {
                   </div>
                 )}
 
-                {storeSummaries[activeStoreTab].warnings.length === 0 && storeSummaries[activeStoreTab].recommendations.length === 0 && (
+                {storeSummaries[activeStoreTab].promotionGap && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <Megaphone className="w-3.5 h-3.5 text-[var(--semantic-info,#6366f1)]" />
+                      <span className="text-xs font-medium text-[var(--semantic-info,#6366f1)]">網路宣傳落差</span>
+                    </div>
+                    <div className="bg-[var(--semantic-info,#6366f1)]/5 border border-[var(--semantic-info,#6366f1)]/15 rounded-lg p-3">
+                      <p className="text-sm text-ink leading-relaxed">{storeSummaries[activeStoreTab].promotionGap!.summary}</p>
+                      {storeSummaries[activeStoreTab].promotionGap!.sourceReviewIds?.length > 0 && (
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          <span className="text-[11px] text-ink-tertiary">來源：</span>
+                          {storeSummaries[activeStoreTab].promotionGap!.sourceReviewIds.map((id: string, j: number) => (
+                            <button
+                              key={j}
+                              onClick={() => handleSourceClick(id)}
+                              className="text-[11px] text-primary hover:text-primary-hover underline underline-offset-2 cursor-pointer"
+                            >
+                              {id}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {storeSummaries[activeStoreTab].warnings.length === 0 && storeSummaries[activeStoreTab].recommendations.length === 0 && !storeSummaries[activeStoreTab].promotionGap && (
                   <p className="text-sm text-ink-subtle">評論資料不足，無法生成總結。</p>
                 )}
               </div>

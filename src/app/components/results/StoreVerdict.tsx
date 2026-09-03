@@ -59,7 +59,7 @@ export function StoreVerdict({ result, storeName }: StoreVerdictProps) {
         </h2>
 
         {/* Rating comparison */}
-        <div className="flex items-baseline gap-3 flex-wrap mb-5">
+        <div className="flex items-baseline gap-3 flex-wrap mb-3">
           <span className="text-sm text-ink-subtle">原始</span>
           <span className="text-xl font-semibold text-ink-muted line-through font-mono tabular-nums">
             {result.originalRating.toFixed(2)}★
@@ -75,6 +75,14 @@ export function StoreVerdict({ result, storeName }: StoreVerdictProps) {
             </span>
           )}
         </div>
+        {result.reviewAvgRating != null && Math.abs(result.originalRating - result.reviewAvgRating) >= 0.05 && (
+          <p className="text-xs text-ink-tertiary mb-5">
+            最近 {total} 則平均 {result.reviewAvgRating.toFixed(2)}★
+            {result.googleReviewsCount != null && (
+              <span>（Google 全部 {result.googleReviewsCount.toLocaleString()} 則為 {result.originalRating.toFixed(1)}★）</span>
+            )}
+          </p>
+        )}
 
         <hr className="border-hairline-strong mb-5" />
 
