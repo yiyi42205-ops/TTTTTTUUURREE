@@ -585,4 +585,111 @@ def test_is_food_category_helper():
     assert not _is_food_category("Church")
     assert not _is_food_category("Museum")
 
+    # Newly added categories from DB analysis
+    assert _is_food_category("快餐店")
+    assert _is_food_category("熟食店")
+    assert _is_food_category("餅店")
+    assert _is_food_category("麵食店")
+    assert _is_food_category("小食店")
+    assert _is_food_category("扒房")
+    assert _is_food_category("薄餅店")
+    assert _is_food_category("外賣店")
+    assert _is_food_category("Sandwich shop")
+
+
+def test_name_looks_like_food():
+    """Test name-based fallback for wrongly categorized stores."""
+    from server import _name_looks_like_food
+
+    # Should match food-related names
+    assert _name_looks_like_food("JJ's CAFE")
+    assert _name_looks_like_food("某某咖啡館")
+    assert _name_looks_like_food("拉麵道樂")
+    assert _name_looks_like_food("串燒居酒屋")
+    assert _name_looks_like_food("Pizza Hut")
+    assert _name_looks_like_food("某某食堂")
+    assert _name_looks_like_food("Brunch Lab")
+    assert _name_looks_like_food("便當專賣")
+    assert _name_looks_like_food("Kitchen Island")
+
+    # Should NOT match non-food names
+    assert not _name_looks_like_food("台大公園")
+    assert not _name_looks_like_food("台北101觀景台")
+    assert not _name_looks_like_food("某某服飾店")
+    assert not _name_looks_like_food("Good Hair Salon")
+
+
+def test_scrape_non_restaurant_returns_report_fields(client, monkeypatch):
+    """NOT_RESTAURANT error includes placeId/storeName/categoryName for reporting."""
+    def fake_scrape(url, max_reviews=50, token=None):
+        return "ChIJ_fake", [], {"categoryName": "時裝店", "title": "某某時裝"}
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape)
+
+    resp = client.post("/api/scrape", json={"url": "https://maps.google.com/?cid=123"})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data["code"] == "NOT_RESTAURANT"
+    assert data["categoryName"] == "時裝店"
+    assert data["storeName"] == "某某時裝"
+    assert "placeId" in data
+
+
+def test_scrape_name_fallback_allows_food_store(client, monkeypatch):
+    """A store with non-food category but food-related name should pass."""
+    reviews = [{"username": "A", "stars": "5", "text": "好吃", "time": "1天前", "images": [], "hasText": True, "imageCount": 0}]
+
+    def fake_scrape(url, max_reviews=50, token=None):
+        return "ChIJ_fake", reviews, {"categoryName": "精神保健服務", "title": "某某咖啡館"}
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape)
+
+    resp = client.post("/api/scrape", json={"url": "https://maps.google.com/?cid=456"})
+    # Should NOT be rejected — name fallback detects "咖啡" in title
+    assert resp.status_code == 200
+
+
+def test_report_category_endpoint(client, monkeypatch, tmp_path):
+    """POST /api/report-category saves to DB and returns ok."""
+    db_path = str(tmp_path / "test.db")
+    monkeypatch.setattr("server.save_category_report",
+                        lambda *a, **kw: 1)
+
+    resp = client.post("/api/report-category", json={
+        "placeId": "ChIJ_test",
+        "storeName": "Test Store",
+        "categoryName": "時裝店",
+    })
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["ok"] is True
+    assert data["id"] == 1
+
+
+def test_report_category_validation(client):
+    """POST /api/report-category rejects missing fields."""
+    resp = client.post("/api/report-category", json={
+        "placeId": "",
+        "storeName": "Test",
+        "categoryName": "Cat",
+    })
+    assert resp.status_code == 400
+
+
+def test_save_category_report_db(tmp_path):
+    """save_category_report writes to the category_reports table."""
+    from cache_store import save_category_report, _connect
+
+    db_path = str(tmp_path / "test.db")
+    row_id = save_category_report("ChIJ_test", "Test Store", "時裝店", "127.0.0.1", db_path=db_path)
+    assert row_id >= 1
+
+    conn = _connect(db_path)
+    row = conn.execute("SELECT * FROM category_reports WHERE id = ?", (row_id,)).fetchone()
+    conn.close()
+    assert row is not None
+    assert row[1] == "ChIJ_test"   # place_id
+    assert row[2] == "Test Store"  # store_name
+    assert row[3] == "時裝店"      # category_name
+
 
