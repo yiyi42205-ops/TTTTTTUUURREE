@@ -255,7 +255,7 @@ flowchart LR
         TS_SIM["相似度信號\n3-gram Jaccard > 0.45"]
         TS_LOW["low_info 偵測\nEMPTY_WORDS"]
         TS_ESC["low_info 升級\nspikeMonth ∨ similarCount ≥ 2"]
-        TS_SPIKE["時間暴增\ncomputeSpikeMonths()"]
+        TS_SPIKE["（已遷移至 Python）"]
         TS_HOT["熱詞偵測\ncomputeHotTermSignals()"]
         TS_NEARBY["附近長評\ncomputeNearbyLongReviewCounts()"]
         TS_AGG["aggregateAuditedReviews()\nWeight → Filtered Rating"]
@@ -267,7 +267,7 @@ flowchart LR
         PY_SIM["相似度信號\ndetect_similar_counts()\n3-gram Jaccard > 0.45"]
         PY_LOW["low_info 偵測\nEMPTY_WORDS"]
         PY_ESC["low_info 升級\nspikeMonth ∨ similarCount ≥ 2"]
-        PY_SPIKE["時間暴增\nspike_months()"]
+        PY_SPIKE["序列密度暴增\ndetect_spike_months()"]
         PY_HOT["熱詞偵測\ndetect_hot_term_signals()"]
         PY_NEARBY["附近長評\ndetect_nearby_long_review_counts()"]
         PY_AGG["washed_ratio 計算\n（簡化版，無加權）"]
@@ -309,13 +309,13 @@ flowchart LR
 | 模板偵測 | `getNGrams(2)` + Jaccard | `detect_templates()` | 🟡 門檻相同 (0.75)，實作分開 |
 | 相似度信號 | `getNGrams(3)` + 0.45 | `detect_similar_counts()` | 🟡 門檻相同，實作分開 |
 | low_info + 升級 | `EMPTY_WORDS` | `EMPTY_WORDS` | 🔴 詞庫須手動同步 |
-| 時間暴增 | `computeSpikeMonths()` | `spike_months()` | 🟡 邏輯相同 |
+| 序列密度暴增 | — | `detect_spike_months()` | ✅ Python 唯一實作（order-based 滑窗） |
 | 熱詞偵測 | `computeHotTermSignals()` | `detect_hot_term_signals()` | ✅ 已補齊，fixture 驗證 |
 | 附近長評 | `computeNearbyLongReviewCounts()` | `detect_nearby_long_review_counts()` | ✅ 已補齊，fixture 驗證 |
 | 聚合公式 | 加權 Filtered Rating | 簡易 washed_ratio | 🟠 設計上不同用途 |
 
 **遷移進度：**
-遷移開發已完成（branch `feat/issue-3-rule-engine-migration`），將 Stage 1 規則引擎統一為 Python 單一實作（`rule_engine.py`），前端改為呼叫 `POST /api/audit-rules`，`evaluate_v2.py` 直接 import 共用模組。曾直推 main 後被 revert，**待開 PR 重新合併**。合併後本圖的雙鏡像架構將被消除。
+遷移已完成。Stage 1 規則引擎統一為 Python 單一實作（`rule_engine.py`），前端呼叫 `POST /api/audit-rules`，`evaluate_v2.py` 直接 import 共用模組。上方「auditEngine.ts」欄位中的規則邏輯已全部遷移至 Python，TS 側僅保留 Stage 2 相關函式（`computeStage2Confidence`、`mergeStage2Results`、`aggregateAuditedReviews`）和型別定義。
 
 ---
 
