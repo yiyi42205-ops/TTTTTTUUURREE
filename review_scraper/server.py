@@ -1200,7 +1200,7 @@ def report_category():
             req = urllib.request.Request(
                 DISCORD_WEBHOOK_URL,
                 data=payload,
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": "application/json", "User-Agent": "TrueRating/1.0"},
                 method="POST",
             )
             urllib.request.urlopen(req, timeout=5)
