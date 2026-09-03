@@ -120,6 +120,18 @@ def _connect(db_path: str) -> sqlite3.Connection:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS category_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            place_id TEXT NOT NULL,
+            store_name TEXT NOT NULL,
+            category_name TEXT NOT NULL,
+            ip TEXT NOT NULL,
+            created_at REAL NOT NULL
+        )
+        """
+    )
     return conn
 
 
@@ -522,5 +534,25 @@ def set_cached_scores(scores: list, model: str, prompt_version: str,
             ],
         )
         conn.commit()
+    finally:
+        conn.close()
+
+
+# ── Category report ────────────────────────────────────────────
+
+def save_category_report(place_id: str, store_name: str, category_name: str,
+                         ip: str, db_path: str = None) -> int:
+    """Save a user-submitted category mismatch report. Returns the row id."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        cursor = conn.execute(
+            """
+            INSERT INTO category_reports (place_id, store_name, category_name, ip, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (place_id, store_name, category_name, ip, time.time()),
+        )
+        conn.commit()
+        return cursor.lastrowid
     finally:
         conn.close()

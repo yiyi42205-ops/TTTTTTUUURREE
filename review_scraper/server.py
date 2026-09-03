@@ -7,6 +7,7 @@ from flask_limiter.util import get_remote_address
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 from google import genai
+import json
 import logging
 import os
 import time
@@ -25,6 +26,7 @@ from cache_store import (
     get_cached_scores, set_cached_scores,
     get_last_checked_at, set_last_checked_at, get_fetched_at,
     log_visitor, get_visitor_stats, update_cached_metadata,
+    save_category_report,
 )
 from prompt_builder import get_prompt_version
 from stage2_rules import build_stage2_result
@@ -35,18 +37,48 @@ import re
 # categoryName that contains none of these tokens, we treat the place as a
 # non-restaurant venue and return an error instead of auditing.
 _FOOD_CATEGORY_KEYWORDS: tuple[str, ...] = (
-    "餐廳", "餐館", "小吃", "飯店", "飯館", "食堂",
+    # Chinese generic
+    "餐廳", "餐館", "小吃", "飯店", "飯館", "食堂", "菜館", "酒家",
+    # Drinks
     "咖啡", "茶", "飲料", "飲品", "奶茶", "果汁", "酒吧", "酒館", "啤酒",
+    # Bakery & dessert
     "麵包", "烘焙", "蛋糕", "甜點", "甜品", "糕點", "冰淇淋", "冰品",
+    "餅店", "雪糕", "班戟", "朱古力",
+    # Hot pot, BBQ, teppanyaki
     "火鍋", "燒烤", "燒肉", "烤肉", "串燒", "鐵板燒",
-    "壽司", "拉麵", "丼飯", "居酒屋", "日本料理", "日式",
-    "披薩", "漢堡", "速食", "炸雞", "牛排",
+    # Japanese
+    "壽司", "拉麵", "丼飯", "居酒屋", "日本料理", "日式", "烏冬",
+    # Western fast food
+    "披薩", "漢堡", "速食", "快餐", "炸雞", "牛排", "扒房", "薄餅", "三文治",
+    # Specialty
     "素食", "蔬食", "早餐", "早午餐", "brunch",
     "buffet", "自助餐", "便當", "滷味", "鹹酥雞",
+    # HK/TW specific
+    "熟食", "麵食", "麵店", "小食", "餃子", "包點", "飯盒",
+    "中菜", "美食", "外賣", "餐車", "私廚", "到會",
+    # English
     "restaurant", "cafe", "coffee", "bakery", "bar",
     "food", "pizza", "burger", "noodle", "sushi",
     "bistro", "diner", "eatery", "grill", "pub",
     "dessert", "ice cream", "tea", "juice", "brewery",
+    "sandwich", "pancake", "chocolate",
+)
+
+# Store name keywords — used as fallback when Google's category is wrong
+# (e.g. a café classified as "時裝店"). More conservative than category list.
+_NAME_FOOD_KEYWORDS: tuple[str, ...] = (
+    "餐", "食堂", "小吃", "咖啡", "cafe", "café", "coffee",
+    "茶屋", "茶館", "茶室", "茶坊", "奶茶",
+    "麵", "飯", "粥", "鍋", "丼",
+    "壽司", "sushi", "ramen", "拉麵",
+    "居酒屋", "酒吧", "bar", "pub",
+    "烘焙", "bakery", "甜點", "dessert",
+    "早午餐", "brunch", "早餐",
+    "包子", "饅頭", "便當", "滷味",
+    "冰品", "冰店", "雪糕",
+    "燒烤", "燒肉", "烤肉", "串燒",
+    "bistro", "grill", "pizza", "burger",
+    "kitchen", "廚房",
 )
 
 
@@ -54,6 +86,12 @@ def _is_food_category(category_name: str) -> bool:
     """Return True if *category_name* looks like a food/drink venue."""
     lower = category_name.lower()
     return any(kw in lower for kw in _FOOD_CATEGORY_KEYWORDS)
+
+
+def _name_looks_like_food(store_name: str) -> bool:
+    """Fallback: return True if the store *name* contains food-related terms."""
+    lower = store_name.lower()
+    return any(kw in lower for kw in _NAME_FOOD_KEYWORDS)
 
 # Configure logging format and level
 logging.basicConfig(
@@ -87,6 +125,8 @@ if DEEPSEEK_API_KEY:
         deepseek_client = openai.OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
     except ImportError:
         logger.warning("openai package not installed. DeepSeek backend will be unavailable.")
+
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB request body limit
@@ -583,11 +623,15 @@ def scrape():
             # Early category gate: the 1-review probe already gives us
             # categoryName — reject non-restaurant venues before the full scrape.
             cat = (probe_metadata or {}).get("categoryName", "")
-            if cat and not _is_food_category(cat):
-                logger.info(f"Non-restaurant category detected via probe: '{cat}' for {url_to_scrape}")
+            title = (probe_metadata or {}).get("title", "")
+            if cat and not _is_food_category(cat) and not _name_looks_like_food(title):
+                logger.info(f"Non-restaurant category detected via probe: '{cat}' ({title}) for {url_to_scrape}")
                 return jsonify({
                     "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。",
-                    "code": "NOT_RESTAURANT"
+                    "code": "NOT_RESTAURANT",
+                    "categoryName": cat,
+                    "storeName": title,
+                    "placeId": probe_place_id or "",
                 }), 400
 
             if probe_place_id:
@@ -638,10 +682,15 @@ def scrape():
         # Category gate for full scrape (covers the path where we already had
         # a place_id and skipped the probe above).
         cat = (metadata or {}).get("categoryName", "")
-        if cat and not _is_food_category(cat):
-            logger.info(f"Non-restaurant category detected: '{cat}' for {url_to_scrape}")
+        title = (metadata or {}).get("title", "")
+        if cat and not _is_food_category(cat) and not _name_looks_like_food(title):
+            logger.info(f"Non-restaurant category detected: '{cat}' ({title}) for {url_to_scrape}")
             return jsonify({
-                "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。"
+                "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。",
+                "code": "NOT_RESTAURANT",
+                "categoryName": cat,
+                "storeName": title,
+                "placeId": apify_place_id or target_place_id or "",
             }), 400
 
         final_place_id = apify_place_id or target_place_id
@@ -1122,6 +1171,43 @@ def log_visit():
 @limiter.exempt
 def stats():
     return jsonify(get_visitor_stats())
+
+@app.route("/api/report-category", methods=["POST"])
+@limiter.limit("5 per hour")
+def report_category():
+    data = request.get_json(silent=True) or {}
+    place_id = (data.get("placeId") or "").strip()
+    store_name = (data.get("storeName") or "").strip()
+    category_name = (data.get("categoryName") or "").strip()
+
+    if not place_id or not store_name or not category_name:
+        return jsonify({"error": "缺少必要欄位"}), 400
+
+    ip = request.remote_addr or "unknown"
+    row_id = save_category_report(place_id, store_name, category_name, ip)
+
+    # Send Discord notification (fire-and-forget)
+    if DISCORD_WEBHOOK_URL:
+        try:
+            payload = json.dumps({
+                "content": (
+                    f"📋 **類別回報 #{row_id}**\n"
+                    f"店名：{store_name}\n"
+                    f"類別：{category_name}\n"
+                    f"Place ID：`{place_id}`"
+                ),
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                DISCORD_WEBHOOK_URL,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=5)
+        except Exception as e:
+            logger.warning(f"Discord webhook failed: {e}")
+
+    return jsonify({"ok": True, "id": row_id})
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5001))

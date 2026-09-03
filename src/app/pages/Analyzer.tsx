@@ -25,6 +25,10 @@ export function Analyzer() {
   const [scrapeUrls, setScrapeUrls] = useState<string[]>(['', '', '']);
   const [scrapeLoadingStep, setScrapeLoadingStep] = useState('');
   const [scrapeError, setScrapeError] = useState('');
+  const [categoryReport, setCategoryReport] = useState<{
+    placeId: string; storeName: string; categoryName: string;
+  } | null>(null);
+  const [reportSent, setReportSent] = useState(false);
 
   // Credentials prompt — shown only when a cache miss requires user keys
   const [showCredentials, setShowCredentials] = useState(false);
@@ -177,6 +181,15 @@ export function Analyzer() {
             if (data?.code === 'CREDENTIALS_REQUIRED') {
               throw { credentialsRequired: true, message: data.error };
             }
+            if (data?.code === 'NOT_RESTAURANT') {
+              throw {
+                notRestaurant: true,
+                message: data.error,
+                placeId: data.placeId,
+                storeName: data.storeName,
+                categoryName: data.categoryName,
+              };
+            }
             throw new Error(data?.error || '伺服器爬取失敗，請確認網址正確或稍後再試。');
           }
 
@@ -205,7 +218,7 @@ export function Analyzer() {
             scrapeSource: data.source || '',
           };
         } catch (e: any) {
-          if (e.credentialsRequired) throw e;
+          if (e.credentialsRequired || e.notRestaurant) throw e;
           throw new Error(`[${storeName}] 爬取失敗: ${e.message || '請確認網址正確或稍後再試'}`);
         }
       });
@@ -217,7 +230,15 @@ export function Analyzer() {
       });
     } catch (e: any) {
       console.error(e);
-      if (e.credentialsRequired) {
+      if (e.notRestaurant) {
+        setScrapeError(e.message);
+        setCategoryReport({
+          placeId: e.placeId || '',
+          storeName: e.storeName || '',
+          categoryName: e.categoryName || '',
+        });
+        setReportSent(false);
+      } else if (e.credentialsRequired) {
         setShowCredentials(true);
         setScrapeError('此店家尚未收錄於資料庫，需要您提供 API 金鑰才能即時爬取。請在下方填入後重試。');
       } else {
@@ -302,9 +323,33 @@ export function Analyzer() {
           {scrapeError && (
             <div className="p-3.5 bg-[var(--semantic-danger)]/10 border border-[var(--semantic-danger)]/20 text-[var(--semantic-danger)] rounded-xl flex items-start gap-2.5 mb-4">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-              <p className="flex-1 text-sm leading-relaxed">{scrapeError}</p>
+              <div className="flex-1">
+                <p className="text-sm leading-relaxed">{scrapeError}</p>
+                {categoryReport && !reportSent && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await fetch('/api/report-category', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(categoryReport),
+                        });
+                        setReportSent(true);
+                      } catch {
+                        // silent
+                      }
+                    }}
+                    className="mt-2 text-xs px-3 py-1.5 rounded-lg bg-[var(--semantic-danger)]/20 hover:bg-[var(--semantic-danger)]/30 transition-colors cursor-pointer"
+                  >
+                    這其實是餐飲店？點此回報
+                  </button>
+                )}
+                {reportSent && (
+                  <p className="mt-2 text-xs text-ink-subtle">已回報，感謝您的協助！</p>
+                )}
+              </div>
               <button
-                onClick={() => { setScrapeError(''); setShowCredentials(false); }}
+                onClick={() => { setScrapeError(''); setShowCredentials(false); setCategoryReport(null); }}
                 className="text-[var(--semantic-danger)] hover:opacity-80 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
