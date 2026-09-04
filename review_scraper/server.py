@@ -198,8 +198,8 @@ _refresh_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="cache_
 
 # How many seconds before a store can be re-checked (7 days)
 REFRESH_COOLDOWN_SECONDS = 604800
-# How many newest reviews to fetch for incremental refresh
-REFRESH_REVIEW_COUNT = 20
+# Minimum new-review gap (Google total − DB count) to justify a full refresh
+REFRESH_MIN_NEW_REVIEWS = 20
 
 
 def _background_audit(place_id: str, reviews: list, metadata: dict) -> None:
@@ -326,25 +326,51 @@ def _background_summary(place_id: str, stage1: dict, metadata: dict | None) -> N
 
 
 def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
-    """Background task: fetch newest reviews from Apify, dedup, merge into cache.
+    """Background task: probe Google for new review count, fetch delta if ≥20 new.
 
-    Called after a cache hit when the store hasn't been checked in 24+ hours.
-    Updates last_checked_at unconditionally; updates fetched_at only when new
-    reviews are actually found.
+    Called after a cache hit when the store hasn't been checked in 7+ days.
+    1. Probe (1 review) to get current Google reviewsCount.
+    2. Compare with DB metadata.reviewsCount — skip if delta < 20.
+    3. Fetch exactly the delta, dedup-merge, cap at 500, re-audit.
+    Updates last_checked_at unconditionally.
     """
     try:
         from apify_scraper import scrape_via_apify
 
-        logger.info(f"[refresh] Starting incremental refresh for {place_id}")
-        _, new_reviews, metadata = scrape_via_apify(
-            url, max_reviews=REFRESH_REVIEW_COUNT, token=apify_token,
-        )
-
         existing = get_cached_reviews(place_id)
         if not existing:
-            # Shouldn't happen (we only refresh on cache hit), but guard anyway
             set_last_checked_at(place_id)
             return
+
+        # Step 1: probe to get current Google reviewsCount
+        logger.info(f"[refresh] Probing {place_id} for review count")
+        _, _, probe_meta = scrape_via_apify(url, max_reviews=1, token=apify_token)
+
+        google_count = (probe_meta or {}).get("reviewsCount")
+        cached_meta = get_cached_metadata(place_id)
+        db_count = (cached_meta or {}).get("reviewsCount")
+
+        if google_count is None or db_count is None:
+            # Can't compare — fall back to fetching a small batch
+            delta = REFRESH_MIN_NEW_REVIEWS
+            logger.info(f"[refresh] {place_id}: missing reviewsCount (google={google_count}, db={db_count}), fetching {delta}")
+        else:
+            delta = google_count - db_count
+            logger.info(f"[refresh] {place_id}: google={google_count}, db={db_count}, delta={delta}")
+
+        if delta < REFRESH_MIN_NEW_REVIEWS:
+            logger.info(f"[refresh] {place_id}: delta {delta} < {REFRESH_MIN_NEW_REVIEWS}, skipping")
+            # Update metadata with latest Google stats even if we skip
+            if probe_meta:
+                update_cached_metadata(place_id, probe_meta)
+            set_last_checked_at(place_id)
+            return
+
+        # Step 2: fetch the delta
+        logger.info(f"[refresh] Fetching {delta} newest reviews for {place_id}")
+        _, new_reviews, metadata = scrape_via_apify(
+            url, max_reviews=delta, token=apify_token,
+        )
 
         by_username = {r["username"]: r for r in existing}
         new_count = 0
@@ -376,6 +402,9 @@ def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
             _background_audit(place_id, merged, metadata)
         else:
             logger.info(f"[refresh] {place_id}: no new reviews (all {len(new_reviews)} already cached)")
+            # Still update metadata (reviewsCount, totalScore may have changed)
+            if metadata:
+                update_cached_metadata(place_id, metadata)
 
         # Always update last_checked_at (whether or not new reviews were found)
         set_last_checked_at(place_id)
