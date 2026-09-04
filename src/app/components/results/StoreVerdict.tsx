@@ -33,10 +33,8 @@ export function StoreVerdict({ result, storeName }: StoreVerdictProps) {
   const incentiveCount = result.issues.timeAnomaly;
   const templateCount = result.issues.templateText;
   const discrepancyCount = result.issues.vague;
-  const noTextCount = result.issues.noText;
-  const lowInfoCount = result.issues.lowInfo;
-  const unauditedCount = result.issues.unaudited;
-  const cleanCount = total - result.suspiciousReviews - noTextCount - lowInfoCount - unauditedCount;
+  const lowContentCount = result.issues.noText + result.issues.lowInfo;
+  const cleanCount = total - result.suspiciousReviews - lowContentCount - result.issues.unaudited;
 
   const pct = (n: number) => total > 0 ? ((n / total) * 100).toFixed(1) : '0.0';
 
@@ -44,9 +42,7 @@ export function StoreVerdict({ result, storeName }: StoreVerdictProps) {
     { label: '促銷型', sublabel: '打卡送餐', count: incentiveCount, color: 'bg-[var(--semantic-danger)]' },
     { label: '模板型', sublabel: '套版複製', count: templateCount, color: 'bg-[var(--semantic-warning)]' },
     { label: '語意矛盾', sublabel: '評分文字割裂', count: discrepancyCount, color: 'bg-ink-subtle' },
-    { label: '純星等', sublabel: '無文字', count: noTextCount, color: 'bg-ink-tertiary' },
-    { label: '低資訊', sublabel: '內容過短', count: lowInfoCount, color: 'bg-ink-tertiary' },
-    { label: '未複審', sublabel: '待二階段', count: unauditedCount, color: 'bg-ink-tertiary' },
+    { label: '低內容', sublabel: '純星等或過短', count: lowContentCount, color: 'bg-ink-tertiary' },
     { label: '自然評論', sublabel: '通過檢核', count: cleanCount, color: 'bg-[var(--semantic-success)]' },
   ];
 
