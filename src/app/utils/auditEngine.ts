@@ -36,6 +36,9 @@ export interface ShopStats {
     timeAnomaly: number;
     templateText: number;
     vague: number;
+    noText: number;
+    lowInfo: number;
+    unaudited: number;
   };
   ratingDistribution: {
     original: { [key: number]: number };
@@ -169,7 +172,7 @@ export function aggregateAuditedReviews(
       trustScore: 100,
       totalReviews: 0,
       suspiciousReviews: 0,
-      issues: { timeAnomaly: 0, templateText: 0, vague: 0 },
+      issues: { timeAnomaly: 0, templateText: 0, vague: 0, noText: 0, lowInfo: 0, unaudited: 0 },
       ratingDistribution: {
         original: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
         filtered: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
@@ -190,6 +193,9 @@ export function aggregateAuditedReviews(
     timeAnomaly: 0, // Maps to 'incentive' in our local model
     templateText: 0, // Maps to 'template'
     vague: 0, // Maps to 'discrepancy'
+    noText: 0, // Maps to 'no_text'
+    lowInfo: 0, // Maps to 'low_info'
+    unaudited: 0, // Maps to 'unaudited'
   };
 
   // Weight for unaudited reviews: not derived from confidence. These reviews
@@ -229,6 +235,12 @@ export function aggregateAuditedReviews(
       } else if (audit.issueType === 'discrepancy') {
         issuesCount.vague++;
       }
+    } else if (audit.issueType === 'no_text') {
+      issuesCount.noText++;
+    } else if (audit.issueType === 'low_info') {
+      issuesCount.lowInfo++;
+    } else if (audit.issueType === 'unaudited') {
+      issuesCount.unaudited++;
     }
   });
 
