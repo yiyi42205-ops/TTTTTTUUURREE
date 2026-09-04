@@ -27,6 +27,7 @@ from cache_store import (
     get_last_checked_at, set_last_checked_at, get_fetched_at,
     log_visitor, get_visitor_stats, update_cached_metadata,
     save_category_report,
+    log_query, count_recent_queries,
 )
 from prompt_builder import get_prompt_version
 from stage2_rules import build_stage2_result
@@ -128,6 +129,28 @@ if DEEPSEEK_API_KEY:
 
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
+
+def _send_discord(message: str) -> None:
+    """Fire-and-forget Discord webhook notification."""
+    if not DISCORD_WEBHOOK_URL:
+        return
+    try:
+        payload = json.dumps({"content": message}).encode("utf-8")
+        req = urllib.request.Request(
+            DISCORD_WEBHOOK_URL,
+            data=payload,
+            headers={"Content-Type": "application/json", "User-Agent": "TrueRating/1.0"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as e:
+        logger.warning(f"Discord webhook failed: {e}")
+
+
+# Threshold: alert when a single IP exceeds this many queries per hour
+ABNORMAL_QUERY_THRESHOLD = 10
+
+
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB request body limit
 
@@ -146,6 +169,29 @@ limiter = Limiter(
     storage_uri="memory://",
     enabled=_limiter_enabled,
 )
+
+# Per-IP rate limit for Apify scrapes (cache misses only) — protects quota
+# Simple in-memory tracker: {ip: [timestamp, ...]}
+_apify_scrape_log: dict[str, list[float]] = {}
+APIFY_SCRAPE_LIMIT = 3        # max scrapes per window
+APIFY_SCRAPE_WINDOW = 3600    # 1 hour
+
+
+def _check_apify_rate_limit(ip: str) -> bool:
+    """Returns True if the IP is within the Apify scrape rate limit."""
+    if not _limiter_enabled:
+        return True
+    now = time.time()
+    timestamps = _apify_scrape_log.get(ip, [])
+    # Prune old entries
+    timestamps = [t for t in timestamps if now - t < APIFY_SCRAPE_WINDOW]
+    _apify_scrape_log[ip] = timestamps
+    return len(timestamps) < APIFY_SCRAPE_LIMIT
+
+
+def _record_apify_scrape(ip: str) -> None:
+    """Record an Apify scrape for rate limiting."""
+    _apify_scrape_log.setdefault(ip, []).append(time.time())
 
 # Background thread pool for incremental cache refresh (fire-and-forget)
 _refresh_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="cache_refresh")
@@ -569,6 +615,20 @@ def scrape():
         if is_url and url_to_scrape != original_query:
             set_query_place_id_mapping(url_to_scrape, place_id)
 
+    # Check if this URL was previously rejected (non-restaurant / invalid)
+    if not force and target_place_id and target_place_id.startswith("REJECTED:"):
+        reason = target_place_id
+        logger.info(f"Cached rejection for {original_query}: {reason}")
+        if reason == "REJECTED:NOT_RESTAURANT":
+            return jsonify({
+                "error": "本系統僅適用於餐飲店家，此地點先前已被判定為非餐飲類別。",
+                "code": "NOT_RESTAURANT",
+            }), 400
+        return jsonify({
+            "error": "此連結先前查詢失敗，請確認連結是否正確。",
+            "code": "SCRAPE_FAILED",
+        }), 400
+
     if not force and target_place_id:
         cached = get_cached_reviews(target_place_id)
         if cached is not None:
@@ -600,6 +660,8 @@ def scrape():
                         _background_refresh, target_place_id, url_to_scrape, apify_token,
                     )
 
+            store_name = (cached_meta or {}).get("title", target_place_id)
+            log_query(ip, target_place_id, store_name, "cache")
             return jsonify(response)
 
     # No token at all → can't even probe
@@ -610,6 +672,14 @@ def scrape():
             "code": "CREDENTIALS_REQUIRED",
         }), 403
 
+    # Rate-limit Apify calls (cache misses) separately: 3 per hour per IP
+    if not _check_apify_rate_limit(ip):
+        logger.info(f"Apify scrape rate limit hit for IP {ip}")
+        return jsonify({
+            "error": "短時間內查詢新店家次數過多，請稍後再試。",
+            "code": "RATE_LIMITED",
+        }), 429
+
     try:
         from apify_scraper import scrape_via_apify
 
@@ -619,6 +689,7 @@ def scrape():
         if not target_place_id and not force:
             logger.info(f"No place_id found, probing Apify with 1 review for: {url_to_scrape}")
             probe_place_id, _, probe_metadata = scrape_via_apify(url_to_scrape, max_reviews=1, token=apify_token)
+            _record_apify_scrape(ip)
 
             # Early category gate: the 1-review probe already gives us
             # categoryName — reject non-restaurant venues before the full scrape.
@@ -626,6 +697,10 @@ def scrape():
             title = (probe_metadata or {}).get("title", "")
             if cat and not _is_food_category(cat) and not _name_looks_like_food(title):
                 logger.info(f"Non-restaurant category detected via probe: '{cat}' ({title}) for {url_to_scrape}")
+                # Cache the rejection so the same URL won't burn Apify again
+                set_query_place_id_mapping(original_query, "REJECTED:NOT_RESTAURANT")
+                if is_url and url_to_scrape != original_query:
+                    set_query_place_id_mapping(url_to_scrape, "REJECTED:NOT_RESTAURANT")
                 return jsonify({
                     "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。",
                     "code": "NOT_RESTAURANT",
@@ -662,6 +737,8 @@ def scrape():
                             _background_refresh, probe_place_id, url_to_scrape, apify_token,
                         )
 
+                    probe_name = (cached_meta or {}).get("title", probe_place_id)
+                    log_query(ip, probe_place_id, probe_name, "cache")
                     return jsonify(response)
 
         # Full scrape is expensive (~$0.20-0.40 for 500 reviews). For new
@@ -678,6 +755,7 @@ def scrape():
         scrape_token = user_apify_token or apify_token
         logger.info(f"Starting Apify scrape for URL: {url_to_scrape} (limit: {max_reviews})")
         apify_place_id, records, metadata = scrape_via_apify(url_to_scrape, max_reviews=max_reviews, token=scrape_token)
+        _record_apify_scrape(ip)
 
         # Category gate for full scrape (covers the path where we already had
         # a place_id and skipped the probe above).
@@ -685,6 +763,9 @@ def scrape():
         title = (metadata or {}).get("title", "")
         if cat and not _is_food_category(cat) and not _name_looks_like_food(title):
             logger.info(f"Non-restaurant category detected: '{cat}' ({title}) for {url_to_scrape}")
+            set_query_place_id_mapping(original_query, "REJECTED:NOT_RESTAURANT")
+            if is_url and url_to_scrape != original_query:
+                set_query_place_id_mapping(url_to_scrape, "REJECTED:NOT_RESTAURANT")
             return jsonify({
                 "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。",
                 "code": "NOT_RESTAURANT",
@@ -729,6 +810,17 @@ def scrape():
         if final_place_id:
             response["dataAsOf"] = datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M")
 
+        # Log query and check for abnormal activity
+        scrape_store_name = (metadata or {}).get("title", final_place_id or url_to_scrape)
+        log_query(ip, final_place_id, scrape_store_name, response.get("source", "apify"))
+        recent = count_recent_queries(ip, seconds=3600)
+        if recent >= ABNORMAL_QUERY_THRESHOLD:
+            _send_discord(
+                f"⚠️ **異常查詢警報**\n"
+                f"IP `{ip}` 過去 1 小時查詢 {recent} 次\n"
+                f"最新查詢：{scrape_store_name}"
+            )
+
         return jsonify(response)
     except Exception as apify_err:
         logger.warning(f"Apify scrape failed for {url_to_scrape}: {apify_err}.")
@@ -737,8 +829,10 @@ def scrape():
         # Internal details are logged server-side only — never sent to the client.
         from apify_scraper import ApifyTokenInvalidError, ApifyQuotaExhaustedError, ApifyRunFailedError
         if isinstance(apify_err, ApifyTokenInvalidError):
+            _send_discord(f"🔑 **Apify Token 無效**\nIP `{ip}` 使用的 Token 已失效\nURL: {url_to_scrape}")
             return jsonify({"error": "Apify Token 無效或已過期，請確認後重試。", "code": "APIFY_TOKEN_INVALID"}), 401
         if isinstance(apify_err, ApifyQuotaExhaustedError):
+            _send_discord(f"💰 **Apify 額度用完**\nIP `{ip}` 觸發\nURL: {url_to_scrape}")
             return jsonify({"error": "Apify 免費額度已用完，請稍後再試或更換 Token。", "code": "APIFY_QUOTA_EXHAUSTED"}), 429
 
         # Playwright fallback is opt-in: read at request time (not bound to a
@@ -1186,26 +1280,12 @@ def report_category():
     ip = request.remote_addr or "unknown"
     row_id = save_category_report(place_id, store_name, category_name, ip)
 
-    # Send Discord notification (fire-and-forget)
-    if DISCORD_WEBHOOK_URL:
-        try:
-            payload = json.dumps({
-                "content": (
-                    f"📋 **類別回報 #{row_id}**\n"
-                    f"店名：{store_name}\n"
-                    f"類別：{category_name}\n"
-                    f"Place ID：`{place_id}`"
-                ),
-            }).encode("utf-8")
-            req = urllib.request.Request(
-                DISCORD_WEBHOOK_URL,
-                data=payload,
-                headers={"Content-Type": "application/json", "User-Agent": "TrueRating/1.0"},
-                method="POST",
-            )
-            urllib.request.urlopen(req, timeout=5)
-        except Exception as e:
-            logger.warning(f"Discord webhook failed: {e}")
+    _send_discord(
+        f"📋 **類別回報 #{row_id}**\n"
+        f"店名：{store_name}\n"
+        f"類別：{category_name}\n"
+        f"Place ID：`{place_id}`"
+    )
 
     return jsonify({"ok": True, "id": row_id})
 

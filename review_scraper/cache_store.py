@@ -132,6 +132,21 @@ def _connect(db_path: str) -> sqlite3.Connection:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS query_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip TEXT NOT NULL,
+            place_id TEXT,
+            store_name TEXT,
+            source TEXT NOT NULL,
+            created_at REAL NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_query_log_ip_time ON query_log (ip, created_at)"
+    )
     return conn
 
 
@@ -477,6 +492,34 @@ def get_visitor_stats(db_path: str = None) -> dict:
         ).fetchone()[0]
 
         return {"total": total, "today": today, "week": week}
+    finally:
+        conn.close()
+
+
+# ── Query log ──────────────────────────────────────────────────
+
+def log_query(ip: str, place_id: str | None, store_name: str | None,
+              source: str, db_path: str = None) -> None:
+    conn = _connect(db_path or DB_PATH)
+    try:
+        conn.execute(
+            "INSERT INTO query_log (ip, place_id, store_name, source, created_at) VALUES (?, ?, ?, ?, ?)",
+            (ip, place_id, store_name, source, time.time()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def count_recent_queries(ip: str, seconds: int = 3600, db_path: str = None) -> int:
+    """Count how many queries this IP has made in the last `seconds`."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        cutoff = time.time() - seconds
+        return conn.execute(
+            "SELECT COUNT(*) FROM query_log WHERE ip = ? AND created_at >= ?",
+            (ip, cutoff),
+        ).fetchone()[0]
     finally:
         conn.close()
 

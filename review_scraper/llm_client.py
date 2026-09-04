@@ -348,7 +348,14 @@ def parse_summary_llm_json(raw_text: str) -> dict:
     if not isinstance(recommendations, list):
         recommendations = []
 
-    return {'warnings': warnings, 'recommendations': recommendations}
+    promotion_gap = parsed.get('promotionGap', None)
+    if promotion_gap is not None and not isinstance(promotion_gap, dict):
+        promotion_gap = None
+
+    result = {'warnings': warnings, 'recommendations': recommendations}
+    if promotion_gap:
+        result['promotionGap'] = promotion_gap
+    return result
 
 
 def call_llm_summary(provider: str, client, store_name: str, reviews: list,

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, useInView } from 'motion/react';
-import { Shield, ArrowRight, Search, Info, Star, FileText } from 'lucide-react';
+import { Shield, ArrowRight, Search, Info, Star, FileText, Key } from 'lucide-react';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { TutorialModal } from '../components/TutorialModal';
 
@@ -62,37 +62,46 @@ export function Home() {
             <span className="text-ink-subtle font-normal text-sm ml-1.5">TrueRating</span>
           </span>
         </div>
-        <button
-          onClick={() => setShowTutorial(true)}
-          className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
-          title="使用教學"
-        >
-          <Info className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/settings')}
+            className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
+            title="金鑰設定"
+          >
+            <Key className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
+            title="使用教學"
+          >
+            <Info className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </header>
 
       {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
 
       {/* ── hero ── */}
-      <section className="container mx-auto px-4 pt-28 pb-24 max-w-3xl">
+      <section className="container mx-auto px-4 pt-16 pb-16 md:pt-28 md:pb-24 max-w-3xl">
         <motion.div className="text-center" variants={stagger} initial="hidden" animate="show">
           <motion.h1
             variants={fadeUp}
-            className="text-5xl md:text-[3.75rem] font-semibold text-ink tracking-[-1.5px] leading-[1.08] mb-5"
+            className="text-3xl md:text-[3.75rem] font-semibold text-ink tracking-[-1px] md:tracking-[-1.5px] leading-[1.15] md:leading-[1.08] mb-4 md:mb-5"
           >
             看穿灌水好評
             <br />
             <span className="text-ink-subtle">還原自然星等</span>
           </motion.h1>
 
-          <motion.p variants={fadeUp} className="text-lg text-ink-subtle mb-12 max-w-sm mx-auto leading-relaxed">
+          <motion.p variants={fadeUp} className="text-base md:text-lg text-ink-subtle mb-8 md:mb-12 max-w-sm mx-auto leading-relaxed">
             AI 驅動的 Google Maps 評論審計引擎
           </motion.p>
 
           <motion.div variants={fadeUp}>
             <button
               onClick={() => navigate('/analyzer')}
-              className="group bg-ink hover:bg-ink-muted text-background px-10 py-4 rounded-lg text-lg font-medium transition-all inline-flex items-center gap-3 cursor-pointer"
+              className="group bg-ink hover:bg-ink-muted text-background px-8 py-3.5 md:px-10 md:py-4 rounded-lg text-base md:text-lg font-medium transition-all inline-flex items-center gap-3 cursor-pointer"
             >
               開始分析
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -120,7 +129,7 @@ export function Home() {
       </motion.section>
 
       {/* ── features ── */}
-      <section className="container mx-auto px-4 py-24 max-w-3xl">
+      <section className="container mx-auto px-4 py-14 md:py-24 max-w-3xl">
         <motion.div
           className="grid grid-cols-1 md:grid-cols-3 gap-5"
           variants={stagger}
@@ -144,7 +153,7 @@ export function Home() {
       </section>
 
       {/* ── bottom CTA ── */}
-      <section className="container mx-auto px-4 pb-28 max-w-3xl">
+      <section className="container mx-auto px-4 pb-16 md:pb-28 max-w-3xl">
         <motion.div
           className="text-center bg-surface-1 border border-hairline rounded-lg py-14 px-6"
           initial={{ opacity: 0, y: 16 }}
