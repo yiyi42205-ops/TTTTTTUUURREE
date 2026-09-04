@@ -99,6 +99,7 @@ export function Results() {
   // Store summary states
   const [storeSummaries, setStoreSummaries] = useState<{ [storeIdx: number]: { warnings: any[]; recommendations: any[]; promotionGap?: { summary: string; sourceReviewIds: string[] } | null } }>({});
   const [isSummaryLoading, setIsSummaryLoading] = useState<{ [storeIdx: number]: boolean }>({});
+  const [summaryErrors, setSummaryErrors] = useState<{ [storeIdx: number]: string }>({});
 
   const [showTutorial, setShowTutorial] = useState(false);
 
@@ -114,6 +115,7 @@ export function Results() {
     // Reset summary/QA state to prevent stale data between navigations
     setStoreSummaries({});
     setIsSummaryLoading({});
+    setSummaryErrors({});
     setQaInput({});
     setQaResults({});
     setQaErrors({});
@@ -403,8 +405,14 @@ export function Results() {
           ...summaryLlm.body,
         }),
       })
-        .then(res => res.json())
-        .then(data => {
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          if (!ok) {
+            if (data.code === 'INSUFFICIENT_REVIEWS') {
+              setSummaryErrors(prev => ({ ...prev, [idx]: data.error }));
+            }
+            return;
+          }
           if (data.warnings || data.recommendations) {
             setStoreSummaries(prev => ({ ...prev, [idx]: data }));
           }
@@ -633,6 +641,11 @@ export function Results() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                   正在生成 AI 總結...
                 </div>
+              </div>
+            )}
+            {summaryErrors[activeStoreTab] && (
+              <div className="border-t border-hairline pt-6">
+                <p className="text-sm text-ink-subtle">{summaryErrors[activeStoreTab]}</p>
               </div>
             )}
             {storeSummaries[activeStoreTab] && (

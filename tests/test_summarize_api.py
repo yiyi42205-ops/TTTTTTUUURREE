@@ -42,6 +42,11 @@ def test_store_summary_golden_case(client, monkeypatch):
     monkeypatch.setattr(server, "get_cached_summary", lambda *args, **kwargs: None)
     monkeypatch.setattr(server, "set_cached_summary", lambda *args, **kwargs: None)
 
+    # Build 20+ valid reviews to pass MIN_REVIEWS_REQUIRED gate
+    filler_reviews = [
+        {"id": f"filler_{i}", "username": f"filler_{i}", "stars": 4, "text": f"不錯的餐廳體驗 {i}"}
+        for i in range(20)
+    ]
     payload = {
         "placeId": "ChIJ_test_golden",
         "storeName": "網紅排隊名店",
@@ -65,7 +70,7 @@ def test_store_summary_golden_case(client, monkeypatch):
                 "stars": 5,
                 "text": "炸豬排非常酥脆多汁，份量也很大，強烈推薦他們的厚切豬排定食！",
             },
-        ],
+        ] + filler_reviews,
     }
 
     response = client.post("/api/store-summary", json=payload)
@@ -129,10 +134,9 @@ def test_store_summary_no_valid_reviews(client, monkeypatch):
     }
 
     response = client.post("/api/store-summary", json=payload)
-    assert response.status_code == 200
+    assert response.status_code == 400
     data = response.get_json()
-    assert data["warnings"] == []
-    assert data["recommendations"] == []
+    assert data["code"] == "INSUFFICIENT_REVIEWS"
 
 
 def test_store_summary_missing_reviews(client):
@@ -147,10 +151,11 @@ def test_store_summary_llm_failure(client, monkeypatch):
     monkeypatch.setattr(server, "set_cached_summary", lambda *args, **kwargs: None)
     monkeypatch.setattr(server, "call_llm_summary", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("API down")))
 
+    reviews = [{"text": f"好吃的拉麵 {i}", "stars": 5} for i in range(25)]
     payload = {
         "placeId": "ChIJ_fail",
         "storeName": "失敗店",
-        "reviews": [{"text": "好吃的拉麵", "stars": 5}],
+        "reviews": reviews,
     }
 
     response = client.post("/api/store-summary", json=payload)
@@ -170,6 +175,11 @@ def test_store_summary_filters_washed_reviews(client, monkeypatch):
     monkeypatch.setattr(server, "set_cached_summary", lambda *args, **kwargs: None)
     monkeypatch.setattr(server, "call_llm_summary", fake_summary)
 
+    # Build 20+ valid reviews plus washed/empty ones to test filtering
+    filler_reviews = [
+        {"text": f"不錯的用餐體驗 {i}", "stars": 4, "username": f"filler_{i}"}
+        for i in range(20)
+    ]
     payload = {
         "placeId": "ChIJ_filter",
         "storeName": "過濾測試店",
@@ -177,10 +187,13 @@ def test_store_summary_filters_washed_reviews(client, monkeypatch):
             {"text": "真的好吃", "stars": 4, "username": "clean_user"},
             {"text": "好吃讚", "stars": 5, "username": "washed_user", "audit": {"isWashed": True}},
             {"text": "", "stars": 5, "username": "empty_user"},
-        ],
+        ] + filler_reviews,
     }
 
     response = client.post("/api/store-summary", json=payload)
     assert response.status_code == 200
-    assert len(captured_reviews) == 1
-    assert captured_reviews[0].get("username") == "clean_user"
+    # Washed and empty reviews should be filtered out
+    usernames = {r.get("username") for r in captured_reviews}
+    assert "washed_user" not in usernames
+    assert "empty_user" not in usernames
+    assert "clean_user" in usernames

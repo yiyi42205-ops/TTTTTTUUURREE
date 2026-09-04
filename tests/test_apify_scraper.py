@@ -37,6 +37,8 @@ def isolated_cache_db(tmp_path, monkeypatch):
     db_path = str(tmp_path / "test_cache.db")
     monkeypatch.setattr(cache_store, "DB_PATH", db_path)
     monkeypatch.setenv("APIFY_TOKEN", "test-token")
+    # Disable minimum review count gate so existing tests aren't affected
+    monkeypatch.setattr(server, "MIN_REVIEWS_REQUIRED", 0)
     # Prevent extract_place_id from making real HTTP requests in tests.
     # Its slow path fetches maps.google.com HTML to find ChIJ patterns, which
     # can non-deterministically skip the probe call and shift mock call counts.
@@ -361,13 +363,14 @@ def test_scrape_probe_hits_cache_avoids_full_scrape(client, monkeypatch):
         {"username": f"u{i}", "stars": 5, "time": "2025-01-01", "text": "好吃", "images": [], "hasText": True, "imageCount": 0}
         for i in range(500)
     ]
-    cache_store.set_cached_reviews("ChIJ_precrawled", pre_crawled, source="playwright_batch")
+    cache_store.set_cached_reviews("ChIJ_precrawled", pre_crawled, source="playwright_batch",
+                                    metadata={"totalScore": 4.2, "reviewsCount": 500})
 
     call_count = {"n": 0}
 
     def probe_only_apify(url, max_reviews=50, token=None):
         call_count["n"] += 1
-        return "ChIJ_precrawled", [{"username": "probe", "stars": 3, "time": "2025-06-01", "text": "x", "images": [], "hasText": True, "imageCount": 0}], {"totalScore": 4.2}
+        return "ChIJ_precrawled", [{"username": "probe", "stars": 3, "time": "2025-06-01", "text": "x", "images": [], "hasText": True, "imageCount": 0}], {"totalScore": 4.2, "reviewsCount": 500}
 
     monkeypatch.setattr("apify_scraper.scrape_via_apify", probe_only_apify)
     # Mock URL resolution so the fake URL doesn't hit the network
@@ -691,5 +694,27 @@ def test_save_category_report_db(tmp_path):
     assert row[1] == "ChIJ_test"   # place_id
     assert row[2] == "Test Store"  # store_name
     assert row[3] == "時裝店"      # category_name
+
+
+def test_scrape_rejects_insufficient_reviews(client, monkeypatch):
+    """Stores with fewer than MIN_REVIEWS_REQUIRED reviews should be rejected."""
+    monkeypatch.setattr(server, "MIN_REVIEWS_REQUIRED", 20)
+
+    def fake_scrape(url, max_reviews=50, token=None):
+        reviews = [
+            {"username": f"u{i}", "stars": 5, "time": "2025-01-01", "text": "好吃",
+             "images": [], "hasText": True, "imageCount": 0}
+            for i in range(5)
+        ]
+        return "ChIJ_few", reviews, {"totalScore": 4.5, "categoryName": "餐廳"}
+
+    monkeypatch.setattr("apify_scraper.scrape_via_apify", fake_scrape)
+
+    resp = client.post("/api/scrape", json={"url": "https://maps.google.com/?cid=few1"})
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data["code"] == "INSUFFICIENT_REVIEWS"
+    assert "5" in data["error"]
+    assert "20" in data["error"]
 
 
