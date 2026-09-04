@@ -504,11 +504,11 @@ export function Results() {
           <Info className="w-3.5 h-3.5" />
         </button>
         <button
-          onClick={() => navigate('/analyzer')}
+          onClick={() => navigate('/')}
           className="flex items-center gap-1.5 bg-surface-1 hover:bg-surface-2 px-4 py-1.5 rounded border border-hairline text-xs font-medium text-ink-muted cursor-pointer transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          返回修改
+          返回首頁
         </button>
       </div>
     </header>
