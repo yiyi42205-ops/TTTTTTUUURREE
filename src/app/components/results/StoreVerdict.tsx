@@ -77,12 +77,9 @@ export function StoreVerdict({ result, storeName }: StoreVerdictProps) {
             </span>
           )}
         </div>
-        {result.reviewAvgRating != null && Math.abs(result.originalRating - result.reviewAvgRating) >= 0.05 && (
+        {result.reviewAvgRating != null && result.googleReviewsCount != null && (
           <p className="text-xs text-ink-tertiary mb-5">
-            最近 {total} 則平均 {result.reviewAvgRating.toFixed(2)}★
-            {result.googleReviewsCount != null && (
-              <span>（Google 全部 {result.googleReviewsCount.toLocaleString()} 則為 {result.originalRating.toFixed(1)}★）</span>
-            )}
+            最近 {total} 則平均 {result.reviewAvgRating.toFixed(2)}★（Google 全部 {result.googleReviewsCount.toLocaleString()} 則為 {result.originalRating.toFixed(1)}★）
           </p>
         )}
 

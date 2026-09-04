@@ -718,7 +718,7 @@ def scrape():
                         set_cached_reviews(probe_place_id, cached, source="cache", metadata=probe_metadata)
                     cached_meta = get_cached_metadata(probe_place_id)
                     logger.info(f"Probe found place_id {probe_place_id}, cache hit ({len(cached)} reviews)")
-                    response = {"reviews": cached, "source": "cache"}
+                    response = {"reviews": cached, "source": "cache", "place_id": probe_place_id}
                     if cached_meta:
                         response["metadata"] = cached_meta
 
