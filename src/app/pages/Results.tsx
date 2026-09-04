@@ -111,6 +111,14 @@ export function Results() {
 
   // 1. Initial Parse -> call backend /api/audit-rules for Stage 1 heuristics
   useEffect(() => {
+    // Reset summary/QA state to prevent stale data between navigations
+    setStoreSummaries({});
+    setIsSummaryLoading({});
+    setQaInput({});
+    setQaResults({});
+    setQaErrors({});
+    setIsQaLoading({});
+
     if (location.state?.cachedShopResults) {
       const computed = location.state.cachedShopResults as ShopStats[];
       setShopResults(computed);
