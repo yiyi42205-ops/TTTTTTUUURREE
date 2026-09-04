@@ -147,6 +147,29 @@ limiter = Limiter(
     enabled=_limiter_enabled,
 )
 
+# Per-IP rate limit for Apify scrapes (cache misses only) — protects quota
+# Simple in-memory tracker: {ip: [timestamp, ...]}
+_apify_scrape_log: dict[str, list[float]] = {}
+APIFY_SCRAPE_LIMIT = 3        # max scrapes per window
+APIFY_SCRAPE_WINDOW = 3600    # 1 hour
+
+
+def _check_apify_rate_limit(ip: str) -> bool:
+    """Returns True if the IP is within the Apify scrape rate limit."""
+    if not _limiter_enabled:
+        return True
+    now = time.time()
+    timestamps = _apify_scrape_log.get(ip, [])
+    # Prune old entries
+    timestamps = [t for t in timestamps if now - t < APIFY_SCRAPE_WINDOW]
+    _apify_scrape_log[ip] = timestamps
+    return len(timestamps) < APIFY_SCRAPE_LIMIT
+
+
+def _record_apify_scrape(ip: str) -> None:
+    """Record an Apify scrape for rate limiting."""
+    _apify_scrape_log.setdefault(ip, []).append(time.time())
+
 # Background thread pool for incremental cache refresh (fire-and-forget)
 _refresh_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="cache_refresh")
 
@@ -569,6 +592,20 @@ def scrape():
         if is_url and url_to_scrape != original_query:
             set_query_place_id_mapping(url_to_scrape, place_id)
 
+    # Check if this URL was previously rejected (non-restaurant / invalid)
+    if not force and target_place_id and target_place_id.startswith("REJECTED:"):
+        reason = target_place_id
+        logger.info(f"Cached rejection for {original_query}: {reason}")
+        if reason == "REJECTED:NOT_RESTAURANT":
+            return jsonify({
+                "error": "本系統僅適用於餐飲店家，此地點先前已被判定為非餐飲類別。",
+                "code": "NOT_RESTAURANT",
+            }), 400
+        return jsonify({
+            "error": "此連結先前查詢失敗，請確認連結是否正確。",
+            "code": "SCRAPE_FAILED",
+        }), 400
+
     if not force and target_place_id:
         cached = get_cached_reviews(target_place_id)
         if cached is not None:
@@ -610,6 +647,14 @@ def scrape():
             "code": "CREDENTIALS_REQUIRED",
         }), 403
 
+    # Rate-limit Apify calls (cache misses) separately: 3 per hour per IP
+    if not _check_apify_rate_limit(ip):
+        logger.info(f"Apify scrape rate limit hit for IP {ip}")
+        return jsonify({
+            "error": "短時間內查詢新店家次數過多，請稍後再試。",
+            "code": "RATE_LIMITED",
+        }), 429
+
     try:
         from apify_scraper import scrape_via_apify
 
@@ -619,6 +664,7 @@ def scrape():
         if not target_place_id and not force:
             logger.info(f"No place_id found, probing Apify with 1 review for: {url_to_scrape}")
             probe_place_id, _, probe_metadata = scrape_via_apify(url_to_scrape, max_reviews=1, token=apify_token)
+            _record_apify_scrape(ip)
 
             # Early category gate: the 1-review probe already gives us
             # categoryName — reject non-restaurant venues before the full scrape.
@@ -626,6 +672,10 @@ def scrape():
             title = (probe_metadata or {}).get("title", "")
             if cat and not _is_food_category(cat) and not _name_looks_like_food(title):
                 logger.info(f"Non-restaurant category detected via probe: '{cat}' ({title}) for {url_to_scrape}")
+                # Cache the rejection so the same URL won't burn Apify again
+                set_query_place_id_mapping(original_query, "REJECTED:NOT_RESTAURANT")
+                if is_url and url_to_scrape != original_query:
+                    set_query_place_id_mapping(url_to_scrape, "REJECTED:NOT_RESTAURANT")
                 return jsonify({
                     "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。",
                     "code": "NOT_RESTAURANT",
@@ -678,6 +728,7 @@ def scrape():
         scrape_token = user_apify_token or apify_token
         logger.info(f"Starting Apify scrape for URL: {url_to_scrape} (limit: {max_reviews})")
         apify_place_id, records, metadata = scrape_via_apify(url_to_scrape, max_reviews=max_reviews, token=scrape_token)
+        _record_apify_scrape(ip)
 
         # Category gate for full scrape (covers the path where we already had
         # a place_id and skipped the probe above).
@@ -685,6 +736,9 @@ def scrape():
         title = (metadata or {}).get("title", "")
         if cat and not _is_food_category(cat) and not _name_looks_like_food(title):
             logger.info(f"Non-restaurant category detected: '{cat}' ({title}) for {url_to_scrape}")
+            set_query_place_id_mapping(original_query, "REJECTED:NOT_RESTAURANT")
+            if is_url and url_to_scrape != original_query:
+                set_query_place_id_mapping(url_to_scrape, "REJECTED:NOT_RESTAURANT")
             return jsonify({
                 "error": f"本系統僅適用於餐飲店家，偵測到此地點類別為「{cat}」，無法進行評論審計。",
                 "code": "NOT_RESTAURANT",
