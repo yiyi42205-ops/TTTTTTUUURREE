@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Github, ChevronDown, ChevronUp } from 'lucide-react';
+import { Github, ChevronDown, ChevronUp, MessageSquareText } from 'lucide-react';
 
 interface VisitorStats {
   total: number;
@@ -37,6 +37,15 @@ export function Footer() {
               <Github className="w-3.5 h-3.5" />
               GitHub
             </a>
+            <a
+              href="https://docs.google.com/forms/d/e/1FAIpQLScXeQd2L43eDuMU_iv9GHGOedSkj3kKM-IEieeW6ieokHfA7g/viewform"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-ink-subtle hover:text-ink transition-colors"
+            >
+              <MessageSquareText className="w-3.5 h-3.5" />
+              意見回饋
+            </a>
             {stats && (
               <span className="font-mono tabular-nums">
                 {stats.total.toLocaleString()} 次使用
@@ -61,10 +70,11 @@ export function Footer() {
           )}
         </div>
 
-        {/* Bottom */}
+        {/* Disclaimer */}
         <div className="space-y-1.5 leading-relaxed">
-          <p>© 2026 TrueRating. 本平台為學術研究專案，不提供任何商業服務保證。</p>
-          <p>分析結果僅供消費決策參考，不代表對特定商家之品質評價。</p>
+          <p className="font-medium text-ink-subtle">免責聲明</p>
+          <p>本平台為學術研究專案，分析結果僅供消費決策參考，不代表對特定商家之品質評價。評論審計基於統計模型與 AI 語意分析，可能存在誤判。本站不對分析結果的準確性或完整性作任何保證。</p>
+          <p className="mt-3">© 2026 TrueRating — 學術研究專案，非商業服務</p>
         </div>
       </div>
     </footer>
