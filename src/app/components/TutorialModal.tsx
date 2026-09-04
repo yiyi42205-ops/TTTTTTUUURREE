@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, MapPin, Globe } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, MapPin, Globe, Key, Info } from 'lucide-react';
 
 export const TUTORIAL_STORAGE_KEY = 'truerating_tutorial_completed';
 
@@ -137,6 +137,35 @@ const aiStepOther = {
   ),
 };
 
+const headerIconsStep = {
+  title: '隨時可用的工具列',
+  content: (
+    <div className="space-y-3">
+      <p>右上角有兩個按鈕，在每個頁面都能使用：</p>
+      <div className="space-y-2.5">
+        <div className="flex items-start gap-3 bg-surface-2 border border-hairline rounded p-3">
+          <div className="w-7 h-7 rounded border border-hairline flex items-center justify-center shrink-0">
+            <Key className="w-3.5 h-3.5 text-ink-subtle" />
+          </div>
+          <div className="text-xs">
+            <p className="font-medium text-ink">金鑰設定</p>
+            <p className="text-ink-subtle mt-0.5">管理 Apify Token 和 AI API Key，隨時可以新增或更換。</p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 bg-surface-2 border border-hairline rounded p-3">
+          <div className="w-7 h-7 rounded border border-hairline flex items-center justify-center shrink-0">
+            <Info className="w-3.5 h-3.5 text-ink-subtle" />
+          </div>
+          <div className="text-xs">
+            <p className="font-medium text-ink">使用教學</p>
+            <p className="text-ink-subtle mt-0.5">重新開啟這份教學導覽。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  ),
+};
+
 export function TutorialModal({ onClose }: TutorialModalProps) {
   const [path, setPath] = useState<Path>(null);
   const [step, setStep] = useState(0);
@@ -193,10 +222,10 @@ export function TutorialModal({ onClose }: TutorialModalProps) {
     );
   }
 
-  // Path-specific steps + path-specific AI step at the end
+  // Path-specific steps + AI step + header icons tip at the end
   const pathSteps = path === 'near_ntu' ? nearNtuSteps : otherSteps;
   const aiStep = path === 'near_ntu' ? aiStepNearNtu : aiStepOther;
-  const allSteps = [...pathSteps, aiStep];
+  const allSteps = [...pathSteps, aiStep, headerIconsStep];
   const current = allSteps[step];
   const isLast = step === allSteps.length - 1;
   const totalWithIntro = allSteps.length + 1; // +1 for the intro we already passed
