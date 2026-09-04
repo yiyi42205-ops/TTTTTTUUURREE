@@ -64,7 +64,8 @@ export function Footer() {
             {creditsOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
           {creditsOpen && (
-            <div className="mt-2 pl-3 border-l-2 border-hairline text-ink-tertiary leading-relaxed">
+            <div className="mt-2 pl-3 border-l-2 border-hairline text-ink-tertiary leading-relaxed space-y-1">
+              <p><span className="text-ink-subtle">114-2 Web App 開發第 C 組全體組員</span> — 初版開發</p>
               <p><span className="text-ink-subtle">Jake (MladenSrB)</span> — 協作開發</p>
             </div>
           )}
