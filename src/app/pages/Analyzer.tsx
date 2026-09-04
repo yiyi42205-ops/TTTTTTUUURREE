@@ -274,6 +274,13 @@ export function Analyzer() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => navigate('/settings')}
+            className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
+            title="金鑰設定"
+          >
+            <Key className="w-3.5 h-3.5" />
+          </button>
+          <button
             onClick={() => setShowTutorial(true)}
             className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
             title="使用教學"

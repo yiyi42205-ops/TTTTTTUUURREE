@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, useInView } from 'motion/react';
-import { Shield, ArrowRight, Search, Info, Star, FileText } from 'lucide-react';
+import { Shield, ArrowRight, Search, Info, Star, FileText, Key } from 'lucide-react';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { TutorialModal } from '../components/TutorialModal';
 
@@ -62,13 +62,22 @@ export function Home() {
             <span className="text-ink-subtle font-normal text-sm ml-1.5">TrueRating</span>
           </span>
         </div>
-        <button
-          onClick={() => setShowTutorial(true)}
-          className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
-          title="使用教學"
-        >
-          <Info className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/settings')}
+            className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
+            title="金鑰設定"
+          >
+            <Key className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
+            title="使用教學"
+          >
+            <Info className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </header>
 
       {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}

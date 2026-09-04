@@ -842,12 +842,6 @@ export function Results() {
             {/* Action buttons */}
             <div className="flex gap-3 justify-center pt-4 pb-2">
               <button
-                onClick={() => navigate('/analyzer')}
-                className="bg-primary hover:bg-primary-hover text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
-              >
-                重新分析
-              </button>
-              <button
                 onClick={() => navigate('/')}
                 className="bg-surface-1 hover:bg-surface-2 text-ink-muted px-6 py-2.5 rounded-lg border border-hairline text-sm font-medium transition-colors cursor-pointer"
               >
