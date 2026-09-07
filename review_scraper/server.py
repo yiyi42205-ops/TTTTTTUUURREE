@@ -176,6 +176,11 @@ _apify_scrape_log: dict[str, list[float]] = {}
 APIFY_SCRAPE_LIMIT = 3        # max scrapes per window
 APIFY_SCRAPE_WINDOW = 3600    # 1 hour
 
+# Global rate limit for server-key LLM calls — prevents distributed abuse
+_server_llm_call_log: list[float] = []
+SERVER_LLM_CALL_LIMIT = 60    # max server-key LLM calls per window
+SERVER_LLM_CALL_WINDOW = 60   # 1 minute
+
 
 def _check_apify_rate_limit(ip: str) -> bool:
     """Returns True if the IP is within the Apify scrape rate limit."""
@@ -192,6 +197,29 @@ def _check_apify_rate_limit(ip: str) -> bool:
 def _record_apify_scrape(ip: str) -> None:
     """Record an Apify scrape for rate limiting."""
     _apify_scrape_log.setdefault(ip, []).append(time.time())
+
+
+def _check_server_llm_rate_limit() -> bool:
+    """Returns True if server-key LLM calls are within the global budget."""
+    if not _limiter_enabled:
+        return True
+    now = time.time()
+    _server_llm_call_log[:] = [t for t in _server_llm_call_log if now - t < SERVER_LLM_CALL_WINDOW]
+    return len(_server_llm_call_log) < SERVER_LLM_CALL_LIMIT
+
+
+def _record_server_llm_call(count: int = 1) -> None:
+    """Record server-key LLM call(s) for global rate limiting."""
+    now = time.time()
+    _server_llm_call_log.extend([now] * count)
+
+
+def _is_place_in_db(place_id: str) -> bool:
+    """Check if a place_id exists in our scrape_cache (server-side verification)."""
+    if not place_id:
+        return False
+    return get_cached_reviews(place_id) is not None
+
 
 # Background thread pool for incremental cache refresh (fire-and-forget)
 _refresh_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="cache_refresh")
@@ -339,9 +367,12 @@ def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
     try:
         from apify_scraper import scrape_via_apify
 
+        # Claim the cooldown slot immediately to prevent concurrent refresh
+        # from other requests hitting the same store.
+        set_last_checked_at(place_id)
+
         existing = get_cached_reviews(place_id)
         if not existing:
-            set_last_checked_at(place_id)
             return
 
         # Step 1: probe to get current Google reviewsCount
@@ -378,7 +409,6 @@ def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
             # Update metadata with latest Google stats even if we skip
             if probe_meta:
                 update_cached_metadata(place_id, probe_meta)
-            set_last_checked_at(place_id)
             return
 
         # Step 2: fetch the delta
@@ -421,15 +451,8 @@ def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
             if metadata:
                 update_cached_metadata(place_id, metadata)
 
-        # Always update last_checked_at (whether or not new reviews were found)
-        set_last_checked_at(place_id)
     except Exception as e:
         logger.warning(f"[refresh] Background refresh failed for {place_id}: {e}")
-        # Still mark as checked so we don't retry immediately on every request
-        try:
-            set_last_checked_at(place_id)
-        except Exception:
-            pass
 
 def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tuple[dict, int] | None]:
     """
@@ -934,6 +957,7 @@ def scrape():
             return jsonify({"error": "評論爬取失敗，請稍後再試。", "code": "SCRAPE_FAILED"}), 500
 
 @app.route("/api/audit-rules", methods=["POST"])
+@limiter.limit("20 per minute")
 def audit_rules():
     start_time = time.time()
     ip = request.remote_addr
@@ -1032,9 +1056,13 @@ def audit():
     errors = []
     client_to_use = None
     if uncached_reviews:
-        # DB stores (source="cache") use server-side key; new stores require user key
-        scrape_source = data.get("scrapeSource", "")
-        if scrape_source == "cache" and genai_client and provider == "gemini":
+        # DB stores use server-side key; new stores require user key.
+        # Verify server-side that the place_id actually exists in our DB
+        # (don't trust client-provided scrapeSource).
+        is_db_store = _is_place_in_db(place_id)
+        if is_db_store and genai_client and provider == "gemini":
+            if not _check_server_llm_rate_limit():
+                return jsonify({"error": "伺服器忙碌中，請稍後再試。", "code": "RATE_LIMITED"}), 429
             client_to_use = genai_client
             logger.info(f"Using server-side Gemini key for DB store '{store_name}'")
         else:
@@ -1044,6 +1072,10 @@ def audit():
 
         batches = make_batches(uncached_reviews)
         logger.info(f"Sending {len(uncached_reviews)} reviews across {len(batches)} batch(es)...")
+
+        # Track server-key LLM usage for global rate limiting
+        if is_db_store and client_to_use == genai_client:
+            _record_server_llm_call(len(batches))
 
         flat_results = []
         with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_BATCHES) as executor:
@@ -1137,6 +1169,7 @@ def audit():
     return jsonify(response_body)
 
 @app.route("/api/store-summary", methods=["POST"])
+@limiter.limit("10 per minute")
 def store_summary():
     start_time = time.time()
     ip = request.remote_addr
@@ -1184,10 +1217,14 @@ def store_summary():
             "code": "INSUFFICIENT_REVIEWS",
         }), 400
 
-    # DB stores use server-side key; new stores require user key
-    scrape_source = data.get("scrapeSource", "")
-    if scrape_source == "cache" and genai_client and provider == "gemini":
+    # DB stores use server-side key; new stores require user key.
+    # Verify server-side instead of trusting client-provided scrapeSource.
+    is_db_store = _is_place_in_db(place_id)
+    if is_db_store and genai_client and provider == "gemini":
+        if not _check_server_llm_rate_limit():
+            return jsonify({"error": "伺服器忙碌中，請稍後再試。", "code": "RATE_LIMITED"}), 429
         client_to_use = genai_client
+        _record_server_llm_call(1)
         logger.info(f"Using server-side Gemini key for summary of DB store '{store_name}'")
     else:
         client_to_use, err_resp = _resolve_llm_client(provider, request.headers, ip)
