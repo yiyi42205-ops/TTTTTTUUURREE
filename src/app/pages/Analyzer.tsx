@@ -13,10 +13,12 @@ export function Analyzer() {
 
   // First visit: auto-show tutorial, then disclaimer after tutorial closes
   const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialMode, setTutorialMode] = useState<'first-time' | 'full'>('first-time');
   const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem(TUTORIAL_STORAGE_KEY)) {
+      setTutorialMode('first-time');
       setShowTutorial(true);
     }
     fetch('/api/log-visit', { method: 'POST' }).catch(() => {});
@@ -48,6 +50,7 @@ export function Analyzer() {
       const isGoogleMapsUrl = trimmed.startsWith('https://') &&
                              (trimmed.includes('google.com/maps') ||
                               trimmed.includes('maps.app.goo.gl') ||
+                              trimmed.includes('share.google/') ||
                               trimmed.includes('/maps/') ||
                               trimmed.includes('g.page'));
 
@@ -112,7 +115,7 @@ export function Analyzer() {
     for (const url of activeUrls) {
       const isUrl = url.startsWith('http://') || url.startsWith('https://');
       if (isUrl) {
-        const isGoogleMaps = (url.includes('google.') && url.includes('/maps/')) || url.includes('maps.app.goo.gl');
+        const isGoogleMaps = (url.includes('google.') && url.includes('/maps/')) || url.includes('maps.app.goo.gl') || url.includes('share.google/');
         if (!isGoogleMaps) {
           alert(`網址格式錯誤: "${url}" 不是正確的 Google Maps 商家網址 (例如包含 google.com/maps 或 maps.app.goo.gl)。`);
           return;
@@ -281,7 +284,7 @@ export function Analyzer() {
             <Key className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => setShowTutorial(true)}
+            onClick={() => { setTutorialMode('full'); setShowTutorial(true); }}
             className="w-7 h-7 rounded border border-hairline flex items-center justify-center text-ink-subtle hover:text-ink hover:border-hairline-strong transition-colors cursor-pointer"
             title="使用教學"
           >
@@ -300,7 +303,7 @@ export function Analyzer() {
       </header>
 
       {showTutorial && (
-        <TutorialModal onClose={() => {
+        <TutorialModal mode={tutorialMode} onClose={() => {
           setShowTutorial(false);
           // Chain: show disclaimer after tutorial if not yet accepted
           if (!localStorage.getItem(DISCLAIMER_STORAGE_KEY)) {

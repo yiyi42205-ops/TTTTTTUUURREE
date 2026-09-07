@@ -80,7 +80,7 @@ export function Home() {
         </div>
       </header>
 
-      {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
+      {showTutorial && <TutorialModal mode="full" onClose={() => setShowTutorial(false)} />}
 
       {/* ── hero ── */}
       <section className="container mx-auto px-4 pt-16 pb-16 md:pt-28 md:pb-24 max-w-3xl">

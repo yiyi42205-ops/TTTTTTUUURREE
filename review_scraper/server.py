@@ -200,6 +200,8 @@ _refresh_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="cache_
 REFRESH_COOLDOWN_SECONDS = 604800
 # Minimum new-review gap (Google total − DB count) to justify a full refresh
 REFRESH_MIN_NEW_REVIEWS = 20
+# Minimum reviews a store needs for meaningful analysis
+MIN_REVIEWS_REQUIRED = 20
 
 
 def _background_audit(place_id: str, reviews: list, metadata: dict) -> None:
@@ -358,7 +360,20 @@ def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
             delta = google_count - db_count
             logger.info(f"[refresh] {place_id}: google={google_count}, db={db_count}, delta={delta}")
 
-        if delta < REFRESH_MIN_NEW_REVIEWS:
+        # Special case: DB has < MIN_REVIEWS_REQUIRED but Google now has enough.
+        # Always fetch regardless of delta so the store can graduate from
+        # "insufficient reviews" status.
+        db_review_count = len(existing)
+        needs_graduation = (
+            db_review_count < MIN_REVIEWS_REQUIRED
+            and google_count is not None
+            and google_count >= MIN_REVIEWS_REQUIRED
+        )
+        if needs_graduation:
+            delta = max(delta, google_count)  # fetch all available
+            logger.info(f"[refresh] {place_id}: DB has {db_review_count} reviews (< {MIN_REVIEWS_REQUIRED}), Google has {google_count} — forcing full fetch")
+
+        if delta < REFRESH_MIN_NEW_REVIEWS and not needs_graduation:
             logger.info(f"[refresh] {place_id}: delta {delta} < {REFRESH_MIN_NEW_REVIEWS}, skipping")
             # Update metadata with latest Google stats even if we skip
             if probe_meta:
@@ -511,13 +526,13 @@ def catch_all(path):
 def resolve_short_url(url: str) -> str:
     """Follow redirects for Google Maps short/share URLs.
 
-    Handles: share.google, goo.gl/maps, maps.app.goo.gl
+    Handles: share.google, goo.gl/maps, maps.app.goo.gl, g.page
     CID URLs (maps.google.com/?cid=) are NOT resolved here — Google requires
     JS rendering, so they fall through to Apify which handles them natively.
     """
     try:
         parsed = urlparse(url)
-        if parsed.hostname in {"share.google", "goo.gl", "maps.app.goo.gl"}:
+        if parsed.hostname in {"share.google", "goo.gl", "maps.app.goo.gl", "g.page"}:
             req = urllib.request.Request(
                 url,
                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"},
@@ -534,6 +549,7 @@ def resolve_short_url(url: str) -> str:
 _ALLOWED_FETCH_HOSTS = {
     "www.google.com", "google.com", "maps.google.com", "google.com.tw",
     "www.google.com.tw", "maps.app.goo.gl", "goo.gl", "share.google",
+    "g.page",
 }
 
 
@@ -829,6 +845,16 @@ def scrape():
         if final_place_id:
             set_last_checked_at(final_place_id)
 
+        # Gate: reject stores with too few reviews for meaningful analysis
+        review_count = len(response["reviews"])
+        if review_count < MIN_REVIEWS_REQUIRED:
+            store_title = (metadata or {}).get("title", final_place_id or url_to_scrape)
+            logger.info(f"Insufficient reviews for {store_title}: {review_count} < {MIN_REVIEWS_REQUIRED}")
+            return jsonify({
+                "error": f"此店家目前僅有 {review_count} 則評論，不足 {MIN_REVIEWS_REQUIRED} 則，無法進行有效的評論審計分析。",
+                "code": "INSUFFICIENT_REVIEWS",
+            }), 400
+
         logger.info(f"Apify scrape succeeded: {len(response['reviews'])} reviews in {time.time() - start_time:.2f}s.")
         if final_place_id:
             response["place_id"] = final_place_id
@@ -886,6 +912,16 @@ def scrape():
                 if is_url and url_to_scrape != original_query:
                     set_query_place_id_mapping(url_to_scrape, target_place_id)
             logger.info(f"Playwright fallback succeeded: {len(records)} reviews in {time.time() - start_time:.2f}s.")
+
+            # Gate: reject stores with too few reviews for meaningful analysis
+            if len(records) < MIN_REVIEWS_REQUIRED:
+                store_title = target_place_id or url_to_scrape
+                logger.info(f"Insufficient reviews (Playwright) for {store_title}: {len(records)} < {MIN_REVIEWS_REQUIRED}")
+                return jsonify({
+                    "error": f"此店家目前僅有 {len(records)} 則評論，不足 {MIN_REVIEWS_REQUIRED} 則，無法進行有效的評論審計分析。",
+                    "code": "INSUFFICIENT_REVIEWS",
+                }), 400
+
             pw_response = {"reviews": records, "source": "playwright_fallback"}
             if target_place_id:
                 pw_response["place_id"] = target_place_id
@@ -1142,9 +1178,11 @@ def store_summary():
     valid_reviews.sort(key=lambda x: len(x.get("text", "")), reverse=True)
     valid_reviews = valid_reviews[:150]
 
-    if not valid_reviews:
-        result = {"warnings": [], "recommendations": []}
-        return jsonify(result)
+    if len(valid_reviews) < MIN_REVIEWS_REQUIRED:
+        return jsonify({
+            "error": f"此店家有效評論不足 {MIN_REVIEWS_REQUIRED} 則（目前 {len(valid_reviews)} 則），無法生成有效的 AI 總結。",
+            "code": "INSUFFICIENT_REVIEWS",
+        }), 400
 
     # DB stores use server-side key; new stores require user key
     scrape_source = data.get("scrapeSource", "")
