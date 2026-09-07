@@ -542,7 +542,7 @@ export function Results() {
     return (
       <div className="min-h-screen bg-background font-sans">
         <DisclaimerModal />
-        {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
+        {showTutorial && <TutorialModal mode="full" onClose={() => setShowTutorial(false)} />}
         {renderHeader()}
         <LoadingState
           shopResults={shopResults}
@@ -559,7 +559,7 @@ export function Results() {
   return (
     <div className="min-h-screen bg-background font-sans pb-16">
       <DisclaimerModal />
-      {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
+      {showTutorial && <TutorialModal mode="full" onClose={() => setShowTutorial(false)} />}
       {renderHeader()}
 
       <div className="container mx-auto px-4 py-6 max-w-3xl">

@@ -1,265 +1,260 @@
 import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, MapPin, Globe, Key, Info } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Key, Info } from 'lucide-react';
 
 export const TUTORIAL_STORAGE_KEY = 'truerating_tutorial_completed';
 
 interface TutorialModalProps {
   onClose: () => void;
+  mode?: 'first-time' | 'full';
 }
 
-type Path = 'near_ntu' | 'other' | null;
+// ── Chat bubble component ──
 
-const introStep = {
-  title: '歡迎使用疑騙真星 TrueRating',
-  content: (
-    <div className="space-y-3">
-      <p>
-        本站分析 Google Maps 餐廳評論的真實性，幫你看穿灌水評價。
-        資料庫目前已收錄<span className="font-medium text-ink">臺大周邊 1,500+ 家餐廳</span>，其他區域也會陸續更新。
-      </p>
-      <p className="font-medium text-ink">你想查的店在哪裡？</p>
+function Bubble({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-surface-2 border border-hairline rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm text-ink leading-relaxed max-w-[90%]">
+      {children}
+    </div>
+  );
+}
+
+function Screenshot({ src, alt }: { src: string; alt: string }) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="max-w-[90%] rounded-lg border border-hairline shadow-sm"
+      onError={e => (e.currentTarget.style.display = 'none')}
+    />
+  );
+}
+
+// ── Steps as chat conversations ──
+
+interface Step {
+  bubbles: React.ReactNode;
+}
+
+const welcomeStep: Step = {
+  bubbles: (
+    <div className="space-y-2.5">
+      <Bubble>
+        嗨！歡迎使用<span className="font-medium">疑騙真星 TrueRating</span> 👋
+      </Bubble>
+      <Bubble>
+        我們幫你分析 Google Maps 餐廳評論的真實性，看穿灌水評價。
+      </Bubble>
+      <Bubble>
+        資料庫已收錄 <span className="font-medium">臺大周邊 1,500+ 家餐廳</span>，這些店<span className="font-medium">不需要任何金鑰或註冊</span>，直接查就好。
+      </Bubble>
+      <Bubble>
+        來，用「男一快餐」示範一下 ↓
+      </Bubble>
     </div>
   ),
 };
 
-const nearNtuSteps = [
-  {
-    title: '臺大附近的店 — 直接查！',
-    content: (
-      <div className="space-y-2">
-        <p>
-          資料庫已收錄的店家<span className="font-medium text-ink">不需要任何 API 金鑰</span>，輸入店名或 Google Maps 網址即可秒出完整報告，包含 AI 語意審計結果。
-        </p>
-        <div className="bg-surface-2 border border-hairline rounded p-3 text-xs text-ink-subtle space-y-1.5">
-          <p>支援的輸入格式：</p>
-          <ul className="list-disc pl-4 space-y-0.5">
-            <li>Google Maps 網址（從瀏覽器複製）</li>
-            <li>Google Maps 分享連結</li>
-            <li>直接輸入店名（例如「蘇草salvia」）</li>
-          </ul>
-        </div>
-      </div>
-    ),
-  },
-  {
-    title: '看懂報告',
-    content: (
-      <div className="space-y-2">
-        <p>報告從上到下依序是：</p>
-        <ol className="list-decimal pl-4 space-y-1 text-sm">
-          <li><span className="font-medium">評分校正</span> — 原始 vs. 過濾後的星級</li>
-          <li><span className="font-medium">評論成分</span> — 促銷型、模板型、語意矛盾各佔多少</li>
-          <li><span className="font-medium">星級分佈</span> — 校正前後的對比圖</li>
-          <li><span className="font-medium">逐條檢核</span> — 展開看每則評論的判定理由</li>
-        </ol>
-      </div>
-    ),
-  },
-];
+const searchStep: Step = {
+  bubbles: (
+    <div className="space-y-2.5">
+      <Bubble>
+        在搜尋欄貼上 Google Maps 網址，或直接打店名就行。
+      </Bubble>
+      <Screenshot src="/tutorial/search.png" alt="搜尋示範" />
+      <Bubble>
+        支援瀏覽器網址、分享連結、或直接輸入「男一快餐」。
+      </Bubble>
+    </div>
+  ),
+};
 
-const otherSteps = [
-  {
-    title: '其他地區的店 — 需要兩把金鑰',
-    content: (
-      <div className="space-y-2">
-        <p>
-          不在資料庫中的店家需要即時爬取評論並進行 AI 語意審計，
-          系統會請你提供：
-        </p>
-        <div className="bg-surface-2 border border-hairline rounded p-3 text-xs space-y-2">
-          <p className="font-medium text-ink">1. Apify Token — 爬取評論（免費）</p>
-          <ol className="list-decimal pl-4 space-y-1 text-ink-subtle">
-            <li>前往 <a href="https://console.apify.com/sign-up" target="_blank" rel="noreferrer" className="underline text-ink">apify.com</a> 註冊帳號</li>
-            <li>進入 Settings → Integrations</li>
-            <li>複製 Personal API Token</li>
-          </ol>
-          <p className="text-ink-tertiary">免費帳號每月有 $5 USD 額度，約可查 100 家店。</p>
+const reportStep: Step = {
+  bubbles: (
+    <div className="space-y-2.5">
+      <Bubble>
+        送出後秒出報告 👇
+      </Bubble>
+      <Screenshot src="/tutorial/report.png" alt="審計報告" />
+      <Bubble>
+        上面告訴你：
+      </Bubble>
+      <Bubble>
+        <span className="font-medium">評分校正</span> — 過濾假評論後的真實星級{'\n'}
+        <span className="font-medium">結構健康度</span> — 評論結構的自然程度{'\n'}
+        <span className="font-medium">評論成分</span> — 促銷型、模板型、語意矛盾各佔多少
+      </Bubble>
+    </div>
+  ),
+};
+
+const summaryStep: Step = {
+  bubbles: (
+    <div className="space-y-2.5">
+      <Bubble>
+        往下滑會看到 <span className="font-medium">AI 總結</span> 👇
+      </Bubble>
+      <Screenshot src="/tutorial/summary.png" alt="AI 總結" />
+      <Bubble>
+        <span className="font-medium">避雷提示</span>幫你整理出真實評論中反覆被提到的缺點，每條都附來源。
+      </Bubble>
+    </div>
+  ),
+};
+
+const reviewStep: Step = {
+  bubbles: (
+    <div className="space-y-2.5">
+      <Bubble>
+        再往下是<span className="font-medium">逐條檢核</span>，每則評論都有判定結果和信心度 👇
+      </Bubble>
+      <Screenshot src="/tutorial/review.png" alt="逐條檢核" />
+      <Bubble>
+        可以篩選只看洗評的、自然的、或某一階段的結果。
+      </Bubble>
+    </div>
+  ),
+};
+
+const qaStep: Step = {
+  bubbles: (
+    <div className="space-y-2.5">
+      <Bubble>
+        最下面可以向 AI 提問，例如「推薦什麼菜？」「服務態度如何？」
+      </Bubble>
+      <Screenshot src="/tutorial/qa.png" alt="AI 問答" />
+      <Bubble>
+        這個功能需要你自己的 AI API Key（免費申請），點右上角 <Key className="w-3 h-3 inline" /> 設定。
+      </Bubble>
+    </div>
+  ),
+};
+
+const toolbarStep: Step = {
+  bubbles: (
+    <div className="space-y-2.5">
+      <Bubble>
+        最後提醒一下，右上角有兩個按鈕隨時可用：
+      </Bubble>
+      <Bubble>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded border border-hairline flex items-center justify-center shrink-0">
+              <Key className="w-3 h-3 text-ink-subtle" />
+            </div>
+            <span><span className="font-medium">金鑰設定</span> — 管理 API 金鑰</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded border border-hairline flex items-center justify-center shrink-0">
+              <Info className="w-3 h-3 text-ink-subtle" />
+            </div>
+            <span><span className="font-medium">使用教學</span> — 重新開啟這份導覽</span>
+          </div>
         </div>
-        <div className="bg-surface-2 border border-hairline rounded p-3 text-xs space-y-2">
-          <p className="font-medium text-ink">2. AI API Key — 語意審計（免費）</p>
-          <p className="text-ink-subtle">支援以下任一服務：</p>
-          <ul className="list-disc pl-4 space-y-1 text-ink-subtle">
-            <li><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline text-ink">Gemini</a> — 免費方案每分鐘 15 次請求</li>
-            <li><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer" className="underline text-ink">DeepSeek</a></li>
+      </Bubble>
+      <Bubble>
+        好了，去試試吧！🎉
+      </Bubble>
+    </div>
+  ),
+};
+
+// ── Full-mode only: key setup guides ──
+
+const apifyStep: Step = {
+  bubbles: (
+    <div className="space-y-2.5">
+      <Bubble>
+        如果你想查<span className="font-medium">臺大以外</span>的店家，需要提供 Apify Token 來即時爬取評論。
+      </Bubble>
+      <Bubble>
+        <span className="font-medium">完全免費，不需要信用卡。</span>申請步驟：
+      </Bubble>
+      <Bubble>
+        <ol className="list-decimal pl-4 space-y-1">
+          <li>前往 <a href="https://console.apify.com/sign-up" target="_blank" rel="noreferrer" className="underline text-primary">apify.com</a> 註冊（Google 一鍵登入）</li>
+          <li>進入 Settings → Integrations</li>
+          <li>複製 Personal API Token</li>
+        </ol>
+      </Bubble>
+      <Bubble>
+        免費帳號每月 $5 USD 額度，大約可以查 100 家店。查過的店會自動存入資料庫，之後<span className="font-medium">任何人再查都不需要金鑰</span>。
+      </Bubble>
+    </div>
+  ),
+};
+
+const aiKeyStep: Step = {
+  bubbles: (
+    <div className="space-y-2.5">
+      <Bubble>
+        即時爬取的店還需要一把 <span className="font-medium">AI API Key</span> 進行語意審計，一樣<span className="font-medium">完全免費</span>。
+      </Bubble>
+      <Bubble>
+        <div className="space-y-1.5">
+          <p className="font-medium">支援的 AI 服務（擇一即可）：</p>
+          <ul className="list-disc pl-4 space-y-0.5">
+            <li><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline text-primary">Gemini</a> — 推薦，免費每分鐘 15 次</li>
+            <li><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer" className="underline text-primary">DeepSeek</a></li>
             <li>任何 OpenAI 相容 API</li>
           </ul>
-          <p className="text-ink-tertiary">取得後貼到本站設定頁即可。查過一次的店會存入資料庫，之後不再需要金鑰。</p>
         </div>
-      </div>
-    ),
-  },
-  {
-    title: '看懂報告',
-    content: (
-      <div className="space-y-2">
-        <p>報告從上到下依序是：</p>
-        <ol className="list-decimal pl-4 space-y-1 text-sm">
-          <li><span className="font-medium">評分校正</span> — 原始 vs. 過濾後的星級</li>
-          <li><span className="font-medium">評論成分</span> — 促銷型、模板型、語意矛盾各佔多少</li>
-          <li><span className="font-medium">星級分佈</span> — 校正前後的對比圖</li>
-          <li><span className="font-medium">逐條檢核</span> — 展開看每則評論的判定理由</li>
-        </ol>
-      </div>
-    ),
-  },
-];
-
-const aiStepNearNtu = {
-  title: 'AI 問答功能（選用）',
-  content: (
-    <div className="space-y-2">
-      <p>
-        報告底部可以向 AI 提問（例如「這家店推薦點什麼？」）。
-        此功能需要你自己的 <span className="font-medium">AI API Key</span>。
-      </p>
-      <div className="bg-surface-2 border border-hairline rounded p-3 text-xs space-y-2">
-        <p className="font-medium text-ink">支援的 AI 服務（擇一即可）：</p>
-        <ul className="list-disc pl-4 space-y-1 text-ink-subtle">
-          <li><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline text-ink">Gemini</a> — 免費方案每分鐘 15 次請求</li>
-          <li><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer" className="underline text-ink">DeepSeek</a></li>
-          <li>任何 OpenAI 相容 API</li>
-        </ul>
-        <p className="text-ink-tertiary">取得金鑰後，貼到本站設定頁即可使用。審計報告本身不需要金鑰。</p>
-      </div>
+      </Bubble>
+      <Bubble>
+        取得後點右上角 <Key className="w-3 h-3 inline" /> 貼入即可。已經收錄的台大店家<span className="font-medium">不需要這些金鑰</span>。
+      </Bubble>
     </div>
   ),
 };
 
-const aiStepOther = {
-  title: 'AI 問答功能（選用）',
-  content: (
-    <div className="space-y-2">
-      <p>
-        報告底部可以向 AI 提問（例如「這家店推薦點什麼？」）。
-        如果你已在上一步填入 AI API Key，問答功能會直接可用。
-      </p>
-    </div>
-  ),
-};
+// ── Component ──
 
-const headerIconsStep = {
-  title: '隨時可用的工具列',
-  content: (
-    <div className="space-y-3">
-      <p>右上角有兩個按鈕，在每個頁面都能使用：</p>
-      <div className="space-y-2.5">
-        <div className="flex items-start gap-3 bg-surface-2 border border-hairline rounded p-3">
-          <div className="w-7 h-7 rounded border border-hairline flex items-center justify-center shrink-0">
-            <Key className="w-3.5 h-3.5 text-ink-subtle" />
-          </div>
-          <div className="text-xs">
-            <p className="font-medium text-ink">金鑰設定</p>
-            <p className="text-ink-subtle mt-0.5">管理 Apify Token 和 AI API Key，隨時可以新增或更換。</p>
-          </div>
-        </div>
-        <div className="flex items-start gap-3 bg-surface-2 border border-hairline rounded p-3">
-          <div className="w-7 h-7 rounded border border-hairline flex items-center justify-center shrink-0">
-            <Info className="w-3.5 h-3.5 text-ink-subtle" />
-          </div>
-          <div className="text-xs">
-            <p className="font-medium text-ink">使用教學</p>
-            <p className="text-ink-subtle mt-0.5">重新開啟這份教學導覽。</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  ),
-};
-
-export function TutorialModal({ onClose }: TutorialModalProps) {
-  const [path, setPath] = useState<Path>(null);
+export function TutorialModal({ onClose, mode = 'first-time' }: TutorialModalProps) {
   const [step, setStep] = useState(0);
-
-  const handleSelectPath = (selected: Path) => {
-    setPath(selected);
-    setStep(0);
-  };
 
   const handleClose = () => {
     localStorage.setItem(TUTORIAL_STORAGE_KEY, '1');
     onClose();
   };
 
-  // Intro screen — path selection
-  if (path === null) {
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/40 px-4">
-        <div className="bg-background border border-hairline-strong rounded max-w-md w-full shadow-lg">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-hairline">
-            <span className="text-xs text-ink-tertiary font-mono">教學導覽</span>
-            <button onClick={handleClose} className="text-ink-subtle hover:text-ink cursor-pointer">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="px-5 py-5">
-            <h3 className="text-sm font-semibold text-ink mb-3">{introStep.title}</h3>
-            <div className="text-sm text-ink-muted leading-relaxed mb-4">{introStep.content}</div>
-            <div className="space-y-2.5">
-              <button
-                onClick={() => handleSelectPath('near_ntu')}
-                className="w-full flex items-center gap-3 p-3.5 rounded-lg border border-hairline hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer text-left"
-              >
-                <MapPin className="w-5 h-5 text-primary shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-ink">在臺大附近</p>
-                  <p className="text-xs text-ink-subtle">直接查，不需要任何金鑰</p>
-                </div>
-              </button>
-              <button
-                onClick={() => handleSelectPath('other')}
-                className="w-full flex items-center gap-3 p-3.5 rounded-lg border border-hairline hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer text-left"
-              >
-                <Globe className="w-5 h-5 text-ink-subtle shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-ink">不在臺大附近</p>
-                  <p className="text-xs text-ink-subtle">需要免費的 Apify Token 即時爬取</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const steps: Step[] = mode === 'first-time'
+    ? [welcomeStep, searchStep, reportStep, summaryStep, reviewStep, toolbarStep]
+    : [welcomeStep, searchStep, reportStep, summaryStep, reviewStep, qaStep, apifyStep, aiKeyStep, toolbarStep];
 
-  // Path-specific steps + AI step + header icons tip at the end
-  const pathSteps = path === 'near_ntu' ? nearNtuSteps : otherSteps;
-  const aiStep = path === 'near_ntu' ? aiStepNearNtu : aiStepOther;
-  const allSteps = [...pathSteps, aiStep, headerIconsStep];
-  const current = allSteps[step];
-  const isLast = step === allSteps.length - 1;
-  const totalWithIntro = allSteps.length + 1; // +1 for the intro we already passed
+  const current = steps[step];
+  const isFirst = step === 0;
+  const isLast = step === steps.length - 1;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/40 px-4">
-      <div className="bg-background border border-hairline-strong rounded max-w-md w-full shadow-lg">
+      <div className="bg-background border border-hairline-strong rounded-xl max-w-md w-full shadow-lg max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-hairline">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-hairline shrink-0">
           <span className="text-xs text-ink-tertiary font-mono tabular-nums">
-            {step + 2} / {totalWithIntro}
+            {step + 1} / {steps.length}
           </span>
           <button onClick={handleClose} className="text-ink-subtle hover:text-ink cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="px-5 py-5">
-          <h3 className="text-sm font-semibold text-ink mb-3">{current.title}</h3>
-          <div className="text-sm text-ink-muted leading-relaxed">
-            {current.content}
-          </div>
+        {/* Chat content — scrollable */}
+        <div className="px-4 py-5 overflow-y-auto flex-1">
+          {current.bubbles}
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-hairline">
-          <button
-            onClick={() => step === 0 ? setPath(null) : setStep(s => s - 1)}
-            className="flex items-center gap-1 text-xs text-ink-subtle hover:text-ink cursor-pointer"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            上一步
-          </button>
+        <div className="flex items-center justify-between px-5 py-3 border-t border-hairline shrink-0">
+          {isFirst ? (
+            <span />
+          ) : (
+            <button
+              onClick={() => setStep(s => s - 1)}
+              className="flex items-center gap-1 text-xs text-ink-subtle hover:text-ink cursor-pointer"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              上一步
+            </button>
+          )}
 
           {isLast ? (
             <button
