@@ -168,7 +168,7 @@ review_scraper/venv/bin/python -m pytest tests/    # pytest（後端，165 tests
 
 ## Contributing
 
-歡迎提交 Issue 和 PR。所有程式碼變更請走 PR 流程，文件可直接推 main。
+歡迎提交 Issue 和 PR。所有變更（包含文件）都請走 PR 流程。
 
 ---
 

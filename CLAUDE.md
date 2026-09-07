@@ -17,8 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Workflow
 
 This is a multi-contributor project. Push rules:
-- **程式碼走 PR** — 所有程式碼變更必須開 PR，不可直接推 `main`。
-- **文件可直接推** — `docs/`、`CLAUDE.md`、`README.md` 等純文件修改可直接推到 `main`，不需開 PR。
+- **所有變更走 PR** — 包含程式碼與文件，一律開 PR，不可直接推 `main`。
 - **緊急修復事後補說明** — hotfix 可先合併，但事後必須在 PR 或 commit message 補上原因與影響範圍。
 
 Standard PR flow:
