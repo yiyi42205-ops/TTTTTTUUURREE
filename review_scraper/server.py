@@ -526,13 +526,13 @@ def catch_all(path):
 def resolve_short_url(url: str) -> str:
     """Follow redirects for Google Maps short/share URLs.
 
-    Handles: share.google, goo.gl/maps, maps.app.goo.gl
+    Handles: share.google, goo.gl/maps, maps.app.goo.gl, g.page
     CID URLs (maps.google.com/?cid=) are NOT resolved here — Google requires
     JS rendering, so they fall through to Apify which handles them natively.
     """
     try:
         parsed = urlparse(url)
-        if parsed.hostname in {"share.google", "goo.gl", "maps.app.goo.gl"}:
+        if parsed.hostname in {"share.google", "goo.gl", "maps.app.goo.gl", "g.page"}:
             req = urllib.request.Request(
                 url,
                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"},
@@ -549,6 +549,7 @@ def resolve_short_url(url: str) -> str:
 _ALLOWED_FETCH_HOSTS = {
     "www.google.com", "google.com", "maps.google.com", "google.com.tw",
     "www.google.com.tw", "maps.app.goo.gl", "goo.gl", "share.google",
+    "g.page",
 }
 
 
