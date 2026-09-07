@@ -167,15 +167,16 @@ const apifyStep: Step = {
         如果你想查<span className="font-medium">臺大以外</span>的店家，需要提供 Apify Token 來即時爬取評論。
       </Bubble>
       <Bubble>
-        <span className="font-medium">完全免費，不需要信用卡。</span>申請步驟：
+        <span className="font-medium">完全免費，不需要信用卡。</span>用 Google 帳號一鍵註冊，登入後什麼都不用設定：
       </Bubble>
       <Bubble>
         <ol className="list-decimal pl-4 space-y-1">
-          <li>前往 <a href="https://console.apify.com/sign-up" target="_blank" rel="noreferrer" className="underline text-primary">apify.com</a> 註冊（Google 一鍵登入）</li>
-          <li>進入 Settings → Integrations</li>
-          <li>複製 Personal API Token</li>
+          <li>前往 <a href="https://console.apify.com/sign-up" target="_blank" rel="noreferrer" className="underline text-primary">apify.com</a> → 點「Sign up with Google」</li>
+          <li>進入 Settings → API & Integrations</li>
+          <li>註冊時系統已自動建好一組 Token，直接複製即可 👇</li>
         </ol>
       </Bubble>
+      <Screenshot src="/tutorial/apify-token.png" alt="Apify Token 取得位置" />
       <Bubble>
         免費帳號每月 $5 USD 額度，大約可以查 100 家店。查過的店會自動存入資料庫，之後<span className="font-medium">任何人再查都不需要金鑰</span>。
       </Bubble>
@@ -191,14 +192,15 @@ const aiKeyStep: Step = {
       </Bubble>
       <Bubble>
         <div className="space-y-1.5">
-          <p className="font-medium">支援的 AI 服務（擇一即可）：</p>
-          <ul className="list-disc pl-4 space-y-0.5">
-            <li><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline text-primary">Gemini</a> — 推薦，免費每分鐘 15 次</li>
-            <li><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer" className="underline text-primary">DeepSeek</a></li>
-            <li>任何 OpenAI 相容 API</li>
-          </ul>
+          <p className="font-medium">推薦用 Gemini（免費）：</p>
+          <ol className="list-decimal pl-4 space-y-0.5">
+            <li>前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline text-primary">AI Studio</a> → 點「Create API Key」</li>
+            <li>複製產生的金鑰</li>
+          </ol>
+          <p className="text-ink-tertiary text-xs mt-1.5">也支援 <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer" className="underline">DeepSeek</a> 或任何 OpenAI 相容 API。</p>
         </div>
       </Bubble>
+      <Screenshot src="/tutorial/ai-key.png" alt="AI API Key 取得位置" />
       <Bubble>
         取得後點右上角 <Key className="w-3 h-3 inline" /> 貼入即可。已經收錄的台大店家<span className="font-medium">不需要這些金鑰</span>。
       </Bubble>
