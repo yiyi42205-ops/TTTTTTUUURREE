@@ -50,6 +50,7 @@ export function Analyzer() {
       const isGoogleMapsUrl = trimmed.startsWith('https://') &&
                              (trimmed.includes('google.com/maps') ||
                               trimmed.includes('maps.app.goo.gl') ||
+                              trimmed.includes('share.google/') ||
                               trimmed.includes('/maps/') ||
                               trimmed.includes('g.page'));
 
@@ -114,7 +115,7 @@ export function Analyzer() {
     for (const url of activeUrls) {
       const isUrl = url.startsWith('http://') || url.startsWith('https://');
       if (isUrl) {
-        const isGoogleMaps = (url.includes('google.') && url.includes('/maps/')) || url.includes('maps.app.goo.gl');
+        const isGoogleMaps = (url.includes('google.') && url.includes('/maps/')) || url.includes('maps.app.goo.gl') || url.includes('share.google/');
         if (!isGoogleMaps) {
           alert(`網址格式錯誤: "${url}" 不是正確的 Google Maps 商家網址 (例如包含 google.com/maps 或 maps.app.goo.gl)。`);
           return;
