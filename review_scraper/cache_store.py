@@ -164,6 +164,24 @@ def get_cached_metadata(place_id: str, db_path: str = None) -> dict | None:
     return None
 
 
+def update_cached_metadata(place_id: str, metadata: dict, db_path: str = None) -> None:
+    """Updates only the metadata_json column for an existing scrape_cache entry."""
+    conn = _connect(db_path or DB_PATH)
+    try:
+        meta_json = json.dumps(metadata, ensure_ascii=False) if metadata else None
+        conn.execute(
+            """
+            UPDATE scrape_cache
+            SET metadata_json = ?
+            WHERE place_id = ?
+            """,
+            (meta_json, place_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def get_cached_audit(place_id: str, db_path: str = None, ttl_seconds: int = CACHE_TTL_SECONDS):
     """Returns the cached audit result dict if a fresh entry exists, else None."""
     conn = _connect(db_path or DB_PATH)

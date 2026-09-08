@@ -17,7 +17,7 @@ from llm_client import make_batches, call_llm_batch, MAX_CONCURRENT_BATCHES, cal
 from cache_store import (
     get_cached_reviews, set_cached_reviews, get_place_id_for_query,
     set_query_place_id_mapping, get_cached_audit, set_cached_audit, get_cached_metadata,
-    check_and_increment_qa_limit, get_cached_qa, set_cached_qa,
+    update_cached_metadata, check_and_increment_qa_limit, get_cached_qa, set_cached_qa,
     get_cached_scores, set_cached_scores,
 )
 from prompt_builder import get_prompt_version
@@ -255,7 +255,21 @@ def scrape():
     if not force and target_place_id:
         cached = get_cached_reviews(target_place_id)
         if cached is not None:
-            cached_meta = get_cached_metadata(target_place_id)
+            cached_meta = get_cached_metadata(target_place_id) or {}
+            
+            # Auto-supplement coordinates if missing
+            if "location" not in cached_meta and apify_token:
+                logger.info(f"Coordinates missing for {target_place_id}, supplementing via Apify probe...")
+                try:
+                    from apify_scraper import scrape_via_apify
+                    _, _, probe_metadata = scrape_via_apify(f"https://www.google.com/maps/place/?q=place_id:{target_place_id}", max_reviews=1, token=apify_token)
+                    if "location" in probe_metadata:
+                        cached_meta["location"] = probe_metadata["location"]
+                        update_cached_metadata(target_place_id, cached_meta)
+                        logger.info(f"Successfully supplemented coordinates for {target_place_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to supplement coordinates for {target_place_id}: {e}")
+
             logger.info(f"Cache hit for place_id: {target_place_id} ({len(cached)} reviews)")
             response = {"reviews": cached, "source": "cache"}
             if cached_meta:
