@@ -81,6 +81,49 @@ if DEEPSEEK_API_KEY:
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 CORS(app)
 
+bg_executor = ThreadPoolExecutor(max_workers=3)
+
+def extract_location_from_url(url: str) -> dict | None:
+    """Fast-path to extract @lat,lng from a Google Maps URL."""
+    match = re.search(r'@(-?\d+\.\d+),(-?\d+\.\d+)', url)
+    if match:
+        try:
+            return {"lat": float(match.group(1)), "lng": float(match.group(2))}
+        except ValueError:
+            pass
+    return None
+
+def _background_supplement_coordinates(place_id: str, apify_token: str):
+    """Background task to fetch missing coordinates from Apify."""
+    try:
+        from cache_store import get_cached_metadata, update_cached_metadata
+        from apify_scraper import scrape_via_apify
+        
+        cached_meta = get_cached_metadata(place_id) or {}
+        if "location" in cached_meta or cached_meta.get("location_attempted"):
+            return
+            
+        logger.info(f"Background: Fetching coordinates for {place_id} via Apify probe...")
+        _, _, probe_metadata = scrape_via_apify(f"https://www.google.com/maps/place/?q=place_id:{place_id}", max_reviews=1, token=apify_token)
+        
+        if "location" in probe_metadata:
+            cached_meta["location"] = probe_metadata["location"]
+            logger.info(f"Background: Successfully supplemented coordinates for {place_id}")
+        else:
+            cached_meta["location_attempted"] = True
+            logger.info(f"Background: Probe completed but no coordinates found for {place_id}")
+            
+        update_cached_metadata(place_id, cached_meta)
+    except Exception as e:
+        logger.warning(f"Background: Failed to supplement coordinates for {place_id}: {e}")
+        try:
+            from cache_store import get_cached_metadata, update_cached_metadata
+            cached_meta = get_cached_metadata(place_id) or {}
+            cached_meta["location_attempted"] = True
+            update_cached_metadata(place_id, cached_meta)
+        except Exception:
+            pass
+
 def _resolve_llm_client(provider: str, headers: dict, ip: str) -> tuple[any, tuple[dict, int] | None]:
     """
     Factory helper to resolve the appropriate LLM client instance based on provider and headers.
@@ -258,17 +301,18 @@ def scrape():
             cached_meta = get_cached_metadata(target_place_id) or {}
             
             # Auto-supplement coordinates if missing
-            if "location" not in cached_meta and apify_token:
-                logger.info(f"Coordinates missing for {target_place_id}, supplementing via Apify probe...")
-                try:
-                    from apify_scraper import scrape_via_apify
-                    _, _, probe_metadata = scrape_via_apify(f"https://www.google.com/maps/place/?q=place_id:{target_place_id}", max_reviews=1, token=apify_token)
-                    if "location" in probe_metadata:
-                        cached_meta["location"] = probe_metadata["location"]
-                        update_cached_metadata(target_place_id, cached_meta)
-                        logger.info(f"Successfully supplemented coordinates for {target_place_id}")
-                except Exception as e:
-                    logger.warning(f"Failed to supplement coordinates for {target_place_id}: {e}")
+            if "location" not in cached_meta and not cached_meta.get("location_attempted"):
+                # 1. Try URL fast-path (0ms)
+                loc = extract_location_from_url(original_query)
+                if loc:
+                    cached_meta["location"] = loc
+                    from cache_store import update_cached_metadata
+                    update_cached_metadata(target_place_id, cached_meta)
+                    logger.info(f"Fast-path: Extracted coordinates from URL for {target_place_id}")
+                elif apify_token:
+                    # 2. Spawn background thread, return cache immediately
+                    logger.info(f"Coordinates missing for {target_place_id}, spawning background Apify probe...")
+                    bg_executor.submit(_background_supplement_coordinates, target_place_id, apify_token)
 
             logger.info(f"Cache hit for place_id: {target_place_id} ({len(cached)} reviews)")
             response = {"reviews": cached, "source": "cache"}
