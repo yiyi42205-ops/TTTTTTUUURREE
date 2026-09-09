@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { motion, useInView } from 'motion/react';
-import { Shield, ArrowRight, Search, Info, Star, FileText, Key } from 'lucide-react';
+import { motion, useInView, AnimatePresence } from 'motion/react';
+import { Shield, ArrowRight, Search, Info, Star, FileText, Key, Sparkles } from 'lucide-react';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { TutorialModal } from '../components/TutorialModal';
 
@@ -44,13 +44,14 @@ export function Home() {
   const navigate = useNavigate();
   const isPWA = useIsPWA();
   const [showTutorial, setShowTutorial] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     if (isPWA) navigate('/analyzer', { replace: true });
   }, [isPWA, navigate]);
 
   return (
-    <div className="min-h-screen bg-background font-sans selection:bg-ink/10">
+    <div className="min-h-screen bg-background font-sans selection:bg-ink/10 relative overflow-hidden">
       {/* ── header ── */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-hairline px-4 md:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
@@ -82,8 +83,22 @@ export function Home() {
 
       {showTutorial && <TutorialModal mode="full" onClose={() => setShowTutorial(false)} />}
 
+      {/* Hover Pulse Overlay */}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div
+            animate={{ opacity: [0, 0.5, 0], scale: [0.5, 1.2] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+            className="fixed left-1/2 top-[42%] w-[400px] h-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none z-0 blur-3xl"
+            style={{
+              background: 'radial-gradient(circle, rgba(94, 224, 185, 0.6) 0%, transparent 60%)',
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* ── hero ── */}
-      <section className="container mx-auto px-4 pt-16 pb-16 md:pt-28 md:pb-24 max-w-3xl">
+      <section className="container mx-auto px-4 pt-16 pb-16 md:pt-28 md:pb-24 max-w-3xl relative z-10">
         <motion.div className="text-center" variants={stagger} initial="hidden" animate="show">
           <motion.h1
             variants={fadeUp}
@@ -99,13 +114,26 @@ export function Home() {
           </motion.p>
 
           <motion.div variants={fadeUp}>
-            <button
+            <motion.button
               onClick={() => navigate('/analyzer')}
-              className="group bg-ink hover:bg-ink-muted text-background px-8 py-3.5 md:px-10 md:py-4 rounded-lg text-base md:text-lg font-medium transition-all inline-flex items-center gap-3 cursor-pointer"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              className="group relative bg-[#0f1715]/80 backdrop-blur-xl border border-[#2a3f38] hover:bg-[#449c95] hover:border-[#449c95] px-8 py-3.5 rounded-full text-base font-medium transition-all duration-300 flex items-center gap-3 mx-auto cursor-pointer hover:shadow-[0_0_30px_rgba(68,156,149,0.3)]"
             >
-              開始分析
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+              <motion.div
+                animate={{ opacity: [0.6, 1, 0.6], scale: [0.95, 1.05, 0.95] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                className="group-hover:rotate-180 group-hover:scale-110 transition-transform duration-700 ease-out"
+              >
+                <Sparkles className="w-4.5 h-4.5 text-[#5ee0b9] group-hover:text-white transition-colors duration-300" />
+              </motion.div>
+              <span className="text-[#5ee0b9] group-hover:text-white tracking-wide transition-colors duration-300">
+                開始分析
+              </span>
+              <ArrowRight className="w-4.5 h-4.5 text-[#5ee0b9] group-hover:text-white opacity-60 group-hover:opacity-100 group-hover:translate-x-1.5 transition-all duration-300" />
+            </motion.button>
           </motion.div>
         </motion.div>
       </section>

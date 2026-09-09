@@ -24,7 +24,13 @@ export function Analyzer() {
     fetch('/api/log-visit', { method: 'POST' }).catch(() => {});
   }, []);
 
-  const [scrapeUrls, setScrapeUrls] = useState<string[]>(['', '', '']);
+  const [scrapeUrls, setScrapeUrls] = useState<{ id: string; value: string }[]>([
+    { id: '1', value: '' },
+    { id: '2', value: '' },
+    { id: '3', value: '' },
+  ]);
+  const [maxReviews, setMaxReviews] = useState(50);
+  const [prevMaxReviews, setPrevMaxReviews] = useState(50);
   const [scrapeLoadingStep, setScrapeLoadingStep] = useState('');
   const [scrapeError, setScrapeError] = useState('');
   const [categoryReport, setCategoryReport] = useState<{
@@ -55,14 +61,17 @@ export function Analyzer() {
                               trimmed.includes('g.page'));
 
       if (isGoogleMapsUrl) {
-        if (scrapeUrls.includes(trimmed)) return;
+        if (scrapeUrls.some(u => u.value === trimmed)) return;
 
         const newScrapeUrls = [...scrapeUrls];
-        const emptyIndex = newScrapeUrls.findIndex(url => url === '');
+        const emptyIndex = newScrapeUrls.findIndex(u => u.value === '');
         if (emptyIndex !== -1) {
-           newScrapeUrls[emptyIndex] = trimmed;
+           newScrapeUrls[emptyIndex] = { ...newScrapeUrls[emptyIndex], value: trimmed };
         } else {
-           newScrapeUrls[0] = trimmed;
+           newScrapeUrls.push({ id: Math.random().toString(36).slice(2), value: trimmed });
+        }
+        if (newScrapeUrls[newScrapeUrls.length - 1].value.trim() !== '') {
+          newScrapeUrls.push({ id: Math.random().toString(36).slice(2), value: '' });
         }
         setScrapeUrls(newScrapeUrls);
       } else {
@@ -75,15 +84,37 @@ export function Analyzer() {
   }, [scrapeUrls]);
 
   const handleScrapeUrlChange = (index: number, value: string) => {
-    const newUrls = [...scrapeUrls];
-    newUrls[index] = value;
+    const newUrls = scrapeUrls.map((u, i) => (i === index ? { ...u, value } : u));
+    if (index === newUrls.length - 1 && value.trim() !== '') {
+      newUrls.push({ id: Math.random().toString(36).slice(2), value: '' });
+    }
     setScrapeUrls(newUrls);
   };
 
   const handleScrapeUrlClear = (index: number) => {
     const newUrls = [...scrapeUrls];
-    newUrls[index] = '';
+    if (newUrls.length > 1) {
+      newUrls.splice(index, 1);
+    } else {
+      newUrls[0] = { ...newUrls[0], value: '' };
+    }
+    const hasEmptyAtEnd = newUrls[newUrls.length - 1].value.trim() === '';
+    if (!hasEmptyAtEnd) {
+      newUrls.push({ id: Math.random().toString(36).slice(2), value: '' });
+    }
     setScrapeUrls(newUrls);
+  };
+
+  const handlePasteToField = async (index: number) => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const trimmed = (text || '').trim();
+      if (!trimmed) return;
+      handleScrapeUrlChange(index, trimmed);
+    } catch (err) {
+      console.warn('Clipboard read permission denied or not supported:', err);
+      alert('無法讀取剪貼簿，請確認瀏覽器授權。');
+    }
   };
 
   const saveCredentials = () => {
@@ -109,7 +140,7 @@ export function Analyzer() {
   };
 
   const handleScrapeAndAnalyze = async () => {
-    const activeUrls = scrapeUrls.map(u => u.trim()).filter(Boolean);
+    const activeUrls = scrapeUrls.map(u => u.value.trim()).filter(Boolean);
     if (activeUrls.length === 0) return;
 
     for (const url of activeUrls) {
@@ -174,7 +205,7 @@ export function Analyzer() {
           const response = await fetch('/api/scrape', {
             method: 'POST',
             headers,
-            body: JSON.stringify({ url: currentUrl, maxReviews: 500 })
+            body: JSON.stringify({ url: currentUrl, maxReviews })
           });
 
           const data = await response.json().catch(() => null);
@@ -260,7 +291,7 @@ export function Analyzer() {
     handleScrapeAndAnalyze();
   };
 
-  const filledScrapeCount = scrapeUrls.filter(url => url.trim() !== '').length;
+  const filledScrapeCount = scrapeUrls.filter(u => u.value.trim() !== '').length;
 
   return (
     <div className="min-h-screen bg-background font-sans selection:bg-primary/20 pb-12">
@@ -518,52 +549,109 @@ export function Analyzer() {
           </div>
 
           <div className="space-y-3 mb-6">
-            {scrapeUrls.map((url, index) => {
-              const isEmpty = !url.trim();
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.08 }}
-                  className={`rounded-xl p-4 border transition-all duration-200 ${
-                    isEmpty
-                      ? 'bg-surface-2 border-hairline border-dashed hover:border-hairline-strong'
-                      : 'bg-surface-2 border-hairline-strong'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${
+            <AnimatePresence initial={false}>
+              {scrapeUrls.map((urlObj, index) => {
+                const isEmpty = !urlObj.value.trim();
+                return (
+                  <motion.div
+                    key={urlObj.id}
+                    initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                    exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className={`rounded-xl p-4 border overflow-hidden transition-all duration-200 ${
                       isEmpty
-                        ? 'bg-surface-3 text-ink-tertiary'
-                        : 'bg-primary/15 text-primary'
-                    }`}>
-                      店家 {index + 1}
-                    </span>
-                    {url && (
-                      <motion.button
-                        onClick={() => handleScrapeUrlClear(index)}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="ml-auto bg-[var(--semantic-danger)] text-white p-1 rounded-md cursor-pointer"
+                        ? 'bg-surface-2 border-hairline border-dashed hover:border-hairline-strong'
+                        : 'bg-surface-2 border-hairline-strong'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${
+                        isEmpty
+                          ? 'bg-surface-3 text-ink-tertiary'
+                          : 'bg-primary/15 text-primary'
+                      }`}>
+                        店家 {index + 1}
+                      </span>
+                      {!isEmpty && (
+                        <motion.button
+                          onClick={() => handleScrapeUrlClear(index)}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="ml-auto bg-[var(--semantic-danger)] text-white p-1 rounded-md cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                        </motion.button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-tertiary pointer-events-none" />
+                      <input
+                        type="text"
+                        value={urlObj.value}
+                        onChange={(e) => handleScrapeUrlChange(index, e.target.value)}
+                        placeholder="Google Maps 網址或店家名稱（例如：蘇草salvia）..."
+                        className="w-full pl-10 pr-20 py-2.5 bg-surface-2 rounded-lg border border-hairline focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none text-sm text-ink placeholder-ink-tertiary transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handlePasteToField(index)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs font-medium bg-surface-3 hover:bg-surface-4 text-ink-subtle hover:text-ink border border-hairline rounded-md px-2.5 py-1.5 cursor-pointer transition-colors"
                       >
-                        <X className="w-3 h-3" />
-                      </motion.button>
-                    )}
+                        <ClipboardPaste className="w-3.5 h-3.5" />
+                        貼上
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+
+          <div className="rounded-xl p-4 bg-surface-2 border border-hairline mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-xs font-medium text-ink flex items-center gap-1.5">
+                <Sliders className="w-3.5 h-3.5 text-ink-subtle" />
+                抓取評論筆數（每間商家）
+              </label>
+              <div className="flex items-center justify-center min-w-[72px] h-[32px] bg-primary/10 rounded-lg overflow-hidden relative">
+                <div className="flex items-baseline gap-0.5">
+                  <div className="flex text-lg font-bold text-primary tabular-nums tracking-tight">
+                    {String(maxReviews).split('').map((digit, idx, arr) => {
+                      const place = arr.length - 1 - idx;
+                      return (
+                        <div key={`place-${place}`} className="relative h-[28px] w-[1ch] overflow-hidden inline-flex justify-center items-center">
+                          <AnimatePresence initial={false}>
+                            <motion.span
+                              key={`${place}-${digit}`}
+                              initial={{ y: maxReviews > prevMaxReviews ? 20 : -20, opacity: 0, filter: 'blur(2px)' }}
+                              animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+                              exit={{ y: maxReviews > prevMaxReviews ? -20 : 20, opacity: 0, filter: 'blur(2px)' }}
+                              transition={{ duration: 0.08, ease: "easeOut" }}
+                              className="absolute"
+                            >
+                              {digit}
+                            </motion.span>
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-tertiary" />
-                    <input
-                      type="text"
-                      value={url}
-                      onChange={(e) => handleScrapeUrlChange(index, e.target.value)}
-                      placeholder="Google Maps 網址或店家名稱（例如：蘇草salvia）..."
-                      className="w-full pl-10 pr-4 py-2.5 bg-surface-2 rounded-lg border border-hairline focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none text-sm text-ink placeholder-ink-tertiary transition-all"
-                    />
-                  </div>
-                </motion.div>
-              );
-            })}
+                </div>
+              </div>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="200"
+              step="1"
+              value={maxReviews}
+              onChange={(e) => {
+                setPrevMaxReviews(maxReviews);
+                setMaxReviews(parseInt(e.target.value));
+              }}
+              className="w-full accent-primary h-1 bg-surface-3 rounded-lg appearance-none cursor-pointer mt-2"
+            />
           </div>
 
           <motion.button
