@@ -25,9 +25,7 @@ export function Analyzer() {
   }, []);
 
   const [scrapeUrls, setScrapeUrls] = useState<{ id: string; value: string }[]>([
-    { id: '1', value: '' },
-    { id: '2', value: '' },
-    { id: '3', value: '' },
+    { id: 'initial-1', value: '' }
   ]);
   const [maxReviews, setMaxReviews] = useState(50);
   const [prevMaxReviews, setPrevMaxReviews] = useState(50);
@@ -48,40 +46,6 @@ export function Analyzer() {
   const [showApifyToken, setShowApifyToken] = useState(false);
   const [showAiKey, setShowAiKey] = useState(false);
   const [showKeyGuide, setShowKeyGuide] = useState(false);
-
-  const handlePasteFromClipboard = useCallback(async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      const trimmed = (text || '').trim();
-      const isGoogleMapsUrl = trimmed.startsWith('https://') &&
-                             (trimmed.includes('google.com/maps') ||
-                              trimmed.includes('maps.app.goo.gl') ||
-                              trimmed.includes('share.google/') ||
-                              trimmed.includes('/maps/') ||
-                              trimmed.includes('g.page'));
-
-      if (isGoogleMapsUrl) {
-        if (scrapeUrls.some(u => u.value === trimmed)) return;
-
-        const newScrapeUrls = [...scrapeUrls];
-        const emptyIndex = newScrapeUrls.findIndex(u => u.value === '');
-        if (emptyIndex !== -1) {
-           newScrapeUrls[emptyIndex] = { ...newScrapeUrls[emptyIndex], value: trimmed };
-        } else {
-           newScrapeUrls.push({ id: Math.random().toString(36).slice(2), value: trimmed });
-        }
-        if (newScrapeUrls[newScrapeUrls.length - 1].value.trim() !== '') {
-          newScrapeUrls.push({ id: Math.random().toString(36).slice(2), value: '' });
-        }
-        setScrapeUrls(newScrapeUrls);
-      } else {
-        alert('剪貼簿中未偵測到有效的 Google Maps 連結。');
-      }
-    } catch (err) {
-      console.warn('Clipboard read permission denied or not supported:', err);
-      alert('無法讀取剪貼簿，請確認瀏覽器授權。');
-    }
-  }, [scrapeUrls]);
 
   const handleScrapeUrlChange = (index: number, value: string) => {
     const newUrls = scrapeUrls.map((u, i) => (i === index ? { ...u, value } : u));
@@ -537,15 +501,6 @@ export function Analyzer() {
 
           <div className="flex justify-between items-end mb-4">
             <h3 className="text-ink font-medium text-sm">輸入店家網址或名稱</h3>
-            <motion.button
-              onClick={handlePasteFromClipboard}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-1.5 text-xs font-medium bg-surface-2 text-ink-subtle border border-hairline rounded-lg px-3 py-1.5 cursor-pointer hover:text-ink hover:border-hairline-strong transition-all"
-            >
-              <ClipboardPaste className="w-3.5 h-3.5" />
-              從剪貼簿貼上
-            </motion.button>
           </div>
 
           <div className="space-y-3 mb-6">
