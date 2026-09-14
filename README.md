@@ -1,8 +1,10 @@
 <div align="center">
 
-# 疑騙真星 TrueRating
+🇺🇸 English | [🇹🇼 繁體中文](README.zh-TW.md)
 
-**Google Maps 餐廳評論真實性分析工具**
+# TrueRating
+
+**Google Maps Restaurant Review Authenticity Analyzer**
 
 Detect fake Google Maps restaurant reviews inflated by "check-in for a free dish" promotions in Taiwan.
 
@@ -10,46 +12,42 @@ Detect fake Google Maps restaurant reviews inflated by "check-in for a free dish
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-truerating.fly.dev-blue)](https://truerating.fly.dev)
 
-[線上使用](https://truerating.fly.dev) ｜ [意見回饋](https://docs.google.com/forms/d/e/1FAIpQLScXeQd2L43eDuMU_iv9GHGOedSkj3kKM-IEieeW6ieokHfA7g/viewform)
+[Live Demo](https://truerating.fly.dev) ｜ [Feedback](https://docs.google.com/forms/d/e/1FAIpQLScXeQd2L43eDuMU_iv9GHGOedSkj3kKM-IEieeW6ieokHfA7g/viewform)
 
 </div>
 
 ---
 
-## 問題
+## The Problem
 
-台灣餐廳普遍透過「打卡送小菜」「五星送飲料」等行銷手法，換取大量非體驗導向的五星好評，導致 Google Maps 星級嚴重失真。
+Restaurants in Taiwan routinely run promotions like "check in on social media for a free side dish" or "leave a 5-star review for a free drink." These campaigns flood Google Maps with non-experience-driven five-star reviews, making star ratings unreliable for consumers.
 
-![三種手法讓 Google Maps 星級嚴重失真](docs/images/03-problem.png)
+## The Solution
 
-## 解決方案
+Paste a Google Maps store link or name → get an instant credibility analysis, an AI-filtered "true" star rating, key negative review summaries, and recommended dishes.
 
-貼上店家連結或店名 → 秒出評論可信度分析、AI 濾水後的真實星等、重點負評摘要與推薦品項。
+**1,500+ restaurants near National Taiwan University are pre-indexed — no sign-up or API key required.**
 
-![使用流程](docs/images/02-how-it-works.png)
-
-**臺大周邊 1,500+ 家餐廳已收錄，不需要註冊或金鑰，直接查。**
-
-![報告範例](docs/images/report-demo.png)
+![Report demo](docs/images/report-demo.png)
 
 ---
 
-## 核心功能
+## Key Features
 
-| 功能 | 說明 |
-|------|------|
-| **評論真實性分析** | 兩階段審計：規則引擎 + AI 語意分析，偵測利益交換、樣板化、空洞短評 |
-| **真實星等還原** | 依信心指數加權，計算過濾灌水後的 Filtered Rating |
-| **Trust Score** | 量化整體評論結構的可疑程度（0–100） |
-| **逐條判定** | 每則評論標註類型、信心度、I/A/D 語意維度分數 |
-| **AI 避雷提示** | 從真實評論中萃取反覆被提及的缺點，附來源 |
-| **AI 問答** | 根據真實評論回答「推薦什麼菜？」「服務態度如何？」 |
+| Feature | Description |
+|---------|-------------|
+| **Review Authenticity Audit** | Two-stage pipeline: rule engine + AI semantic analysis detects incentivized, templated, and low-content reviews |
+| **Filtered Rating** | Confidence-weighted star rating after removing suspected fake reviews |
+| **Trust Score** | Quantifies how suspicious the overall review structure is (0–100) |
+| **Per-Review Verdict** | Each review is tagged with type, confidence, and I/A/D semantic scores |
+| **AI Red-Flag Summary** | Extracts recurring complaints from authentic reviews, with sources |
+| **AI Q&A** | Answer questions like "What dish should I order?" based on genuine reviews |
 
 ---
 
-## 快速開始
+## Quick Start
 
-### 一鍵啟動 (macOS)
+### One-Command Setup (macOS)
 
 ```bash
 git clone https://github.com/yiyi42205-ops/TTTTTTUUURREE.git
@@ -57,118 +55,118 @@ cd TTTTTTUUURREE
 ./run.sh
 ```
 
-自動建立 Python venv、安裝依賴、提示設定 `.env`，然後同時啟動前後端。
+Automatically creates a Python venv, installs dependencies, prompts for `.env` setup, then starts both frontend and backend.
 
-### 手動啟動
+### Manual Setup
 
 ```bash
-# 1. 環境變數
+# 1. Environment variables
 cp .env.example .env
-# 填入 GEMINI_API_KEY（選填，無則為純快取模式）
-# 填入 APIFY_TOKEN（選填，僅即時爬取需要）
+# Set GEMINI_API_KEY (optional — cache-only mode without it)
+# Set APIFY_TOKEN (optional — only needed for live scraping)
 
-# 2. 安裝
+# 2. Install
 npm i
 cd review_scraper && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ..
 
-# 3. 啟動（兩個 terminal）
-npm run dev:scraper   # Flask 後端 :5001
-npm run dev           # Vite 前端 (proxy /api → :5001)
+# 3. Start (two terminals)
+npm run dev:scraper   # Flask backend :5001
+npm run dev           # Vite frontend (proxies /api → :5001)
 ```
 
-### 測試
+### Tests
 
 ```bash
-npm test                                           # vitest（前端，15 tests）
-review_scraper/venv/bin/python -m pytest tests/    # pytest（後端，165 tests）
+npm test                                           # vitest (frontend, 15 tests)
+review_scraper/venv/bin/python -m pytest tests/    # pytest (backend, 165 tests)
 ```
 
 ---
 
-## 系統架構
+## Architecture
 
 ```
-使用者輸入 Google Maps 店家連結或店名
+User enters a Google Maps store link or name
         │
         ▼
-┌─────────────────────────┐
-│  資料層                   │  SQLite 快取（臺大周邊 1,500+ 家）
-│  Cache hit → 秒出結果     │  Cache miss → Apify 即時爬取
-└─────────────────────────┘
+┌──────────────────────────────┐
+│  Data Layer                  │  SQLite cache (1,500+ pre-indexed stores)
+│  Cache hit → instant result  │  Cache miss → Apify live scrape
+└──────────────────────────────┘
         │
         ▼
-┌─────────────────────────┐
-│  Stage 1：規則引擎        │  促銷關鍵字、樣板相似度、
-│  rule_engine.py          │  時間密度異常、low_info 偵測
-└─────────────────────────┘
-        │ ambiguous 評論
+┌──────────────────────────────┐
+│  Stage 1: Rule Engine        │  Promo keywords, template similarity,
+│  rule_engine.py              │  review spike detection, low-info flagging
+└──────────────────────────────┘
+        │ ambiguous reviews
         ▼
-┌─────────────────────────┐
-│  Stage 2：LLM 語意複審    │  Gemini 2.5 Flash Lite
-│  三維度 I/A/D 評分        │  server-side，key 不到前端
-└─────────────────────────┘
+┌──────────────────────────────┐
+│  Stage 2: LLM Semantic Audit │  Gemini 2.5 Flash Lite
+│  I/A/D scoring (1–5)        │  Server-side, key never exposed to client
+└──────────────────────────────┘
         │
         ▼
-┌─────────────────────────┐
-│  加權計分引擎             │  confidence → weight
-│  aggregateAuditedReviews │  Filtered Rating / Trust Score
-└─────────────────────────┘
+┌──────────────────────────────┐
+│  Scoring Engine              │  confidence → weight
+│  aggregateAuditedReviews     │  Filtered Rating / Trust Score
+└──────────────────────────────┘
 ```
 
-判斷邏輯的完整數學公式請參閱 [`docs/TRUE_RATING_LOGIC.md`](./docs/TRUE_RATING_LOGIC.md)。
+See [`docs/TRUE_RATING_LOGIC.md`](./docs/TRUE_RATING_LOGIC.md) for the full scoring math.
 
 ---
 
-## 技術棧
+## Tech Stack
 
-| 層級 | 技術 |
-|------|------|
-| 前端 | Vite + React 18 (TypeScript)、Tailwind v4 |
-| 後端 | Flask (Python)、gunicorn |
-| 爬蟲 | Apify（主路徑）；Playwright + stealth（可選備援） |
-| AI 引擎 | Gemini 2.5 Flash Lite（預設）、DeepSeek、OpenAI 相容 |
-| 資料庫 | SQLite（persistent volume） |
-| 部署 | Fly.io（CI/CD via GitHub Actions） |
+| Layer | Technology |
+|-------|------------|
+| Frontend | Vite + React 18 (TypeScript), Tailwind v4 |
+| Backend | Flask (Python), gunicorn |
+| Scraper | Apify (primary); Playwright + stealth (optional fallback) |
+| AI Engine | Gemini 2.5 Flash Lite (default), DeepSeek, OpenAI-compatible |
+| Database | SQLite (persistent volume) |
+| Deployment | Fly.io (CI/CD via GitHub Actions) |
 
 ---
 
-## 專案結構
+## Project Structure
 
 ```
-├── src/                    前端 (React + TypeScript)
+├── src/                    Frontend (React + TypeScript)
 │   ├── app/pages/          Analyzer, Results, History, Settings, Home
 │   ├── app/components/     TutorialModal, ReviewInspector, StoreVerdict
 │   └── app/utils/          auditEngine.ts (types + Stage 2 functions)
-├── review_scraper/         後端 (Flask)
+├── review_scraper/         Backend (Flask)
 │   ├── server.py           API endpoints
-│   ├── rule_engine.py      Stage 1 規則引擎（唯一實作）
+│   ├── rule_engine.py      Stage 1 rule engine (single implementation)
 │   ├── llm_client.py       LLM batching + validation + typo recovery
-│   ├── stage2_rules.py     Stage 2 post-LLM 判定邏輯
+│   ├── stage2_rules.py     Stage 2 post-LLM verdict logic
 │   ├── cache_store.py      SQLite cache layer
 │   ├── apify_scraper.py    Apify actor wrapper
-│   └── normalize.py        Review 格式統一
-├── scripts/                批次預跑腳本
-├── eval/                   離線評估（非測試套件）
-├── restaurant_data/        人工標注 CSV（18 家，6,000+ 則）
+│   └── normalize.py        Review format normalization
+├── scripts/                Batch prerun scripts
+├── eval/                   Offline evaluation (not a test suite)
+├── restaurant_data/        Hand-labeled CSVs (18 stores, 6,000+ reviews)
 ├── tests/                  pytest (165) + vitest (15)
-└── docs/                   設計文件與數學公式
+└── docs/                   Design docs & scoring formulas
 ```
 
 ---
 
-## 適用範圍與限制
+## Scope & Limitations
 
-- **地區**：台灣（規則與 prompt 專為繁體中文餐飲評論設計）
-- **語言**：僅支援繁體中文
-- **資料庫**：已收錄臺大周邊 1,500+ 家，其他區域需使用者提供免費 Apify Token 即時爬取
-- **樣本**：單次分析約 100–500 則最新評論
-- **邊界**：「真實但話少的客人」與「敷衍洗評」文字特徵難以區分，存在誤判風險
+- **Region**: Taiwan (rules and prompts are designed for Traditional Chinese restaurant reviews)
+- **Language**: Traditional Chinese only
+- **Database**: 1,500+ stores near NTU pre-indexed; other areas require a free Apify Token for live scraping
+- **Sample size**: ~100–500 most recent reviews per analysis
+- **Edge cases**: Short genuine reviews and low-effort fake reviews share similar textual features — false positives are possible
 
 ---
 
 ## Contributing
 
-歡迎提交 Issue 和 PR。所有變更（包含文件）都請走 PR 流程。
+Issues and PRs are welcome. All changes (including docs) should go through the PR workflow.
 
 ---
 
@@ -178,6 +176,6 @@ review_scraper/venv/bin/python -m pytest tests/    # pytest（後端，165 tests
 
 ---
 
-## 免責聲明
+## Disclaimer
 
-本系統為學術研究專案，分析結果僅供消費決策參考，不代表對特定商家之品質評價。評論審計基於統計模型與 AI 語意分析，可能存在誤判。本站不對分析結果的準確性或完整性作任何保證。
+This is an academic research project. Analysis results are for consumer reference only and do not constitute an evaluation of any specific business. Review auditing is based on statistical models and AI semantic analysis, and may produce inaccurate results. We make no guarantees regarding the accuracy or completeness of the analysis.
