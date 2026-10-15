@@ -46,7 +46,7 @@ const welcomeSearchStep: Step = {
       </Bubble>
       <Screenshot src="/tutorial/search.png" alt="搜尋示範" />
       <Bubble>
-        <span className="font-medium">臺大周邊 1,500+ 家餐廳</span>已收錄，不用註冊、不用金鑰，直接查。
+        <span className="font-medium">臺大周邊 1,500 家以上餐廳</span>已收錄，不用註冊、不用金鑰，直接查。
       </Bubble>
     </div>
   ),

@@ -232,11 +232,13 @@ REFRESH_MIN_NEW_REVIEWS = 20
 MIN_REVIEWS_REQUIRED = 20
 
 
-def _background_audit(place_id: str, reviews: list, metadata: dict) -> None:
+def _background_audit(place_id: str, reviews: list, metadata: dict, fallback_audit: dict | None = None) -> None:
     """Re-run Stage 1 + Stage 2 on merged reviews using the server-side Gemini key.
 
     Called after _background_refresh finds new reviews. Scores are saved to
     stage2_scores so the next user query gets a full cache hit.
+    If fallback_audit is provided and Stage 1 fails, restores the previous
+    audit_cache so users don't lose cached results.
     """
     if not genai_client:
         logger.info(f"[refresh-audit] Skipping Stage 2 for {place_id}: no server GEMINI_API_KEY")
@@ -326,6 +328,12 @@ def _background_audit(place_id: str, reviews: list, metadata: dict) -> None:
         _background_summary(place_id, stage1, metadata)
     except Exception as e:
         logger.warning(f"[refresh-audit] Background audit failed for {place_id}: {e}")
+        if fallback_audit:
+            try:
+                set_cached_audit(place_id, fallback_audit)
+                logger.info(f"[refresh-audit] Restored previous audit_cache for {place_id}")
+            except Exception:
+                pass
 
 
 def _background_summary(place_id: str, stage1: dict, metadata: dict | None) -> None:
@@ -440,11 +448,14 @@ def _background_refresh(place_id: str, url: str, apify_token: str) -> None:
                 f"[refresh] {place_id}: {new_count} new reviews found, "
                 f"merged {len(existing)} → {len(merged)}"
             )
+            # Save existing audit before set_cached_reviews clears it
+            old_audit = get_cached_audit(place_id)
             set_cached_reviews(place_id, merged, source="refresh", metadata=metadata)
             # set_cached_reviews already invalidates audit_cache
 
             # Re-run Stage 1 + Stage 2 on the full merged set using server key
-            _background_audit(place_id, merged, metadata)
+            # Pass old_audit as fallback so it can be restored if Stage 1 fails
+            _background_audit(place_id, merged, metadata, fallback_audit=old_audit)
         else:
             logger.info(f"[refresh] {place_id}: no new reviews (all {len(new_reviews)} already cached)")
             # Still update metadata (reviewsCount, totalScore may have changed)
@@ -648,9 +659,15 @@ def scrape():
     # 2. If not found in mapping, try to extract or construct it
     if not target_place_id:
         if is_url:
-            # First time seeing this URL. Resolve short/share links, then extract place_id
-            url_to_scrape = resolve_short_url(original_query)
-            target_place_id = extract_place_id(url_to_scrape)
+            # Fast regex: extract ChIJ directly from URL before any HTTP calls
+            chij_match = re.search(r'(ChIJ[\w-]+)', original_query)
+            if chij_match:
+                target_place_id = chij_match.group(1)
+                logger.info(f"Fast-path ChIJ extraction from URL: {target_place_id}")
+            else:
+                # Short/share links need HTTP resolution first
+                url_to_scrape = resolve_short_url(original_query)
+                target_place_id = extract_place_id(url_to_scrape)
         else:
             # Text query: No network extraction attempted. Apify will handle it.
             from urllib.parse import quote
@@ -727,6 +744,50 @@ def scrape():
                     _refresh_executor.submit(
                         _background_refresh, target_place_id, url_to_scrape, apify_token,
                     )
+
+            # Bundle precomputed audit/stage2/summary for instant rendering
+            audit_data = get_cached_audit(target_place_id)
+            if audit_data:
+                precomputed = {"auditRules": audit_data}
+
+                # Build Stage 2 results from cached I/A/D scores
+                ambiguous = [
+                    r for r in audit_data.get("auditedReviews", [])
+                    if r.get("stars") == 5 and (r.get("audit") or {}).get("issueType") is None
+                ]
+                if ambiguous:
+                    model_name = MODEL_NAME_GEMINI
+                    prompt_version = get_prompt_version()
+                    review_ids = [f"{target_place_id}:{r['username']}" for r in ambiguous]
+                    scores = get_cached_scores(review_ids, model_name, prompt_version)
+                    spike_months = set(audit_data.get("signals", {}).get("spikeMonths", []))
+
+                    stage2_results = []
+                    for r in ambiguous:
+                        rid = f"{target_place_id}:{r['username']}"
+                        if rid in scores:
+                            s = scores[rid]
+                            month = (r.get("time") or "")[:7]
+                            result = build_stage2_result(
+                                username=r["username"],
+                                I=s["I"], A=s["A"], D=s["D"],
+                                reasoning=s.get("reasoning", ""),
+                                is_spike=month in spike_months,
+                            )
+                            stage2_results.append(result)
+
+                    precomputed["stage2"] = {
+                        "results": stage2_results,
+                        "complete": len(stage2_results) == len(ambiguous),
+                    }
+                else:
+                    precomputed["stage2"] = {"results": [], "complete": True}
+
+                summary_data = get_cached_summary(target_place_id)
+                if summary_data:
+                    precomputed["summary"] = summary_data
+
+                response["precomputed"] = precomputed
 
             store_name = (cached_meta or {}).get("title", target_place_id)
             log_query(ip, target_place_id, store_name, "cache")

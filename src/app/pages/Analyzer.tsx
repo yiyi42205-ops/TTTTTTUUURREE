@@ -219,6 +219,7 @@ export function Analyzer() {
             metadata: meta,
             dataAsOf: data.dataAsOf,
             scrapeSource: data.source || '',
+            precomputed: data.precomputed || undefined,
           };
         } catch (e: any) {
           if (e.credentialsRequired || e.notRestaurant) throw e;
@@ -402,7 +403,7 @@ export function Analyzer() {
                       >
                         <div className="bg-surface-3 rounded-lg p-4 text-xs text-ink-subtle leading-relaxed space-y-2 mb-2">
                           <p className="font-medium text-ink text-sm">如何查詢未收錄的店家？</p>
-                          <p>資料庫目前收錄臺大周邊 1,500+ 家餐廳。查詢其他地區的店家需要免費的 Apify Token 即時爬取評論。</p>
+                          <p>資料庫目前收錄臺大周邊 1,500 家以上餐廳，且持續增加中。查詢其他地區的店家需要免費的 Apify Token 即時爬取評論。</p>
                           <ol className="list-decimal list-inside space-y-1">
                             <li>前往 <a href="https://apify.com/sign-up" target="_blank" rel="noreferrer" className="text-primary hover:text-primary-hover underline">apify.com</a> 註冊免費帳號（每月 $5 美元免費額度）</li>
                             <li>到 <a href="https://console.apify.com/account/integrations" target="_blank" rel="noreferrer" className="text-primary hover:text-primary-hover underline">帳號設定 → Integrations</a> 複製 API Token</li>

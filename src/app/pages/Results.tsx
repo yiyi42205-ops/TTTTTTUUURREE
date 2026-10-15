@@ -5,8 +5,7 @@ import {
   ArrowLeft, AlertTriangle, Shield, X, Database, MessageSquare, Send,
   Loader2, Sparkles, Trophy, AlertCircle, ThumbsUp, Info, Megaphone, Key
 } from 'lucide-react';
-import { RESTAURANTS_DATA } from '../data/restaurantsData';
-import { parseReviews, Review } from '../utils/csvParser';
+import { Review } from '../utils/csvParser';
 import { aggregateAuditedReviews, mergeStage2Results, ShopStats, AuditResult, SimilaritySignal, HotTermSignal } from '../utils/auditEngine';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
 import { useIsPWA } from '../hooks/useIsPWA';
@@ -51,7 +50,7 @@ export function Results() {
   const isPWA = useIsPWA();
   const isHistoryCache = !!location.state?.cachedShopResults;
 
-  const storeIds = (location.state?.storeIds as string[]) || ['ramen_washed_3', 'ramen_clean_2'];
+  const storeIds = (location.state?.storeIds as string[]) || [];
 
   // Base state computed from CSV data and local heuristic engine
   const [shopResults, setShopResults] = useState<ShopStats[]>([]);
@@ -137,38 +136,37 @@ export function Results() {
     }
 
     const runStage1 = async () => {
-      const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number }; dataAsOf?: string; scrapeSource?: string }>) || [];
+      const customShops = (location.state?.customShops as Array<{ id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number }; dataAsOf?: string; scrapeSource?: string; precomputed?: any }>) || [];
 
-      let shopsToProcess: { id: string; name: string; reviews: Review[]; metadata?: { totalScore?: number; reviewsCount?: number }; dataAsOf?: string; scrapeSource?: string }[];
-      if (customShops.length > 0) {
-        shopsToProcess = customShops;
-      } else {
-        const activeIds = storeIds.length > 0 ? storeIds : ['ramen_washed_3', 'ramen_clean_2'];
-        shopsToProcess = activeIds.map(id => {
-          const store = RESTAURANTS_DATA.find(r => r.id === id);
-          if (!store) return null;
-          const reviews = parseReviews(store.csvContent);
-          return { id, name: store.name, reviews };
-        }).filter(Boolean) as { id: string; name: string; reviews: Review[] }[];
-      }
+      const shopsToProcess = customShops;
 
       const computed: ShopStats[] = [];
       const newSignals: typeof shopSignals = {};
+      const precomputedAiResults: { [key: string]: { [username: string]: AuditResult } } = {};
+      const precomputedSummaries: { [key: number]: any } = {};
 
-      for (const shop of shopsToProcess) {
+      for (let shopIdx = 0; shopIdx < shopsToProcess.length; shopIdx++) {
+        const shop = shopsToProcess[shopIdx];
         try {
-          const response = await fetch('/api/audit-rules', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reviews: shop.reviews }),
-          });
+          // Use precomputed audit data if available, otherwise call API
+          let data: any;
+          if (shop.precomputed?.auditRules) {
+            data = shop.precomputed.auditRules;
+          } else {
+            const response = await fetch('/api/audit-rules', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reviews: shop.reviews, placeId: shop.id }),
+            });
 
-          if (!response.ok) {
-            throw new Error(`Stage 1 API returned ${response.status}`);
+            if (!response.ok) {
+              throw new Error(`Stage 1 API returned ${response.status}`);
+            }
+
+            data = await response.json();
           }
 
-          const data = await response.json();
-          const auditedReviews = data.auditedReviews.map((r: any) => ({
+          let auditedReviews = data.auditedReviews.map((r: any) => ({
             username: r.username,
             stars: typeof r.stars === 'number' ? r.stars : Number(r.stars),
             time: r.time,
@@ -177,7 +175,34 @@ export function Results() {
             audit: r.audit as AuditResult,
           }));
 
-          const stats = aggregateAuditedReviews(shop.name, auditedReviews);
+          // If precomputed Stage 2 is complete, merge now (skip /api/audit later)
+          if (shop.precomputed?.stage2?.complete) {
+            const items: any[] = shop.precomputed.stage2.results || [];
+            const storeMap: { [username: string]: AuditResult } = {};
+            items.forEach((item: any) => {
+              if (item.stage2 === 'unscored') return;
+              storeMap[item.username] = {
+                isWashed: item.isWashed,
+                reason: item.reason,
+                confidenceScore: item.confidenceScore,
+                issueType: item.issueType === 'none' ? null : (item.issueType as any),
+                reasoningPath: item.reasoningPath,
+                incentiveIntensity: item.incentiveIntensity || 3,
+                sentimentAuthenticity: item.sentimentAuthenticity || 3,
+                descriptionGranularity: item.descriptionGranularity || 3,
+                verdictBasis: item.verdictBasis,
+              };
+            });
+            precomputedAiResults[shop.id] = storeMap;
+            auditedReviews = mergeStage2Results(auditedReviews, storeMap);
+          }
+
+          // If precomputed summary exists, save it
+          if (shop.precomputed?.summary) {
+            precomputedSummaries[shopIdx] = shop.precomputed.summary;
+          }
+
+          let stats = aggregateAuditedReviews(shop.name, auditedReviews);
           stats.reviewAvgRating = stats.originalRating;
           if (shop.metadata?.totalScore != null) {
             stats.originalRating = shop.metadata.totalScore;
@@ -198,6 +223,12 @@ export function Results() {
 
       setShopResults(computed);
       setShopSignals(newSignals);
+      if (Object.keys(precomputedAiResults).length > 0) {
+        setAiAuditResults(prev => ({ ...prev, ...precomputedAiResults }));
+      }
+      if (Object.keys(precomputedSummaries).length > 0) {
+        setStoreSummaries(prev => ({ ...prev, ...precomputedSummaries }));
+      }
 
       const initialSearch: { [key: number]: string } = {};
       const initialFilter: { [key: number]: 'all' | 'washed' | 'stage1' | 'stage2' | 'clean' | 'unaudited' } = {};
@@ -217,8 +248,16 @@ export function Results() {
     if (location.state?.cachedShopResults) {
       return;
     }
-    if (shopResults.length > 0 && !isAiAuditing && Object.keys(aiAuditResults).length === 0) {
-      handleGeminiAudit(shopResults);
+    if (shopResults.length > 0 && !isAiAuditing) {
+      // Check if any shop still needs Stage 2 audit
+      const customShops = (location.state?.customShops as Array<{ id: string }>) || [];
+      const needsAudit = shopResults.some((_, idx) => {
+        const id = storeIds[idx] || customShops[idx]?.id || `custom_${idx}`;
+        return !(id in aiAuditResults);
+      });
+      if (needsAudit) {
+        handleGeminiAudit(shopResults);
+      }
     }
   }, [shopResults, location.state?.cachedShopResults]);
 
@@ -237,6 +276,13 @@ export function Results() {
         const result = activeShopResults[idx];
         const customShopsRef = (location.state?.customShops as Array<{ id: string }>) || [];
         const id = storeIds[idx] || customShopsRef[idx]?.id || `custom_${idx}`;
+
+        // Skip shops that already have precomputed Stage 2 results
+        if (id in newAiResults && Object.keys(newAiResults[id]).length > 0) {
+          logs.push({ storeId: id, storeName: result.storeName, totalReviews: result.auditedReviews.length, stage1Count: 0, stage2Sent: 0, stage2Flagged: 0, stage2Passed: 0 });
+          continue;
+        }
+
         const reviews = result.auditedReviews;
 
         const signals = shopSignals[id];

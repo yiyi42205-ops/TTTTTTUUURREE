@@ -491,7 +491,9 @@ def get_visitor_stats(db_path: str = None) -> dict:
             "SELECT COUNT(*) FROM visitor_log WHERE visited_at >= ?", (week_ago,)
         ).fetchone()[0]
 
-        return {"total": total, "today": today, "week": week}
+        store_count = conn.execute("SELECT COUNT(*) FROM scrape_cache").fetchone()[0]
+
+        return {"total": total, "today": today, "week": week, "storeCount": store_count}
     finally:
         conn.close()
 
