@@ -44,6 +44,13 @@ export function Home() {
   const navigate = useNavigate();
   const isPWA = useIsPWA();
   const [showTutorial, setShowTutorial] = useState(false);
+  const [storeCount, setStoreCount] = useState(1513);
+
+  useEffect(() => {
+    fetch('/api/stats').then(r => r.json()).then(d => {
+      if (d.storeCount) setStoreCount(d.storeCount);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (isPWA) navigate('/analyzer', { replace: true });
@@ -121,7 +128,7 @@ export function Home() {
         <div className="container mx-auto px-4 py-10 max-w-2xl flex justify-center">
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-semibold text-ink tracking-[-1px]">
-              <Counter target={1500} suffix="+" />
+              <Counter target={storeCount} />
             </div>
             <div className="text-sm text-ink-subtle mt-1">家餐廳已收錄</div>
           </div>
