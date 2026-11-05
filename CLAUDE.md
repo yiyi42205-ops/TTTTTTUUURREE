@@ -26,6 +26,15 @@ Standard PR flow:
 3. Push the branch and open a PR via `gh pr create`.
 4. Merge only after review.
 
+Safety rules:
+- **花錢的操作先報價** — 執行爬蟲或大量 LLM／API 呼叫前，先估算次數、費用和時間（Gemini 要算 thinking tokens），等確認後先跑一小批校正預估，再跑全部。
+- **動資料前先確認** — 清除或覆寫 cache、資料庫、Fly volume 前，先列出影響範圍和能否復原，備份並等確認。只處理指定的項目。
+- **線上驗證才算完成** — PR 合併或部署成功不等於完成。影響線上行為的改動，要在線上確認實際結果；無法驗證時，要說明還缺什麼。
+
+## 常見錯誤
+
+- **用 `git add -A` 或 `git add .` 開 PR** — `eval/`、`scripts/` 有刻意不進 repo 的本機檔案，會被一起帶進去。正確做法是只逐一 stage 這次任務的檔案。
+
 ## Commands
 
 - `npm i` — install frontend dependencies
